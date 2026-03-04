@@ -9,19 +9,20 @@
 ## Commands
 - `npm run dev` — dev server
 - `npm run build` — production build
+- `npm run test` — 79 unit tests (Vitest)
 - `npm run lint` — ESLint
 
 ## Architecture
 ```
 src/
   components/
-    ui/          — Card, Button, Input, Select, Modal, AnimatedNumber
+    ui/          — Card, Button, Input, Select, Modal, AnimatedNumber, ProgressBar, Skeleton
     layout/      — AppShell (bottom nav)
     onboarding/  — OnboardingWizard
     ErrorBoundary.jsx
   pages/         — DashboardPage, MonthlyPage, ChargesPage, CalendarPage, ImportPage, SettingsPage
-  stores/        — householdStore, chargesStore, monthlyStore (Zustand + persist)
-  utils/         — calculations, csvParser, format
+  stores/        — householdStore, chargesStore (+ auto-categorisation), monthlyStore (Zustand + persist)
+  utils/         — calculations, csvParser, format, insights, motion
 ```
 
 ## Conventions
