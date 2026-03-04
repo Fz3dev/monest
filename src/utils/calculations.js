@@ -1,8 +1,5 @@
 import { addMonths, format, parseISO, differenceInMonths, startOfMonth } from 'date-fns'
 
-/**
- * Check if a fixed charge is active for a given month
- */
 export function isActiveThisMonth(charge, month) {
   if (!charge.active) return false
   if (charge.startsAt && month < charge.startsAt) return false
@@ -10,12 +7,8 @@ export function isActiveThisMonth(charge, month) {
   return true
 }
 
-/**
- * Check if a fixed charge is due this month based on frequency
- */
 export function isDueThisMonth(charge, month) {
   if (!isActiveThisMonth(charge, month)) return false
-
   const monthNum = parseInt(month.split('-')[1], 10)
 
   switch (charge.frequency) {
@@ -32,36 +25,12 @@ export function isDueThisMonth(charge, month) {
   }
 }
 
-/**
- * Get the effective month for a charge considering payment delay
- */
 export function getEffectiveMonth(charge, month) {
   if (!charge.paymentDelayMonths) return month
   const date = parseISO(month + '-01')
   return format(addMonths(date, -charge.paymentDelayMonths), 'yyyy-MM')
 }
 
-/**
- * Get the monthly equivalent amount for a charge
- */
-export function getMonthlyAmount(charge) {
-  switch (charge.frequency) {
-    case 'monthly':
-      return charge.amount
-    case 'bimonthly':
-      return charge.amount
-    case 'quarterly':
-      return charge.amount
-    case 'annual':
-      return charge.amount
-    default:
-      return charge.amount
-  }
-}
-
-/**
- * Check if an installment payment is due for a given month
- */
 export function isInstallmentDue(installment, month) {
   const firstDate = parseISO(installment.firstPaymentDate)
   const monthDate = parseISO(month + '-01')
@@ -69,19 +38,12 @@ export function isInstallmentDue(installment, month) {
   return diff >= 0 && diff < installment.installmentCount
 }
 
-/**
- * Get the installment number for a given month (1-indexed)
- */
 export function getInstallmentNumber(installment, month) {
   const firstDate = parseISO(installment.firstPaymentDate)
   const monthDate = parseISO(month + '-01')
-  const diff = differenceInMonths(startOfMonth(monthDate), startOfMonth(firstDate))
-  return diff + 1
+  return differenceInMonths(startOfMonth(monthDate), startOfMonth(firstDate)) + 1
 }
 
-/**
- * Core computation: calculate remaining budget for a month
- */
 export function computeMonth(month, household, fixedCharges, installments, plannedExpenses, monthlyEntry) {
   if (!household) {
     return { resteA: 0, resteB: 0, resteFoyer: 0, totalCommon: 0, shareA: 0, shareB: 0, charges: [] }
@@ -98,9 +60,7 @@ export function computeMonth(month, household, fixedCharges, installments, plann
 
   // Fixed charges active this month
   const activeCharges = fixedCharges.filter((c) => {
-    const effectiveMonth = c.paymentDelayMonths
-      ? getEffectiveMonth(c, month)
-      : month
+    const effectiveMonth = c.paymentDelayMonths ? getEffectiveMonth(c, month) : month
     return isDueThisMonth(c, effectiveMonth)
   })
 
@@ -119,8 +79,7 @@ export function computeMonth(month, household, fixedCharges, installments, plann
   })
 
   // Installments due this month
-  const dueInstallments = installments.filter((i) => isInstallmentDue(i, month))
-  dueInstallments.forEach((i) => {
+  installments.filter((i) => isInstallmentDue(i, month)).forEach((i) => {
     const num = getInstallmentNumber(i, month)
     chargesDetail.push({
       id: i.id,
@@ -134,8 +93,7 @@ export function computeMonth(month, household, fixedCharges, installments, plann
   })
 
   // Planned expenses for this month
-  const monthPlanned = plannedExpenses.filter((e) => e.targetMonth === month)
-  monthPlanned.forEach((e) => {
+  plannedExpenses.filter((e) => e.targetMonth === month).forEach((e) => {
     chargesDetail.push({
       id: e.id,
       name: e.name,
@@ -145,24 +103,19 @@ export function computeMonth(month, household, fixedCharges, installments, plann
     })
   })
 
-  // Sums
-  const commonCharges = chargesDetail
-    .filter((c) => c.payer === 'common')
-    .reduce((sum, c) => sum + c.amount, 0)
+  // Sums by payer
+  const commonCharges = chargesDetail.filter((c) => c.payer === 'common').reduce((sum, c) => sum + c.amount, 0)
+  const personalACharges = chargesDetail.filter((c) => c.payer === 'person_a').reduce((sum, c) => sum + c.amount, 0)
+  const personalBCharges = chargesDetail.filter((c) => c.payer === 'person_b').reduce((sum, c) => sum + c.amount, 0)
 
-  const personalACharges = chargesDetail
-    .filter((c) => c.payer === 'person_a')
-    .reduce((sum, c) => sum + c.amount, 0)
+  // Pro rata: dynamically compute split ratio from actual incomes
+  let ratio = household.splitRatio || 0.5
+  if (household.configModel !== 'solo' && household.splitMode === 'prorata' && (incomeA + incomeB) > 0) {
+    ratio = incomeA / (incomeA + incomeB)
+  }
 
-  const personalBCharges = chargesDetail
-    .filter((c) => c.payer === 'person_b')
-    .reduce((sum, c) => sum + c.amount, 0)
-
-  // CAF and similar credits go to common income
-  const ratio = household.splitRatio || 0.5
   const shareA = commonCharges * ratio
   const shareB = commonCharges * (1 - ratio)
-
   const resteA = incomeA + proReimbA - shareA - personalACharges
   const resteB = incomeB + proReimbB - shareB - personalBCharges
 
@@ -180,5 +133,6 @@ export function computeMonth(month, household, fixedCharges, installments, plann
     personalACharges,
     personalBCharges,
     charges: chargesDetail,
+    ratio,
   }
 }

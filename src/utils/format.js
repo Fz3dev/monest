@@ -64,12 +64,13 @@ export const FREQUENCIES = [
 ]
 
 export const PAYER_OPTIONS = (household) => {
-  const options = [{ value: 'person_a', label: household?.personAName || 'Personne A' }]
-  if (household?.personBName) {
-    options.push({ value: 'person_b', label: household.personBName })
-  }
+  const options = []
   if (household?.configModel !== 'solo' && household?.configModel !== 'full_personal') {
     options.push({ value: 'common', label: 'Compte commun' })
+  }
+  options.push({ value: 'person_a', label: household?.personAName || 'Personne A' })
+  if (household?.personBName) {
+    options.push({ value: 'person_b', label: household.personBName })
   }
   return options
 }

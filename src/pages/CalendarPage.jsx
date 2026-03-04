@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { motion, AnimatePresence } from 'motion/react'
 import { useHouseholdStore } from '../stores/householdStore'
 import { useChargesStore } from '../stores/chargesStore'
 import { useMonthlyStore } from '../stores/monthlyStore'
@@ -6,12 +7,12 @@ import { computeMonth } from '../utils/calculations'
 import { formatCurrency, formatMonthShort, getCurrentMonth } from '../utils/format'
 import Card from '../components/ui/Card'
 import { addMonths, format } from 'date-fns'
-import { useState } from 'react'
+import { CheckCircle2, AlertTriangle, XCircle } from 'lucide-react'
 
 export default function CalendarPage() {
   const household = useHouseholdStore((s) => s.household)
   const { fixedCharges, installmentPayments, plannedExpenses } = useChargesStore()
-  const getEntry = useMonthlyStore((s) => s.getEntry)
+  const entries = useMonthlyStore((s) => s.entries)
   const [selectedMonth, setSelectedMonth] = useState(null)
 
   const months = useMemo(() => {
@@ -19,7 +20,7 @@ export default function CalendarPage() {
     const results = []
     for (let i = 0; i < 12; i++) {
       const m = format(addMonths(new Date(current + '-01'), i), 'yyyy-MM')
-      const entry = getEntry(m)
+      const entry = entries[m] || null
       const result = computeMonth(m, household, fixedCharges, installmentPayments, plannedExpenses, entry)
       const totalCharges = result.totalCommon + result.personalACharges + result.personalBCharges
 
@@ -37,96 +38,126 @@ export default function CalendarPage() {
       })
     }
     return results
-  }, [household, fixedCharges, installmentPayments, plannedExpenses, getEntry])
+  }, [household, fixedCharges, installmentPayments, plannedExpenses, entries])
 
   const selected = selectedMonth ? months.find((m) => m.month === selectedMonth) : null
 
-  const statusColors = {
-    green: 'bg-green-500/20 border-green-500/40 text-green-400',
-    yellow: 'bg-amber-500/20 border-amber-500/40 text-amber-400',
-    red: 'bg-red-500/20 border-red-500/40 text-red-400',
+  const statusConfig = {
+    green: {
+      bg: 'bg-success/10 border-success/20',
+      text: 'text-success',
+      icon: <CheckCircle2 size={10} className="text-success" />,
+    },
+    yellow: {
+      bg: 'bg-warning/10 border-warning/20',
+      text: 'text-warning',
+      icon: <AlertTriangle size={10} className="text-warning" />,
+    },
+    red: {
+      bg: 'bg-danger/10 border-danger/20',
+      text: 'text-danger',
+      icon: <XCircle size={10} className="text-danger" />,
+    },
   }
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Calendrier prévisionnel</h1>
+      <motion.h1
+        className="text-2xl font-bold"
+        initial={{ opacity: 0, x: -10 }}
+        animate={{ opacity: 1, x: 0 }}
+      >
+        Calendrier previsionnel
+      </motion.h1>
 
-      {/* Grid 12 months */}
       <div className="grid grid-cols-4 gap-2">
-        {months.map((m) => (
-          <button
-            key={m.month}
-            onClick={() => setSelectedMonth(m.month === selectedMonth ? null : m.month)}
-            className={`p-3 rounded-xl border text-center transition-all ${
-              statusColors[m.status]
-            } ${selectedMonth === m.month ? 'ring-2 ring-white scale-105' : 'hover:scale-102'}`}
-          >
-            <div className="text-xs font-medium">{m.label}</div>
-            <div className="text-lg font-bold mt-1">{formatCurrency(m.result.resteFoyer)}</div>
-            {m.hasSpecial && <div className="text-xs mt-1">*</div>}
-          </button>
-        ))}
+        {months.map((m, i) => {
+          const cfg = statusConfig[m.status]
+          return (
+            <motion.button
+              key={m.month}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: i * 0.03 }}
+              onClick={() => setSelectedMonth(m.month === selectedMonth ? null : m.month)}
+              className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${cfg.bg} ${
+                selectedMonth === m.month ? 'ring-2 ring-white/30 scale-105' : 'hover:scale-[1.03]'
+              }`}
+            >
+              <div className="text-[10px] font-medium text-text-secondary">{m.label}</div>
+              <div className={`text-base font-bold mt-0.5 tabular-nums ${cfg.text}`}>
+                {formatCurrency(m.result.resteFoyer)}
+              </div>
+              <div className="flex items-center justify-center gap-1 mt-1">
+                {cfg.icon}
+                {m.hasSpecial && <span className="text-[8px] text-text-muted">+</span>}
+              </div>
+            </motion.button>
+          )
+        })}
       </div>
 
       {/* Legend */}
-      <div className="flex gap-4 text-xs text-slate-400 justify-center">
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-green-500/30" /> &gt; 1 500 €
+      <div className="flex gap-4 text-[10px] text-text-muted justify-center">
+        <div className="flex items-center gap-1.5">
+          <CheckCircle2 size={10} className="text-success" /> &gt; 1 500 €
         </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-amber-500/30" /> 500-1 500 €
+        <div className="flex items-center gap-1.5">
+          <AlertTriangle size={10} className="text-warning" /> 500–1 500 €
         </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-red-500/30" /> &lt; 500 €
+        <div className="flex items-center gap-1.5">
+          <XCircle size={10} className="text-danger" /> &lt; 500 €
         </div>
       </div>
 
-      {/* Selected month detail */}
-      {selected && (
-        <Card>
-          <h2 className="font-semibold mb-3">{selected.label}</h2>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-400">Reste foyer</span>
-              <span className="font-bold">{formatCurrency(selected.result.resteFoyer)}</span>
-            </div>
-            {household?.personAName && (
-              <div className="flex justify-between text-sm">
-                <span style={{ color: household.personAColor }}>{household.personAName}</span>
-                <span>{formatCurrency(selected.result.resteA)}</span>
-              </div>
-            )}
-            {household?.personBName && (
-              <div className="flex justify-between text-sm">
-                <span style={{ color: household.personBColor }}>{household.personBName}</span>
-                <span>{formatCurrency(selected.result.resteB)}</span>
-              </div>
-            )}
-
-            {selected.result.charges.length > 0 && (
-              <>
-                <div className="border-t border-slate-700 pt-2 mt-2">
-                  <div className="text-xs text-slate-500 mb-2">Charges ce mois</div>
-                  {selected.result.charges.map((c) => (
-                    <div key={c.id} className="flex justify-between text-sm py-1">
-                      <span className="text-slate-300">
-                        {c.name}
-                        {c.type === 'installment' && (
-                          <span className="text-xs text-slate-500 ml-1">échéancier</span>
-                        )}
-                        {c.type === 'planned' && (
-                          <span className="text-xs text-amber-500 ml-1">prévu</span>
-                        )}
-                      </span>
-                      <span>{formatCurrency(c.amount)}</span>
-                    </div>
-                  ))}
+      {/* Detail */}
+      <AnimatePresence>
+        {selected && (
+          <motion.div
+            key={selected.month}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+          >
+            <Card>
+              <h2 className="font-semibold mb-3">{selected.label}</h2>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-secondary">Reste foyer</span>
+                  <span className="font-bold tabular-nums">{formatCurrency(selected.result.resteFoyer)}</span>
                 </div>
-              </>
-            )}
-          </div>
-        </Card>
-      )}
+                {household?.personAName && (
+                  <div className="flex justify-between text-sm">
+                    <span style={{ color: household.personAColor }}>{household.personAName}</span>
+                    <span className="tabular-nums">{formatCurrency(selected.result.resteA)}</span>
+                  </div>
+                )}
+                {household?.personBName && (
+                  <div className="flex justify-between text-sm">
+                    <span style={{ color: household.personBColor }}>{household.personBName}</span>
+                    <span className="tabular-nums">{formatCurrency(selected.result.resteB)}</span>
+                  </div>
+                )}
+                {selected.result.charges.length > 0 && (
+                  <div className="border-t border-white/[0.06] pt-2 mt-2">
+                    <div className="text-[10px] text-text-muted uppercase tracking-wider mb-2">Charges</div>
+                    {selected.result.charges.map((c) => (
+                      <div key={c.id} className="flex justify-between text-sm py-1">
+                        <span className="text-text-secondary truncate">
+                          {c.name}
+                          {c.type === 'installment' && <span className="text-[9px] text-brand ml-1">ech.</span>}
+                          {c.type === 'planned' && <span className="text-[9px] text-warning ml-1">prevu</span>}
+                        </span>
+                        <span className="tabular-nums ml-2">{formatCurrency(c.amount)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

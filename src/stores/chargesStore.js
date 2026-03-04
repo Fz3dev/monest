@@ -5,21 +5,18 @@ const generateId = () => crypto.randomUUID()
 
 export const useChargesStore = create(
   persist(
-    (set, get) => ({
+    (set) => ({
       fixedCharges: [],
       installmentPayments: [],
       plannedExpenses: [],
 
-      // Fixed charges
       addFixedCharge: (charge) =>
         set((state) => ({
           fixedCharges: [...state.fixedCharges, { ...charge, id: generateId(), active: true }],
         })),
       updateFixedCharge: (id, updates) =>
         set((state) => ({
-          fixedCharges: state.fixedCharges.map((c) =>
-            c.id === id ? { ...c, ...updates } : c
-          ),
+          fixedCharges: state.fixedCharges.map((c) => (c.id === id ? { ...c, ...updates } : c)),
         })),
       removeFixedCharge: (id) =>
         set((state) => ({
@@ -27,12 +24,9 @@ export const useChargesStore = create(
         })),
       toggleFixedCharge: (id) =>
         set((state) => ({
-          fixedCharges: state.fixedCharges.map((c) =>
-            c.id === id ? { ...c, active: !c.active } : c
-          ),
+          fixedCharges: state.fixedCharges.map((c) => (c.id === id ? { ...c, active: !c.active } : c)),
         })),
 
-      // Installment payments
       addInstallment: (payment) =>
         set((state) => ({
           installmentPayments: [
@@ -42,34 +36,26 @@ export const useChargesStore = create(
         })),
       updateInstallment: (id, updates) =>
         set((state) => ({
-          installmentPayments: state.installmentPayments.map((p) =>
-            p.id === id ? { ...p, ...updates } : p
-          ),
+          installmentPayments: state.installmentPayments.map((p) => (p.id === id ? { ...p, ...updates } : p)),
         })),
       removeInstallment: (id) =>
         set((state) => ({
           installmentPayments: state.installmentPayments.filter((p) => p.id !== id),
         })),
 
-      // Planned expenses
       addPlannedExpense: (expense) =>
         set((state) => ({
-          plannedExpenses: [
-            ...state.plannedExpenses,
-            { ...expense, id: generateId() },
-          ],
+          plannedExpenses: [...state.plannedExpenses, { ...expense, id: generateId() }],
         })),
       updatePlannedExpense: (id, updates) =>
         set((state) => ({
-          plannedExpenses: state.plannedExpenses.map((e) =>
-            e.id === id ? { ...e, ...updates } : e
-          ),
+          plannedExpenses: state.plannedExpenses.map((e) => (e.id === id ? { ...e, ...updates } : e)),
         })),
       removePlannedExpense: (id) =>
         set((state) => ({
           plannedExpenses: state.plannedExpenses.filter((e) => e.id !== id),
         })),
     }),
-    { name: 'payme-charges' }
+    { name: 'monest-charges', version: 1 }
   )
 )

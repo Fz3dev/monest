@@ -35,6 +35,6 @@ export const useMonthlyStore = create(
           }
         }),
     }),
-    { name: 'payme-monthly' }
+    { name: 'monest-monthly', version: 1 }
   )
 )

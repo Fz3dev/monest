@@ -1,19 +1,18 @@
 import { useState, useRef } from 'react'
-import { useHouseholdStore } from '../stores/householdStore'
+import { motion } from 'motion/react'
 import { useChargesStore } from '../stores/chargesStore'
 import { parseCSV, detectColumns, detectRecurring } from '../utils/csvParser'
-import { formatCurrency, PAYER_OPTIONS } from '../utils/format'
+import { formatCurrency } from '../utils/format'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
-import Select from '../components/ui/Select'
-import { Upload, Check, X, RefreshCw, FileText } from 'lucide-react'
+import { Upload, Check, X, Loader2, FileText } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function ImportPage() {
-  const household = useHouseholdStore((s) => s.household)
   const addFixedCharge = useChargesStore((s) => s.addFixedCharge)
   const fileInputRef = useRef(null)
 
-  const [status, setStatus] = useState('idle') // idle, parsing, detected, error
+  const [status, setStatus] = useState('idle')
   const [suggestions, setSuggestions] = useState([])
   const [dismissed, setDismissed] = useState(new Set())
   const [added, setAdded] = useState(new Set())
@@ -32,33 +31,26 @@ export default function ImportPage() {
 
     try {
       const result = await parseCSV(file)
-
-      if (!result.data || result.data.length === 0) {
-        throw new Error('Fichier vide ou format non reconnu')
-      }
+      if (!result.data || result.data.length === 0) throw new Error('Fichier vide ou format non reconnu')
 
       const headers = result.meta.fields || Object.keys(result.data[0])
       const columns = detectColumns(headers)
 
       if (!columns.dateCol || !columns.labelCol) {
-        throw new Error('Colonnes date/libellé non détectées. Vérifiez le format du CSV.')
+        throw new Error('Colonnes date/libelle non detectees.')
       }
 
       const recurring = detectRecurring(result.data, columns)
-
-      setStats({
-        totalRows: result.data.length,
-        detectedRecurring: recurring.length,
-        fileName: file.name,
-      })
+      setStats({ totalRows: result.data.length, detectedRecurring: recurring.length, fileName: file.name })
       setSuggestions(recurring)
       setStatus('detected')
+      toast.success(`${recurring.length} charges recurrentes detectees`)
     } catch (err) {
       setError(err.message)
       setStatus('error')
+      toast.error('Erreur lors de l\'analyse')
     }
 
-    // Reset file input
     e.target.value = ''
   }
 
@@ -73,6 +65,7 @@ export default function ImportPage() {
       paymentDelayMonths: 0,
     })
     setAdded((prev) => new Set([...prev, suggestion.suggestedName]))
+    toast.success(`"${suggestion.suggestedName}" ajoutee`)
   }
 
   const handleDismiss = (name) => {
@@ -85,28 +78,29 @@ export default function ImportPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Import CSV</h1>
+      <motion.h1
+        className="text-2xl font-bold"
+        initial={{ opacity: 0, x: -10 }}
+        animate={{ opacity: 1, x: 0 }}
+      >
+        Import CSV
+      </motion.h1>
 
       <Card>
-        <div className="text-center">
-          <FileText size={48} className="mx-auto text-slate-500 mb-3" />
-          <p className="text-slate-400 text-sm mb-4">
-            Importez votre relevé bancaire CSV pour détecter automatiquement vos charges récurrentes.
-            <br />
-            <span className="text-xs text-slate-500">
-              Le fichier est traité localement, jamais envoyé sur un serveur.
-            </span>
+        <div className="text-center py-4">
+          <div className="w-16 h-16 bg-brand/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <FileText size={28} className="text-brand" />
+          </div>
+          <p className="text-text-secondary text-sm mb-1">
+            Importez votre releve bancaire CSV
           </p>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
+          <p className="text-text-muted text-xs mb-4">
+            Traitement 100% local, rien n'est envoye.
+          </p>
+          <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileSelect} className="hidden" />
           <Button onClick={() => fileInputRef.current?.click()} size="lg">
             <Upload size={16} className="inline mr-2" />
-            Choisir un fichier CSV
+            Choisir un fichier
           </Button>
         </div>
       </Card>
@@ -114,15 +108,15 @@ export default function ImportPage() {
       {status === 'parsing' && (
         <Card>
           <div className="flex items-center justify-center gap-3 py-4">
-            <RefreshCw size={20} className="animate-spin text-brand" />
-            <span className="text-slate-400">Analyse en cours...</span>
+            <Loader2 size={20} className="animate-spin text-brand" />
+            <span className="text-text-secondary text-sm">Analyse en cours...</span>
           </div>
         </Card>
       )}
 
       {status === 'error' && (
-        <Card className="border-red-500/30">
-          <p className="text-red-400 text-sm">{error}</p>
+        <Card className="!border-danger/30">
+          <p className="text-danger text-sm">{error}</p>
         </Card>
       )}
 
@@ -130,78 +124,67 @@ export default function ImportPage() {
         <>
           {stats && (
             <Card>
-              <div className="text-sm text-slate-400 space-y-1">
+              <div className="text-xs text-text-secondary space-y-1">
                 <div>Fichier : {stats.fileName}</div>
-                <div>{stats.totalRows} transactions analysées</div>
-                <div>{stats.detectedRecurring} charges récurrentes détectées</div>
+                <div>{stats.totalRows} transactions analysees</div>
+                <div className="text-brand font-medium">{stats.detectedRecurring} charges recurrentes</div>
               </div>
             </Card>
           )}
 
           {added.size > 0 && (
-            <Card className="border-green-500/30">
-              <p className="text-green-400 text-sm">
-                {added.size} charge(s) ajoutée(s) avec succès
-              </p>
+            <Card className="!border-success/30 !bg-success/5">
+              <p className="text-success text-sm">{added.size} charge(s) ajoutee(s)</p>
             </Card>
           )}
 
           {activeSuggestions.length === 0 && added.size > 0 && (
             <Card>
-              <p className="text-center text-slate-400 py-4">
-                Toutes les suggestions ont été traitées. Vérifiez vos charges dans l'onglet Charges.
+              <p className="text-center text-text-secondary py-4 text-sm">
+                Toutes les suggestions traitees. Verifiez dans l'onglet Charges.
               </p>
             </Card>
           )}
 
-          <div className="space-y-3">
-            {activeSuggestions.map((suggestion) => (
-              <Card key={suggestion.suggestedName} className="border-slate-600">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <RefreshCw size={14} className="text-brand" />
-                      <span className="font-medium text-sm">{suggestion.suggestedName}</span>
-                    </div>
-                    <div className="text-sm text-slate-400">
-                      ~{formatCurrency(suggestion.avgAmount, true)}/mois — détecté {suggestion.occurrences}x
-                      {suggestion.isStable && (
-                        <span className="text-green-400 ml-1">(stable)</span>
-                      )}
-                    </div>
-                    {suggestion.originalLabels.length > 0 && (
-                      <div className="text-xs text-slate-500 mt-1 truncate">
-                        {suggestion.originalLabels[0]}
+          <div className="space-y-2">
+            {activeSuggestions.map((s, i) => (
+              <motion.div
+                key={s.suggestedName}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+              >
+                <Card>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <span className="font-medium text-sm">{s.suggestedName}</span>
+                      <div className="text-xs text-text-muted mt-0.5">
+                        ~{formatCurrency(s.avgAmount, true)}/mois — {s.occurrences}x
+                        {s.isStable && <span className="text-success ml-1">(stable)</span>}
                       </div>
-                    )}
+                    </div>
+                    <div className="flex gap-1.5 flex-shrink-0">
+                      <Button size="sm" onClick={() => handleAdd(s)}>
+                        <Check size={12} className="mr-1" /> Ajouter
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => handleDismiss(s.suggestedName)}>
+                        <X size={12} />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex gap-2 flex-shrink-0">
-                    <Button size="sm" onClick={() => handleAdd(suggestion)}>
-                      <Check size={14} className="mr-1" />
-                      Ajouter
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleDismiss(suggestion.suggestedName)}
-                    >
-                      <X size={14} />
-                    </Button>
-                  </div>
-                </div>
-              </Card>
+                </Card>
+              </motion.div>
             ))}
           </div>
         </>
       )}
 
-      {/* Formats supportés */}
       <Card>
-        <h3 className="text-sm font-medium text-slate-400 mb-2">Formats supportés</h3>
-        <ul className="text-xs text-slate-500 space-y-1">
-          <li>BoursoBank (séparateur ; , encodage Latin-1)</li>
-          <li>Détection automatique pour les autres banques</li>
-          <li>Colonnes requises : Date, Libellé, Débit (ou Montant)</li>
+        <h3 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">Formats supportes</h3>
+        <ul className="text-xs text-text-muted space-y-1">
+          <li>BoursoBank, Boursorama (Latin-1 et UTF-8)</li>
+          <li>Detection automatique pour les autres banques</li>
+          <li>Colonnes requises : Date, Libelle, Debit/Montant</li>
         </ul>
       </Card>
     </div>
