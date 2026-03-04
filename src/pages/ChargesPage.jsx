@@ -236,10 +236,10 @@ export default function ChargesPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <button onClick={() => toggleFixedCharge(charge.id)} className="text-text-muted hover:text-white p-1" aria-label={charge.active ? 'Desactiver' : 'Activer'}>
+                    <button onClick={() => toggleFixedCharge(charge.id)} className="text-text-muted hover:text-white p-2" aria-label={charge.active ? 'Desactiver' : 'Activer'}>
                       {charge.active ? <ToggleRight size={20} className="text-success" /> : <ToggleLeft size={20} />}
                     </button>
-                    <button onClick={() => setModal({ type: 'fixed', editId: charge.id })} className="text-text-muted hover:text-white p-1" aria-label="Modifier">
+                    <button onClick={() => setModal({ type: 'fixed', editId: charge.id })} className="text-text-muted hover:text-white p-2" aria-label="Modifier">
                       <Edit3 size={14} />
                     </button>
                     <button onClick={() => handleDelete('fixed', charge.id, charge.name)} className={`p-1 transition-colors ${deleteConfirm === charge.id ? 'text-danger' : 'text-text-muted hover:text-danger'}`} aria-label="Supprimer">
@@ -270,7 +270,7 @@ export default function ChargesPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <button onClick={() => setModal({ type: 'installment', editId: payment.id })} className="text-text-muted hover:text-white p-1" aria-label="Modifier">
+                    <button onClick={() => setModal({ type: 'installment', editId: payment.id })} className="text-text-muted hover:text-white p-2" aria-label="Modifier">
                       <Edit3 size={14} />
                     </button>
                     <button onClick={() => handleDelete('installment', payment.id, payment.name)} className={`p-1 transition-colors ${deleteConfirm === payment.id ? 'text-danger' : 'text-text-muted hover:text-danger'}`} aria-label="Supprimer">
@@ -302,7 +302,7 @@ export default function ChargesPage() {
                     {expense.note && <div className="text-[10px] text-text-muted mt-0.5">{expense.note}</div>}
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <button onClick={() => setModal({ type: 'planned', editId: expense.id })} className="text-text-muted hover:text-white p-1" aria-label="Modifier">
+                    <button onClick={() => setModal({ type: 'planned', editId: expense.id })} className="text-text-muted hover:text-white p-2" aria-label="Modifier">
                       <Edit3 size={14} />
                     </button>
                     <button onClick={() => handleDelete('planned', expense.id, expense.name)} className={`p-1 transition-colors ${deleteConfirm === expense.id ? 'text-danger' : 'text-text-muted hover:text-danger'}`} aria-label="Supprimer">
