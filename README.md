@@ -23,7 +23,7 @@ Application PWA de gestion de budget pour couples (et solo). Calcul automatique 
 - Resume revenus / charges / epargne dans la carte hero
 
 ### Saisie mensuelle
-- Revenus (salaire + remboursements pro) par personne
+- Revenus (salaire) par personne
 - Override variable des charges fixes (electricite, etc.)
 - **Swipe gauche/droite** pour naviguer entre les mois
 - **Barre de progression** revenus vs charges

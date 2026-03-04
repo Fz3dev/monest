@@ -109,24 +109,6 @@ export default function MonthlyPage() {
               suffix="€"
             />
           )}
-          <Input
-            label={`Remboursement pro ${household?.personAName || ''}`}
-            type="number"
-            value={entry?.proReimbursementA || ''}
-            onChange={(e) => handleIncomeChange('proReimbursementA', e.target.value)}
-            placeholder="0"
-            suffix="€"
-          />
-          {household?.personBName && (
-            <Input
-              label={`Remboursement pro ${household.personBName}`}
-              type="number"
-              value={entry?.proReimbursementB || ''}
-              onChange={(e) => handleIncomeChange('proReimbursementB', e.target.value)}
-              placeholder="0"
-              suffix="€"
-            />
-          )}
         </div>
       </Card>
 
@@ -191,11 +173,11 @@ export default function MonthlyPage() {
               </div>
               <ProgressBar
                 value={result.totalCommon + result.personalACharges + result.personalBCharges}
-                max={result.incomeA + result.incomeB + result.proReimbA + result.proReimbB}
+                max={result.incomeA + result.incomeB}
                 color={result.resteFoyer >= 1000 ? '#4ADE80' : result.resteFoyer >= 0 ? '#FBBF24' : '#F87171'}
               />
               <div className="flex justify-between text-[10px] text-text-muted tabular-nums">
-                <span>{formatCurrency(result.incomeA + result.incomeB + result.proReimbA + result.proReimbB)}</span>
+                <span>{formatCurrency(result.incomeA + result.incomeB)}</span>
                 <span>{formatCurrency(result.totalCommon + result.personalACharges + result.personalBCharges)}</span>
               </div>
             </div>

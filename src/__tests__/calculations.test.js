@@ -328,15 +328,15 @@ describe('computeMonth', () => {
     expect(result.totalCommon).toBe(150)
   })
 
-  it('includes pro reimbursements in reste a vivre', () => {
+  it('computes reste a vivre from salary only', () => {
     const charges = [
       { id: '1', name: 'Loyer', amount: 1000, payer: 'common', frequency: 'monthly', active: true },
     ]
-    const entry = { incomeA: 3000, incomeB: 2000, proReimbursementA: 200, proReimbursementB: 100 }
+    const entry = { incomeA: 3000, incomeB: 2000 }
     const result = computeMonth('2026-03', household, charges, [], [], entry)
 
-    expect(result.resteA).toBe(2700) // 3000 + 200 - 500
-    expect(result.resteB).toBe(1600) // 2000 + 100 - 500
+    expect(result.resteA).toBe(2500) // 3000 - 500
+    expect(result.resteB).toBe(1500) // 2000 - 500
   })
 
   it('handles solo mode with only person A', () => {

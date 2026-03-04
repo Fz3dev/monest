@@ -14,7 +14,7 @@ export function generateInsights(currentMonth, household, fixedCharges, installm
   const prevEntry = entries[prevMonth] || null
   const prevResult = computeMonth(prevMonth, household, fixedCharges, installments, planned, prevEntry)
 
-  const totalIncome = result.incomeA + result.incomeB + result.proReimbA + result.proReimbB
+  const totalIncome = result.incomeA + result.incomeB
   const totalCharges = result.totalCommon + result.personalACharges + result.personalBCharges
   const prevTotalCharges = prevResult.totalCommon + prevResult.personalACharges + prevResult.personalBCharges
 

@@ -102,7 +102,7 @@ export default function DashboardPage() {
     return generateInsights(currentMonth, household, fixedCharges, installmentPayments, plannedExpenses, entries)
   }, [currentMonth, household, fixedCharges, installmentPayments, plannedExpenses, entries])
 
-  const totalIncome = result.incomeA + result.incomeB + result.proReimbA + result.proReimbB
+  const totalIncome = result.incomeA + result.incomeB
   const totalCharges = result.totalCommon + result.personalACharges + result.personalBCharges
   const hasIncome = result.incomeA > 0 || result.incomeB > 0
   const savingsRate = totalIncome > 0 ? Math.round((result.resteFoyer / totalIncome) * 100) : 0
