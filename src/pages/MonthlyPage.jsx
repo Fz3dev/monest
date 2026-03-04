@@ -8,7 +8,8 @@ import { formatCurrency, formatMonth, getCurrentMonth } from '../utils/format'
 import Card from '../components/ui/Card'
 import Input from '../components/ui/Input'
 import AnimatedNumber from '../components/ui/AnimatedNumber'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import ProgressBar from '../components/ui/ProgressBar'
+import { ChevronLeft, ChevronRight, Wallet, TrendingDown } from 'lucide-react'
 import { addMonths, subMonths, format } from 'date-fns'
 
 export default function MonthlyPage() {
@@ -181,6 +182,25 @@ export default function MonthlyPage() {
       <Card className="glass !border-brand/20">
         <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">Reste a vivre</h2>
         <div className="space-y-3">
+          {/* Income vs charges bar */}
+          {(result.incomeA > 0 || result.incomeB > 0) && (
+            <div className="space-y-1.5 mb-2">
+              <div className="flex justify-between text-[10px] text-text-muted">
+                <div className="flex items-center gap-1"><Wallet size={10} /> Revenus</div>
+                <div className="flex items-center gap-1"><TrendingDown size={10} /> Charges</div>
+              </div>
+              <ProgressBar
+                value={result.totalCommon + result.personalACharges + result.personalBCharges}
+                max={result.incomeA + result.incomeB + result.proReimbA + result.proReimbB}
+                color={result.resteFoyer >= 1000 ? '#4ADE80' : result.resteFoyer >= 0 ? '#FBBF24' : '#F87171'}
+              />
+              <div className="flex justify-between text-[10px] text-text-muted tabular-nums">
+                <span>{formatCurrency(result.incomeA + result.incomeB + result.proReimbA + result.proReimbB)}</span>
+                <span>{formatCurrency(result.totalCommon + result.personalACharges + result.personalBCharges)}</span>
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-between items-center">
             <span className="text-sm" style={{ color: household?.personAColor }}>{household?.personAName}</span>
             <span className={`text-xl font-bold ${getResteColor(result.resteA)}`}>

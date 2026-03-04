@@ -1,15 +1,15 @@
 import { useState, useRef } from 'react'
-import { motion } from 'motion/react'
+import { motion, AnimatePresence } from 'motion/react'
 import { useChargesStore } from '../stores/chargesStore'
 import { parseCSV, detectColumns, detectRecurring } from '../utils/csvParser'
-import { formatCurrency } from '../utils/format'
+import { formatCurrency, CATEGORIES } from '../utils/format'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
-import { Upload, Check, X, Loader2, FileText } from 'lucide-react'
+import { Upload, Check, X, Loader2, FileText, Tag } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function ImportPage() {
-  const addFixedCharge = useChargesStore((s) => s.addFixedCharge)
+  const { addFixedCharge, matchCategory, addCategoryRule } = useChargesStore()
   const fileInputRef = useRef(null)
 
   const [status, setStatus] = useState('idle')
@@ -18,6 +18,7 @@ export default function ImportPage() {
   const [added, setAdded] = useState(new Set())
   const [error, setError] = useState(null)
   const [stats, setStats] = useState(null)
+  const [categoryOverrides, setCategoryOverrides] = useState({})
 
   const handleFileSelect = async (e) => {
     const file = e.target.files?.[0]
@@ -28,6 +29,7 @@ export default function ImportPage() {
     setSuggestions([])
     setDismissed(new Set())
     setAdded(new Set())
+    setCategoryOverrides({})
 
     try {
       const result = await parseCSV(file)
@@ -41,10 +43,17 @@ export default function ImportPage() {
       }
 
       const recurring = detectRecurring(result.data, columns)
-      setStats({ totalRows: result.data.length, detectedRecurring: recurring.length, fileName: file.name })
-      setSuggestions(recurring)
+
+      // Auto-categorize each suggestion
+      const enriched = recurring.map((s) => ({
+        ...s,
+        suggestedCategory: matchCategory(s.suggestedName),
+      }))
+
+      setStats({ totalRows: result.data.length, detectedRecurring: enriched.length, fileName: file.name })
+      setSuggestions(enriched)
       setStatus('detected')
-      toast.success(`${recurring.length} charges recurrentes detectees`)
+      toast.success(`${enriched.length} charges recurrentes detectees`)
     } catch (err) {
       setError(err.message)
       setStatus('error')
@@ -54,16 +63,30 @@ export default function ImportPage() {
     e.target.value = ''
   }
 
+  const getCategory = (suggestion) => {
+    return categoryOverrides[suggestion.suggestedName] || suggestion.suggestedCategory || 'autre'
+  }
+
+  const handleCategoryChange = (name, category) => {
+    setCategoryOverrides((prev) => ({ ...prev, [name]: category }))
+  }
+
   const handleAdd = (suggestion) => {
+    const category = getCategory(suggestion)
+
     addFixedCharge({
       name: suggestion.suggestedName,
       amount: suggestion.avgAmount,
       payer: 'common',
       frequency: suggestion.frequency,
       dayOfMonth: 1,
-      category: 'autre',
+      category,
       paymentDelayMonths: 0,
     })
+
+    // Learn from user's category choice for future imports
+    addCategoryRule(suggestion.suggestedName, category)
+
     setAdded((prev) => new Set([...prev, suggestion.suggestedName]))
     toast.success(`"${suggestion.suggestedName}" ajoutee`)
   }
@@ -146,36 +169,51 @@ export default function ImportPage() {
             </Card>
           )}
 
-          <div className="space-y-2">
-            {activeSuggestions.map((s, i) => (
-              <motion.div
-                key={s.suggestedName}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-              >
-                <Card>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <span className="font-medium text-sm">{s.suggestedName}</span>
-                      <div className="text-xs text-text-muted mt-0.5">
-                        ~{formatCurrency(s.avgAmount, true)}/mois — {s.occurrences}x
-                        {s.isStable && <span className="text-success ml-1">(stable)</span>}
+          <AnimatePresence>
+            <div className="space-y-2">
+              {activeSuggestions.map((s, i) => (
+                <motion.div
+                  key={s.suggestedName}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: -100 }}
+                  transition={{ delay: i * 0.05 }}
+                >
+                  <Card>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <span className="font-medium text-sm">{s.suggestedName}</span>
+                        <div className="text-xs text-text-muted mt-0.5">
+                          ~{formatCurrency(s.avgAmount, true)}/mois — {s.occurrences}x
+                          {s.isStable && <span className="text-success ml-1">(stable)</span>}
+                        </div>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Tag size={10} className="text-text-muted flex-shrink-0" />
+                          <select
+                            value={getCategory(s)}
+                            onChange={(e) => handleCategoryChange(s.suggestedName, e.target.value)}
+                            className="text-[11px] bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1 text-text-secondary"
+                          >
+                            {CATEGORIES.map((c) => (
+                              <option key={c.value} value={c.value}>{c.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      <div className="flex gap-1.5 flex-shrink-0">
+                        <Button size="sm" onClick={() => handleAdd(s)}>
+                          <Check size={12} className="mr-1" /> Ajouter
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => handleDismiss(s.suggestedName)}>
+                          <X size={12} />
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex gap-1.5 flex-shrink-0">
-                      <Button size="sm" onClick={() => handleAdd(s)}>
-                        <Check size={12} className="mr-1" /> Ajouter
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => handleDismiss(s.suggestedName)}>
-                        <X size={12} />
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </AnimatePresence>
         </>
       )}
 
@@ -185,6 +223,7 @@ export default function ImportPage() {
           <li>BoursoBank, Boursorama (Latin-1 et UTF-8)</li>
           <li>Detection automatique pour les autres banques</li>
           <li>Colonnes requises : Date, Libelle, Debit/Montant</li>
+          <li>Categorisation automatique intelligente</li>
         </ul>
       </Card>
     </div>

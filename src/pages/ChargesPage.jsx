@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
+import { useState, useCallback } from 'react'
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'motion/react'
 import { useHouseholdStore } from '../stores/householdStore'
 import { useChargesStore } from '../stores/chargesStore'
 import { formatCurrency, CATEGORIES, FREQUENCIES, PAYER_OPTIONS } from '../utils/format'
@@ -10,6 +10,40 @@ import Select from '../components/ui/Select'
 import Modal from '../components/ui/Modal'
 import { Plus, Trash2, ToggleLeft, ToggleRight, Edit3, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
+
+function SwipeToDelete({ onDelete, children }) {
+  const x = useMotionValue(0)
+  const bgOpacity = useTransform(x, [-120, -60, 0], [1, 0.5, 0])
+
+  const handleDragEnd = (_, info) => {
+    if (info.offset.x < -100) {
+      animate(x, -300, { duration: 0.2 })
+      setTimeout(onDelete, 200)
+    } else {
+      animate(x, 0, { type: 'spring', stiffness: 300, damping: 30 })
+    }
+  }
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl">
+      <motion.div
+        className="absolute inset-0 bg-danger/20 flex items-center justify-end pr-6"
+        style={{ opacity: bgOpacity }}
+      >
+        <Trash2 size={18} className="text-danger" />
+      </motion.div>
+      <motion.div
+        style={{ x }}
+        drag="x"
+        dragConstraints={{ left: -120, right: 0 }}
+        dragElastic={0.1}
+        onDragEnd={handleDragEnd}
+      >
+        {children}
+      </motion.div>
+    </div>
+  )
+}
 
 function ChargeForm({ initialValues, onSubmit, onCancel, household }) {
   const payerOptions = PAYER_OPTIONS(household)
@@ -153,13 +187,22 @@ export default function ChargesPage() {
 
   const [modal, setModal] = useState(null)
   const [tab, setTab] = useState('fixed')
-  const [deleteConfirm, setDeleteConfirm] = useState(null)
 
   const tabs = [
     { id: 'fixed', label: 'Fixes', count: fixedCharges.length },
     { id: 'installment', label: 'Etalees', count: installmentPayments.length },
     { id: 'planned', label: 'Prevues', count: plannedExpenses.length },
   ]
+
+  const totalMonthly = fixedCharges
+    .filter((c) => c.active)
+    .reduce((sum, c) => {
+      if (c.frequency === 'monthly') return sum + c.amount
+      if (c.frequency === 'bimonthly') return sum + c.amount / 2
+      if (c.frequency === 'quarterly') return sum + c.amount / 3
+      if (c.frequency === 'annual') return sum + c.amount / 12
+      return sum + c.amount
+    }, 0)
 
   const getPayerLabel = (payer) => {
     if (payer === 'person_a') return household?.personAName || 'A'
@@ -173,18 +216,12 @@ export default function ChargesPage() {
     return '#6C63FF'
   }
 
-  const handleDelete = (type, id, name) => {
-    if (deleteConfirm === id) {
-      if (type === 'fixed') removeFixedCharge(id)
-      else if (type === 'installment') removeInstallment(id)
-      else removePlannedExpense(id)
-      setDeleteConfirm(null)
-      toast.success(`"${name}" supprime`)
-    } else {
-      setDeleteConfirm(id)
-      setTimeout(() => setDeleteConfirm(null), 3000)
-    }
-  }
+  const handleSwipeDelete = useCallback((type, id, name) => {
+    if (type === 'fixed') removeFixedCharge(id)
+    else if (type === 'installment') removeInstallment(id)
+    else removePlannedExpense(id)
+    toast.success(`"${name}" supprime`)
+  }, [removeFixedCharge, removeInstallment, removePlannedExpense])
 
   return (
     <div className="space-y-4">
@@ -201,6 +238,16 @@ export default function ChargesPage() {
         </Button>
       </div>
 
+      {/* Monthly total summary */}
+      {fixedCharges.length > 0 && (
+        <Card className="glass !border-brand/10">
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-text-secondary">Total mensualise</span>
+            <span className="text-lg font-bold text-brand tabular-nums">{formatCurrency(Math.round(totalMonthly))}</span>
+          </div>
+        </Card>
+      )}
+
       {/* Tabs */}
       <div className="flex gap-1 bg-bg-surface/60 rounded-xl p-1">
         {tabs.map((t) => (
@@ -216,6 +263,8 @@ export default function ChargesPage() {
         ))}
       </div>
 
+      <p className="text-[10px] text-text-muted text-center">Glissez vers la gauche pour supprimer</p>
+
       {/* Fixed charges */}
       <AnimatePresence mode="wait">
         {tab === 'fixed' && (
@@ -224,30 +273,34 @@ export default function ChargesPage() {
               <Card><p className="text-center text-text-muted py-6 text-sm">Aucune charge fixe.</p></Card>
             )}
             {fixedCharges.map((charge) => (
-              <Card key={charge.id} className={`${!charge.active ? 'opacity-40' : ''}`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getPayerColor(charge.payer) }} />
-                      <span className="font-medium text-sm truncate">{charge.name}</span>
+              <SwipeToDelete key={charge.id} onDelete={() => handleSwipeDelete('fixed', charge.id, charge.name)}>
+                <Card className={`${!charge.active ? 'opacity-40' : ''}`} animate={false}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getPayerColor(charge.payer) }} />
+                        <span className="font-medium text-sm truncate">{charge.name}</span>
+                        {charge.category && charge.category !== 'autre' && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/[0.06] text-text-muted flex-shrink-0">
+                            {CATEGORIES.find((c) => c.value === charge.category)?.label}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-text-muted mt-1">
+                        {formatCurrency(charge.amount)} · {getPayerLabel(charge.payer)} · {FREQUENCIES.find((f) => f.value === charge.frequency)?.label}
+                      </div>
                     </div>
-                    <div className="text-xs text-text-muted mt-1">
-                      {formatCurrency(charge.amount)} · {getPayerLabel(charge.payer)} · {FREQUENCIES.find((f) => f.value === charge.frequency)?.label}
+                    <div className="flex items-center gap-1.5">
+                      <button onClick={() => toggleFixedCharge(charge.id)} className="text-text-muted hover:text-white p-2" aria-label={charge.active ? 'Desactiver' : 'Activer'}>
+                        {charge.active ? <ToggleRight size={20} className="text-success" /> : <ToggleLeft size={20} />}
+                      </button>
+                      <button onClick={() => setModal({ type: 'fixed', editId: charge.id })} className="text-text-muted hover:text-white p-2" aria-label="Modifier">
+                        <Edit3 size={14} />
+                      </button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <button onClick={() => toggleFixedCharge(charge.id)} className="text-text-muted hover:text-white p-2" aria-label={charge.active ? 'Desactiver' : 'Activer'}>
-                      {charge.active ? <ToggleRight size={20} className="text-success" /> : <ToggleLeft size={20} />}
-                    </button>
-                    <button onClick={() => setModal({ type: 'fixed', editId: charge.id })} className="text-text-muted hover:text-white p-2" aria-label="Modifier">
-                      <Edit3 size={14} />
-                    </button>
-                    <button onClick={() => handleDelete('fixed', charge.id, charge.name)} className={`p-1 transition-colors ${deleteConfirm === charge.id ? 'text-danger' : 'text-text-muted hover:text-danger'}`} aria-label="Supprimer">
-                      {deleteConfirm === charge.id ? <AlertCircle size={14} /> : <Trash2 size={14} />}
-                    </button>
-                  </div>
-                </div>
-              </Card>
+                </Card>
+              </SwipeToDelete>
             ))}
           </motion.div>
         )}
@@ -258,27 +311,26 @@ export default function ChargesPage() {
               <Card><p className="text-center text-text-muted py-6 text-sm">Aucun paiement etale.</p></Card>
             )}
             {installmentPayments.map((payment) => (
-              <Card key={payment.id}>
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getPayerColor(payment.payer) }} />
-                      <span className="font-medium text-sm truncate">{payment.name}</span>
+              <SwipeToDelete key={payment.id} onDelete={() => handleSwipeDelete('installment', payment.id, payment.name)}>
+                <Card animate={false}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getPayerColor(payment.payer) }} />
+                        <span className="font-medium text-sm truncate">{payment.name}</span>
+                      </div>
+                      <div className="text-xs text-text-muted mt-1">
+                        {formatCurrency(payment.totalAmount)} en {payment.installmentCount}x ({formatCurrency(payment.installmentAmount)}/mois)
+                      </div>
                     </div>
-                    <div className="text-xs text-text-muted mt-1">
-                      {formatCurrency(payment.totalAmount)} en {payment.installmentCount}x ({formatCurrency(payment.installmentAmount)}/mois)
+                    <div className="flex items-center gap-1.5">
+                      <button onClick={() => setModal({ type: 'installment', editId: payment.id })} className="text-text-muted hover:text-white p-2" aria-label="Modifier">
+                        <Edit3 size={14} />
+                      </button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <button onClick={() => setModal({ type: 'installment', editId: payment.id })} className="text-text-muted hover:text-white p-2" aria-label="Modifier">
-                      <Edit3 size={14} />
-                    </button>
-                    <button onClick={() => handleDelete('installment', payment.id, payment.name)} className={`p-1 transition-colors ${deleteConfirm === payment.id ? 'text-danger' : 'text-text-muted hover:text-danger'}`} aria-label="Supprimer">
-                      {deleteConfirm === payment.id ? <AlertCircle size={14} /> : <Trash2 size={14} />}
-                    </button>
-                  </div>
-                </div>
-              </Card>
+                </Card>
+              </SwipeToDelete>
             ))}
           </motion.div>
         )}
@@ -289,28 +341,27 @@ export default function ChargesPage() {
               <Card><p className="text-center text-text-muted py-6 text-sm">Aucune depense planifiee.</p></Card>
             )}
             {plannedExpenses.map((expense) => (
-              <Card key={expense.id}>
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getPayerColor(expense.payer) }} />
-                      <span className="font-medium text-sm truncate">{expense.name}</span>
+              <SwipeToDelete key={expense.id} onDelete={() => handleSwipeDelete('planned', expense.id, expense.name)}>
+                <Card animate={false}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getPayerColor(expense.payer) }} />
+                        <span className="font-medium text-sm truncate">{expense.name}</span>
+                      </div>
+                      <div className="text-xs text-text-muted mt-1">
+                        ~{formatCurrency(expense.estimatedAmount)} · {expense.targetMonth}
+                      </div>
+                      {expense.note && <div className="text-[10px] text-text-muted mt-0.5">{expense.note}</div>}
                     </div>
-                    <div className="text-xs text-text-muted mt-1">
-                      ~{formatCurrency(expense.estimatedAmount)} · {expense.targetMonth}
+                    <div className="flex items-center gap-1.5">
+                      <button onClick={() => setModal({ type: 'planned', editId: expense.id })} className="text-text-muted hover:text-white p-2" aria-label="Modifier">
+                        <Edit3 size={14} />
+                      </button>
                     </div>
-                    {expense.note && <div className="text-[10px] text-text-muted mt-0.5">{expense.note}</div>}
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <button onClick={() => setModal({ type: 'planned', editId: expense.id })} className="text-text-muted hover:text-white p-2" aria-label="Modifier">
-                      <Edit3 size={14} />
-                    </button>
-                    <button onClick={() => handleDelete('planned', expense.id, expense.name)} className={`p-1 transition-colors ${deleteConfirm === expense.id ? 'text-danger' : 'text-text-muted hover:text-danger'}`} aria-label="Supprimer">
-                      {deleteConfirm === expense.id ? <AlertCircle size={14} /> : <Trash2 size={14} />}
-                    </button>
-                  </div>
-                </div>
-              </Card>
+                </Card>
+              </SwipeToDelete>
             ))}
           </motion.div>
         )}
