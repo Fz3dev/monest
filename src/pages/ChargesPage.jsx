@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'motion/react'
+import { motion, AnimatePresence, useMotionValue, animate } from 'motion/react'
 import { useHouseholdStore } from '../stores/householdStore'
 import { useChargesStore } from '../stores/chargesStore'
 import { formatCurrency, CATEGORIES, FREQUENCIES, PAYER_OPTIONS } from '../utils/format'
@@ -8,36 +8,52 @@ import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Select from '../components/ui/Select'
 import Modal from '../components/ui/Modal'
-import { Plus, Trash2, ToggleLeft, ToggleRight, Edit3, AlertCircle } from 'lucide-react'
+import { Plus, Trash2, ToggleLeft, ToggleRight, Edit3 } from 'lucide-react'
 import { toast } from 'sonner'
 
-function SwipeToDelete({ onDelete, children }) {
+function SwipeableCard({ onDelete, onEdit, children }) {
   const x = useMotionValue(0)
-  const bgOpacity = useTransform(x, [-120, -60, 0], [1, 0.5, 0])
+  const actionsWidth = onEdit ? -140 : -70
 
   const handleDragEnd = (_, info) => {
-    if (info.offset.x < -100) {
-      animate(x, -300, { duration: 0.2 })
-      setTimeout(onDelete, 200)
+    if (info.offset.x < -50) {
+      animate(x, actionsWidth, { type: 'spring', stiffness: 400, damping: 35 })
     } else {
-      animate(x, 0, { type: 'spring', stiffness: 300, damping: 30 })
+      animate(x, 0, { type: 'spring', stiffness: 400, damping: 35 })
     }
   }
 
+  const close = () => animate(x, 0, { type: 'spring', stiffness: 400, damping: 35 })
+
   return (
     <div className="relative overflow-hidden rounded-2xl">
-      <motion.div
-        className="absolute inset-0 bg-danger/20 flex items-center justify-end pr-6"
-        style={{ opacity: bgOpacity }}
-      >
-        <Trash2 size={18} className="text-danger" />
-      </motion.div>
+      {/* Action buttons revealed on swipe */}
+      <div className="absolute inset-y-0 right-0 flex">
+        {onEdit && (
+          <button
+            onClick={() => { close(); setTimeout(onEdit, 150) }}
+            className="w-[70px] bg-brand flex items-center justify-center"
+            aria-label="Modifier"
+          >
+            <Edit3 size={16} className="text-white" />
+          </button>
+        )}
+        <button
+          onClick={() => { close(); setTimeout(onDelete, 150) }}
+          className="w-[70px] bg-danger flex items-center justify-center"
+          aria-label="Supprimer"
+        >
+          <Trash2 size={16} className="text-white" />
+        </button>
+      </div>
       <motion.div
         style={{ x }}
         drag="x"
-        dragConstraints={{ left: -120, right: 0 }}
-        dragElastic={0.1}
+        dragDirectionLock
+        dragConstraints={{ left: actionsWidth, right: 0 }}
+        dragElastic={0.05}
         onDragEnd={handleDragEnd}
+        className="relative z-10"
       >
         {children}
       </motion.div>
@@ -263,7 +279,7 @@ export default function ChargesPage() {
         ))}
       </div>
 
-      <p className="text-[10px] text-text-muted text-center">Glissez vers la gauche pour supprimer</p>
+      <p className="text-[10px] text-text-muted text-center">Glissez vers la gauche pour modifier ou supprimer</p>
 
       {/* Fixed charges */}
       <AnimatePresence mode="wait">
@@ -273,7 +289,11 @@ export default function ChargesPage() {
               <Card><p className="text-center text-text-muted py-6 text-sm">Aucune charge fixe.</p></Card>
             )}
             {fixedCharges.map((charge) => (
-              <SwipeToDelete key={charge.id} onDelete={() => handleSwipeDelete('fixed', charge.id, charge.name)}>
+              <SwipeableCard
+                key={charge.id}
+                onDelete={() => handleSwipeDelete('fixed', charge.id, charge.name)}
+                onEdit={() => setModal({ type: 'fixed', editId: charge.id })}
+              >
                 <Card className={`${!charge.active ? 'opacity-40' : ''}`} animate={false}>
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
@@ -290,17 +310,12 @@ export default function ChargesPage() {
                         {formatCurrency(charge.amount)} · {getPayerLabel(charge.payer)} · {FREQUENCIES.find((f) => f.value === charge.frequency)?.label}
                       </div>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <button onClick={() => toggleFixedCharge(charge.id)} className="text-text-muted hover:text-white p-2" aria-label={charge.active ? 'Desactiver' : 'Activer'}>
-                        {charge.active ? <ToggleRight size={20} className="text-success" /> : <ToggleLeft size={20} />}
-                      </button>
-                      <button onClick={() => setModal({ type: 'fixed', editId: charge.id })} className="text-text-muted hover:text-white p-2" aria-label="Modifier">
-                        <Edit3 size={14} />
-                      </button>
-                    </div>
+                    <button onClick={() => toggleFixedCharge(charge.id)} className="text-text-muted hover:text-white p-2" aria-label={charge.active ? 'Desactiver' : 'Activer'}>
+                      {charge.active ? <ToggleRight size={20} className="text-success" /> : <ToggleLeft size={20} />}
+                    </button>
                   </div>
                 </Card>
-              </SwipeToDelete>
+              </SwipeableCard>
             ))}
           </motion.div>
         )}
@@ -311,7 +326,11 @@ export default function ChargesPage() {
               <Card><p className="text-center text-text-muted py-6 text-sm">Aucun paiement etale.</p></Card>
             )}
             {installmentPayments.map((payment) => (
-              <SwipeToDelete key={payment.id} onDelete={() => handleSwipeDelete('installment', payment.id, payment.name)}>
+              <SwipeableCard
+                key={payment.id}
+                onDelete={() => handleSwipeDelete('installment', payment.id, payment.name)}
+                onEdit={() => setModal({ type: 'installment', editId: payment.id })}
+              >
                 <Card animate={false}>
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
@@ -323,14 +342,9 @@ export default function ChargesPage() {
                         {formatCurrency(payment.totalAmount)} en {payment.installmentCount}x ({formatCurrency(payment.installmentAmount)}/mois)
                       </div>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <button onClick={() => setModal({ type: 'installment', editId: payment.id })} className="text-text-muted hover:text-white p-2" aria-label="Modifier">
-                        <Edit3 size={14} />
-                      </button>
-                    </div>
                   </div>
                 </Card>
-              </SwipeToDelete>
+              </SwipeableCard>
             ))}
           </motion.div>
         )}
@@ -341,7 +355,11 @@ export default function ChargesPage() {
               <Card><p className="text-center text-text-muted py-6 text-sm">Aucune depense planifiee.</p></Card>
             )}
             {plannedExpenses.map((expense) => (
-              <SwipeToDelete key={expense.id} onDelete={() => handleSwipeDelete('planned', expense.id, expense.name)}>
+              <SwipeableCard
+                key={expense.id}
+                onDelete={() => handleSwipeDelete('planned', expense.id, expense.name)}
+                onEdit={() => setModal({ type: 'planned', editId: expense.id })}
+              >
                 <Card animate={false}>
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
@@ -354,14 +372,9 @@ export default function ChargesPage() {
                       </div>
                       {expense.note && <div className="text-[10px] text-text-muted mt-0.5">{expense.note}</div>}
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <button onClick={() => setModal({ type: 'planned', editId: expense.id })} className="text-text-muted hover:text-white p-2" aria-label="Modifier">
-                        <Edit3 size={14} />
-                      </button>
-                    </div>
                   </div>
                 </Card>
-              </SwipeToDelete>
+              </SwipeableCard>
             ))}
           </motion.div>
         )}

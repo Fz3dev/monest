@@ -37,9 +37,9 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('recharts')) return 'recharts'
-          if (id.includes('@supabase/supabase-js')) return 'supabase'
-          if (id.includes('motion')) return 'motion'
+          if (id.includes('node_modules/recharts')) return 'recharts'
+          if (id.includes('node_modules/@supabase/supabase-js')) return 'supabase'
+          if (id.includes('node_modules/motion')) return 'motion'
         },
       },
     },
