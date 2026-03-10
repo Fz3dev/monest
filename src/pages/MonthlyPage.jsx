@@ -184,7 +184,7 @@ export default function MonthlyPage() {
                     }
                     className="w-24 text-right bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-brand/50"
                   />
-                  <span className="text-xs text-text-muted">\u20ac</span>
+                  <span className="text-xs text-text-muted">€</span>
                 </div>
               ) : (
                 <span className="text-sm font-medium tabular-nums">{formatCurrency(charge.amount)}</span>

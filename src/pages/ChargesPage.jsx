@@ -82,7 +82,7 @@ function ChargeForm({ initialValues, onSubmit, onCancel, household, t }) {
   const handleSubmit = () => {
     if (submitting) return
     setSubmitting(true)
-    onSubmit({ ...form, amount: parseFloat(form.amount) || 0 })
+    onSubmit({ ...form, amount: parseFloat(form.amount) || 0, startMonth: parseInt(form.startMonth) || 1, dayOfMonth: parseInt(form.dayOfMonth) || 1, paymentDelayMonths: parseInt(form.paymentDelayMonths) || 0 })
     setTimeout(() => setSubmitting(false), 200)
   }
 
@@ -99,12 +99,12 @@ function ChargeForm({ initialValues, onSubmit, onCancel, household, t }) {
           min="1"
           max="12"
           value={form.startMonth}
-          onChange={(e) => update('startMonth', parseInt(e.target.value) || 1)}
+          onChange={(e) => update('startMonth', e.target.value === '' ? '' : parseInt(e.target.value) || '')}
         />
       )}
-      <Input label={t('charges.formDayOfMonth')} type="number" min="1" max="31" value={form.dayOfMonth} onChange={(e) => update('dayOfMonth', parseInt(e.target.value) || 1)} />
+      <Input label={t('charges.formDayOfMonth')} type="number" min="1" max="31" value={form.dayOfMonth} onChange={(e) => update('dayOfMonth', e.target.value === '' ? '' : parseInt(e.target.value) || '')} />
       <Select label={t('charges.formCategory')} value={form.category} onChange={(e) => update('category', e.target.value)} options={categories} />
-      <Input label={t('charges.formPaymentDelay')} type="number" min="0" value={form.paymentDelayMonths} onChange={(e) => update('paymentDelayMonths', parseInt(e.target.value) || 0)} />
+      <Input label={t('charges.formPaymentDelay')} type="number" min="0" value={form.paymentDelayMonths} onChange={(e) => update('paymentDelayMonths', e.target.value === '' ? '' : parseInt(e.target.value) || '')} />
       <div className="flex gap-3 pt-2">
         <Button variant="secondary" onClick={onCancel} className="flex-1">{t('common.cancel')}</Button>
         <Button onClick={handleSubmit} disabled={!form.name.trim() || !form.amount || submitting} className="flex-1">
@@ -155,7 +155,7 @@ function InstallmentForm({ initialValues, onSubmit, onCancel, household, t }) {
     <div className="space-y-4">
       <Input label={t('charges.formName')} value={form.name} onChange={(e) => update('name', e.target.value)} placeholder={t('charges.installmentNamePlaceholder')} />
       <Input label={t('charges.formTotalAmount')} type="number" value={form.totalAmount} onChange={(e) => update('totalAmount', e.target.value)} suffix="\u20ac" />
-      <Input label={t('charges.formInstallmentCount')} type="number" min="2" value={form.installmentCount} onChange={(e) => update('installmentCount', parseInt(e.target.value) || 2)} />
+      <Input label={t('charges.formInstallmentCount')} type="number" min="2" value={form.installmentCount} onChange={(e) => update('installmentCount', e.target.value === '' ? '' : parseInt(e.target.value) || '')} />
       <Input label={t('charges.formInstallmentAmount')} type="number" value={form.installmentAmount} onChange={(e) => update('installmentAmount', e.target.value)} suffix="\u20ac" />
       <Input label={t('charges.formFirstPaymentDate')} type="date" value={form.firstPaymentDate} onChange={(e) => update('firstPaymentDate', e.target.value)} />
       <Select label={t('charges.formWhoPays')} value={form.payer} onChange={(e) => update('payer', e.target.value)} options={payerOptions} />

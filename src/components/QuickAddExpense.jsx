@@ -201,7 +201,7 @@ export default function QuickAddExpense() {
                       placeholder="0"
                       className="bg-transparent text-center text-4xl font-bold text-text-primary placeholder-text-muted/50 focus:outline-none w-40 tabular-nums"
                     />
-                    <span className="text-2xl font-semibold text-text-secondary">\u20ac</span>
+                    <span className="text-2xl font-semibold text-text-secondary">€</span>
                   </div>
                 </div>
 
@@ -285,6 +285,7 @@ export default function QuickAddExpense() {
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
+                    style={{ colorScheme: 'dark' }}
                     className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-transparent transition-all w-[130px]"
                   />
                 </div>

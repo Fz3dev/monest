@@ -10,6 +10,7 @@ import { useExpenseStore } from '../stores/expenseStore'
 import { computeMonth } from '../utils/calculations'
 import { generateInsights } from '../utils/insights'
 import { formatCurrency, formatMonth, getCurrentMonth, formatMonthShort, getCategoryLabel } from '../utils/format'
+import { useCategoriesStore } from '../stores/categoriesStore'
 import Card from '../components/ui/Card'
 import AnimatedNumber from '../components/ui/AnimatedNumber'
 import ProgressBar from '../components/ui/ProgressBar'
@@ -22,20 +23,6 @@ import {
 } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, Tooltip } from 'recharts'
 
-const CATEGORY_COLORS = {
-  logement: '#6C63FF',
-  assurance: '#818CF8',
-  credit: '#F87171',
-  abonnement: '#38BDF8',
-  impot: '#FBBF24',
-  transport: '#FB923C',
-  alimentation: '#4ADE80',
-  sante: '#F472B6',
-  education: '#A78BFA',
-  loisirs: '#34D399',
-  enfants: '#E879F9',
-  autre: '#94A3B8',
-}
 
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
@@ -59,6 +46,7 @@ export default function DashboardPage() {
   const entries = useMonthlyStore((s) => s.entries)
   const savingsGoals = useSavingsStore((s) => s.goals)
   const expenseStore = useExpenseStore()
+  const getCategoryColor = useCategoriesStore((s) => s.getCategoryColor)
 
   const currentMonth = getCurrentMonth()
   const entry = entries[currentMonth] || null
@@ -122,7 +110,7 @@ export default function DashboardPage() {
         name,
         label: getCategoryLabel(name),
         value,
-        color: CATEGORY_COLORS[name] || '#94A3B8',
+        color: getCategoryColor(name),
       }))
       .sort((a, b) => b.value - a.value)
   }, [result.charges])

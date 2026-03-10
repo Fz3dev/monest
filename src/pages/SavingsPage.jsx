@@ -223,7 +223,7 @@ function ContributeForm({ goal, onSubmit, onCancel, t }) {
                 : 'bg-white/[0.04] text-text-secondary border border-white/[0.06] hover:bg-white/[0.08]'
             }`}
           >
-            {qa} \u20ac
+            {qa} €
           </motion.button>
         ))}
       </div>

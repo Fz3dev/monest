@@ -126,13 +126,13 @@ export default function CalendarPage() {
       {/* Legend */}
       <div className="flex gap-4 text-[10px] text-text-muted justify-center">
         <div className="flex items-center gap-1.5">
-          <CheckCircle2 size={10} className="text-success" /> &gt; 1 500 \u20ac
+          <CheckCircle2 size={10} className="text-success" /> &gt; 1 500 €
         </div>
         <div className="flex items-center gap-1.5">
-          <AlertTriangle size={10} className="text-warning" /> 500\u20131 500 \u20ac
+          <AlertTriangle size={10} className="text-warning" /> 500–1 500 €
         </div>
         <div className="flex items-center gap-1.5">
-          <XCircle size={10} className="text-danger" /> &lt; 500 \u20ac
+          <XCircle size={10} className="text-danger" /> &lt; 500 €
         </div>
       </div>
 
