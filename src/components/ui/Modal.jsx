@@ -38,9 +38,10 @@ export default function Modal({ isOpen, onClose, title, children }) {
             role="dialog"
             aria-modal="true"
             aria-label={title}
-            className="relative bg-bg-primary border border-white/[0.08] rounded-t-3xl sm:rounded-3xl w-full sm:max-w-lg max-h-[85vh] overflow-y-auto"
+            className="relative bg-bg-primary border border-white/[0.08] rounded-t-3xl sm:rounded-3xl w-full sm:max-w-lg max-h-[85vh] flex flex-col overflow-hidden"
           >
-            <div className="sticky top-0 bg-bg-primary/95 backdrop-blur-xl border-b border-white/[0.06] px-5 py-4 flex items-center justify-between z-10">
+            {/* Header — fixed at top */}
+            <div className="flex-shrink-0 bg-bg-primary border-b border-white/[0.06] px-5 py-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold">{title}</h2>
               <button
                 onClick={onClose}
@@ -50,7 +51,10 @@ export default function Modal({ isOpen, onClose, title, children }) {
                 <X size={20} />
               </button>
             </div>
-            <div className="p-5">{children}</div>
+            {/* Body — scrolls with hidden scrollbar */}
+            <div className="flex-1 overflow-y-auto overscroll-contain p-5 scrollbar-hide">
+              {children}
+            </div>
           </motion.div>
         </div>
       )}

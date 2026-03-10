@@ -157,7 +157,7 @@ export default function DashboardPage() {
           <Card className="glass !border-brand/20">
             <div className="text-center py-3 lg:py-5">
               <div className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest mb-1 lg:text-xs">
-                Il vous reste
+                {household?.configModel === 'solo' ? 'Il te reste' : 'Il vous reste'}
               </div>
               <div className={`text-5xl font-black tracking-tight lg:text-6xl ${getFlexColor(flexNumber)}`}>
                 <AnimatedNumber value={flexNumber} format={(v) => formatCurrency(Math.round(v))} />
@@ -203,28 +203,88 @@ export default function DashboardPage() {
             </div>
           </Card>
 
-          {/* Person cards */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Person cards — detailed breakdown */}
+          <div className={`grid gap-3 ${household?.personBName ? 'grid-cols-2' : 'grid-cols-1'}`}>
             <Card>
-              <div className="text-xs text-text-secondary mb-1">{household?.personAName || 'Personne A'}</div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-xs text-text-secondary font-medium">{household?.personAName || 'Personne A'}</div>
+                <div className="flex items-center gap-1">
+                  {getHealthIcon(result.resteA)}
+                </div>
+              </div>
               <div className="text-2xl font-bold lg:text-3xl" style={{ color: household?.personAColor }}>
                 <AnimatedNumber value={result.resteA} format={(v) => formatCurrency(Math.round(v))} />
               </div>
-              <div className="flex items-center gap-1 mt-1">
-                {getHealthIcon(result.resteA)}
-                <span className="text-[10px] text-text-muted">ce mois</span>
-              </div>
+              <div className="text-[10px] text-text-muted mb-2">reste a depenser</div>
+              {hasIncome && (
+                <div className="space-y-1.5 pt-2 border-t border-white/[0.06]">
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-text-muted">Revenu</span>
+                    <span className="text-text-secondary tabular-nums">{formatCurrency(result.incomeA)}</span>
+                  </div>
+                  {result.startingBalanceA !== 0 && (
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-text-muted">Solde initial</span>
+                      <span className={`tabular-nums ${result.startingBalanceA < 0 ? 'text-danger' : 'text-text-secondary'}`}>
+                        {formatCurrency(result.startingBalanceA)}
+                      </span>
+                    </div>
+                  )}
+                  {result.shareA > 0 && (
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-text-muted">Part communes ({Math.round(result.ratio * 100)}%)</span>
+                      <span className="text-danger tabular-nums">- {formatCurrency(Math.round(result.shareA))}</span>
+                    </div>
+                  )}
+                  {result.personalACharges > 0 && (
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-text-muted">Charges perso</span>
+                      <span className="text-danger tabular-nums">- {formatCurrency(result.personalACharges)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </Card>
             {household?.personBName && (
               <Card>
-                <div className="text-xs text-text-secondary mb-1">{household.personBName}</div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-xs text-text-secondary font-medium">{household.personBName}</div>
+                  <div className="flex items-center gap-1">
+                    {getHealthIcon(result.resteB)}
+                  </div>
+                </div>
                 <div className="text-2xl font-bold lg:text-3xl" style={{ color: household?.personBColor }}>
                   <AnimatedNumber value={result.resteB} format={(v) => formatCurrency(Math.round(v))} />
                 </div>
-                <div className="flex items-center gap-1 mt-1">
-                  {getHealthIcon(result.resteB)}
-                  <span className="text-[10px] text-text-muted">ce mois</span>
-                </div>
+                <div className="text-[10px] text-text-muted mb-2">reste a depenser</div>
+                {hasIncome && (
+                  <div className="space-y-1.5 pt-2 border-t border-white/[0.06]">
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-text-muted">Revenu</span>
+                      <span className="text-text-secondary tabular-nums">{formatCurrency(result.incomeB)}</span>
+                    </div>
+                    {result.startingBalanceB !== 0 && (
+                      <div className="flex justify-between text-[11px]">
+                        <span className="text-text-muted">Solde initial</span>
+                        <span className={`tabular-nums ${result.startingBalanceB < 0 ? 'text-danger' : 'text-text-secondary'}`}>
+                          {formatCurrency(result.startingBalanceB)}
+                        </span>
+                      </div>
+                    )}
+                    {result.shareB > 0 && (
+                      <div className="flex justify-between text-[11px]">
+                        <span className="text-text-muted">Part communes ({Math.round((1 - result.ratio) * 100)}%)</span>
+                        <span className="text-danger tabular-nums">- {formatCurrency(Math.round(result.shareB))}</span>
+                      </div>
+                    )}
+                    {result.personalBCharges > 0 && (
+                      <div className="flex justify-between text-[11px]">
+                        <span className="text-text-muted">Charges perso</span>
+                        <span className="text-danger tabular-nums">- {formatCurrency(result.personalBCharges)}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </Card>
             )}
           </div>
