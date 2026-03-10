@@ -17,10 +17,6 @@ function translateError(message) {
 }
 
 export default function InvitePage({ householdId }) {
-  const [household, setHousehold] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [notFound, setNotFound] = useState(false)
-
   const [mode, setMode] = useState('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -30,30 +26,15 @@ export default function InvitePage({ householdId }) {
   const [error, setError] = useState('')
 
   const isSignup = mode === 'signup'
+  const validId = isSupabaseConfigured() && householdId
 
   useEffect(() => {
-    if (!isSupabaseConfigured() || !householdId) {
-      setNotFound(true)
-      setLoading(false)
-      return
+    if (validId) {
+      // Store invite ID so App.jsx can join the household after auth
+      // We skip querying households here because RLS blocks unauthenticated reads
+      sessionStorage.setItem('monest-invite', householdId)
     }
-
-    supabase
-      .from('households')
-      .select('id, name, person_a_name, person_a_color, config_model')
-      .eq('id', householdId)
-      .single()
-      .then(({ data, error: err }) => {
-        if (err || !data) {
-          setNotFound(true)
-        } else {
-          setHousehold(data)
-          // Store invite info so App can join after auth
-          sessionStorage.setItem('monest-invite', householdId)
-        }
-        setLoading(false)
-      })
-  }, [householdId])
+  }, [validId, householdId])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -111,15 +92,7 @@ export default function InvitePage({ householdId }) {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-bg-primary flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-brand/30 border-t-brand rounded-full animate-spin" />
-      </div>
-    )
-  }
-
-  if (notFound) {
+  if (!validId) {
     return (
       <div className="min-h-screen bg-bg-primary flex items-center justify-center px-4">
         <Card className="text-center p-8 max-w-sm w-full">
@@ -148,7 +121,7 @@ export default function InvitePage({ householdId }) {
             <Mail className="w-12 h-12 text-brand mx-auto mb-4" />
             <h2 className="text-lg font-semibold mb-2">Lien envoye !</h2>
             <p className="text-text-secondary text-sm mb-4">
-              Verifiez votre boite mail <span className="text-brand-light font-medium">{email}</span> pour vous connecter et rejoindre le budget de {household.person_a_name}.
+              Verifiez votre boite mail <span className="text-brand-light font-medium">{email}</span> pour vous connecter et rejoindre le budget partage.
             </p>
             <Button variant="ghost" size="sm" onClick={() => setMode('login')} className="w-full">
               Retour
@@ -190,22 +163,19 @@ export default function InvitePage({ householdId }) {
         >
           <Card className="!border-brand/20 !bg-brand/5 mb-4 text-center">
             <div className="flex justify-center mb-3">
-              <div
-                className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold"
-                style={{ backgroundColor: household.person_a_color || '#6C63FF' }}
-              >
-                {household.person_a_name?.[0]?.toUpperCase()}
+              <div className="w-12 h-12 rounded-full bg-brand/20 flex items-center justify-center">
+                <Users size={24} className="text-brand" />
               </div>
             </div>
             <div className="flex items-center justify-center gap-1.5 mb-1">
-              <Users size={14} className="text-brand" />
+              <Sparkles size={14} className="text-brand" />
               <span className="text-xs font-medium text-brand uppercase tracking-wider">Invitation</span>
             </div>
             <h2 className="text-lg font-semibold">
-              {household.person_a_name} vous invite
+              Vous etes invite(e)
             </h2>
             <p className="text-text-secondary text-sm mt-1">
-              a rejoindre le budget partage <span className="font-medium text-text-primary">{household.name}</span>
+              Connectez-vous ou creez un compte pour rejoindre le budget partage
             </p>
           </Card>
         </motion.div>
