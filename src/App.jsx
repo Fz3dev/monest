@@ -7,6 +7,7 @@ import AppShell from './components/layout/AppShell'
 import ErrorBoundary from './components/ErrorBoundary'
 import OnboardingWizard from './components/onboarding/OnboardingWizard'
 import AuthPage from './components/auth/AuthPage'
+import ResetPasswordPage from './components/auth/ResetPasswordPage'
 import { Toaster } from 'sonner'
 
 // Lazy import with auto-recovery: if chunk fails (stale cache), nuke SW & reload
@@ -143,6 +144,7 @@ function AppContent({ session }) {
 export default function App() {
   const [session, setSession] = useState(null)
   const [authLoading, setAuthLoading] = useState(isSupabaseConfigured())
+  const [passwordRecovery, setPasswordRecovery] = useState(false)
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return
@@ -152,8 +154,11 @@ export default function App() {
       setAuthLoading(false)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s)
+      if (event === 'PASSWORD_RECOVERY') {
+        setPasswordRecovery(true)
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -164,6 +169,16 @@ export default function App() {
       <div className="min-h-screen bg-bg-primary flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-brand/30 border-t-brand rounded-full animate-spin" />
       </div>
+    )
+  }
+
+  // Password recovery flow — user clicked reset link in email
+  if (passwordRecovery && session) {
+    return (
+      <ErrorBoundary>
+        <ResetPasswordPage onComplete={() => setPasswordRecovery(false)} />
+        <Toaster theme="dark" position="top-center" richColors />
+      </ErrorBoundary>
     )
   }
 

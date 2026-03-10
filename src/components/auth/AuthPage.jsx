@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
-import { Mail, Eye, EyeOff, Loader2, CheckCircle2, Sparkles, UserPlus, Inbox } from 'lucide-react'
+import { Mail, Eye, EyeOff, Loader2, CheckCircle2, Sparkles, UserPlus, Inbox, ArrowLeft } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import Button from '../ui/Button'
 import Input from '../ui/Input'
@@ -32,6 +32,9 @@ export default function AuthPage({ inviteCode }) {
   const [magicLinkLoading, setMagicLinkLoading] = useState(false)
   const [magicLinkSent, setMagicLinkSent] = useState(false)
   const [signupSent, setSignupSent] = useState(false)
+  const [forgotMode, setForgotMode] = useState(false)
+  const [forgotLoading, setForgotLoading] = useState(false)
+  const [forgotSent, setForgotSent] = useState(false)
   const [error, setError] = useState('')
 
   const isSignup = mode === 'signup'
@@ -110,11 +113,169 @@ export default function AuthPage({ inviteCode }) {
     }
   }
 
+  async function handleForgotPassword() {
+    if (!email) {
+      setError(t('auth.enterEmail'))
+      return
+    }
+    setError('')
+    setForgotLoading(true)
+    try {
+      const { error: authError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}`,
+      })
+      if (authError) {
+        setError(translateError(authError.message))
+      } else {
+        setForgotSent(true)
+      }
+    } catch {
+      setError(t('auth.unexpectedError'))
+    } finally {
+      setForgotLoading(false)
+    }
+  }
+
   function toggleMode() {
     setMode(isSignup ? 'login' : 'signup')
     setError('')
     setConfirmPassword('')
     setMagicLinkSent(false)
+    setForgotMode(false)
+    setForgotSent(false)
+  }
+
+  // Forgot password: reset link sent confirmation
+  if (forgotSent) {
+    return (
+      <div className="min-h-screen bg-bg-primary flex items-center justify-center px-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          className="w-full max-w-sm"
+        >
+          <Card className="text-center p-8">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+            >
+              <CheckCircle2 className="w-16 h-16 text-success mx-auto mb-4" />
+            </motion.div>
+            <h2 className="text-xl font-semibold text-text-primary mb-2">
+              {t('auth.resetLinkSent')}
+            </h2>
+            <p className="text-text-secondary text-sm mb-4">
+              {t('auth.resetLinkSentDescription')}{' '}
+              <span className="text-brand-light font-medium">{email}</span>.
+              <br />
+              {t('auth.resetLinkSentHint')}
+            </p>
+            <div className="bg-white/[0.04] rounded-xl p-3 mb-6">
+              <p className="text-xs text-text-muted">
+                {t('auth.spamHint')} <span className="text-text-secondary font-medium">{t('auth.spams')}</span> ou <span className="text-text-secondary font-medium">{t('auth.junkMail')}</span>.
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => { setForgotSent(false); setForgotMode(false) }}
+              className="w-full"
+            >
+              {t('common.back')}
+            </Button>
+          </Card>
+        </motion.div>
+      </div>
+    )
+  }
+
+  // Forgot password: enter email form
+  if (forgotMode) {
+    return (
+      <div className="min-h-screen bg-bg-primary flex items-center justify-center px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+          className="w-full max-w-sm"
+        >
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <Sparkles className="w-6 h-6 text-brand" />
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-brand to-brand-light bg-clip-text text-transparent">
+                Monest
+              </h1>
+            </div>
+          </div>
+
+          <Card className="p-6">
+            <h2 className="text-lg font-semibold text-text-primary mb-1">
+              {t('auth.forgotPasswordTitle')}
+            </h2>
+            <p className="text-text-secondary text-sm mb-5">
+              {t('auth.forgotPasswordDescription')}
+            </p>
+
+            <div className="space-y-4">
+              <Input
+                label={t('auth.emailLabel')}
+                type="email"
+                placeholder={t('auth.emailPlaceholder')}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                suffix={<Mail className="w-4 h-4" />}
+              />
+
+              <AnimatePresence mode="wait">
+                {error && (
+                  <motion.p
+                    key="error"
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    className="text-sm text-danger bg-danger/10 border border-danger/20 rounded-xl px-3 py-2.5"
+                  >
+                    {error}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+
+              <Button
+                variant="primary"
+                size="lg"
+                disabled={forgotLoading}
+                onClick={handleForgotPassword}
+                className="w-full flex items-center justify-center gap-2"
+              >
+                {forgotLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {t('auth.sending')}
+                  </>
+                ) : (
+                  <>
+                    <Mail className="w-4 h-4" />
+                    {t('auth.sendResetLink')}
+                  </>
+                )}
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => { setForgotMode(false); setError('') }}
+                className="w-full flex items-center justify-center gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                {t('common.back')}
+              </Button>
+            </div>
+          </Card>
+        </motion.div>
+      </div>
+    )
   }
 
   // Confirmation screen (magic link or signup)
@@ -292,6 +453,19 @@ export default function AuthPage({ inviteCode }) {
                 }
               />
             </div>
+
+            {/* Forgot password link (login only) */}
+            {!isSignup && (
+              <div className="flex justify-end -mt-2">
+                <button
+                  type="button"
+                  onClick={() => { setForgotMode(true); setError('') }}
+                  className="text-xs text-brand-light hover:text-brand transition-colors cursor-pointer"
+                >
+                  {t('auth.forgotPassword')}
+                </button>
+              </div>
+            )}
 
             {/* Confirm Password (signup only) */}
             <AnimatePresence mode="wait">
