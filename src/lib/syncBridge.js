@@ -2,15 +2,27 @@
 // Set once from useSupabaseSync, used by stores to auto-sync mutations
 
 import { toast } from 'sonner'
+import { createNotification } from './notifications'
 
 let _syncItem = null
 let _deleteItem = null
 let _syncMonthlyEntry = null
 
+// User info for notifications
+let _userId = null
+let _userName = null
+let _householdId = null
+
 export function setSyncFunctions(syncItem, deleteItem, syncMonthlyEntry) {
   _syncItem = syncItem
   _deleteItem = deleteItem
   _syncMonthlyEntry = syncMonthlyEntry || null
+}
+
+export function setUserInfo(userId, userName, householdId) {
+  _userId = userId
+  _userName = userName
+  _householdId = householdId
 }
 
 // ─── Retry helper ────────────────────────────────────────────────────────────
@@ -58,6 +70,8 @@ async function executeSyncToSupabase(table, item) {
   if (!_syncItem) return false
   try {
     await withRetry(() => _syncItem(table, item))
+    // Fire notification for partner
+    notifyForSync(table, item)
     return true
   } catch (err) {
     console.error(`Sync error (${table}):`, err)
@@ -78,6 +92,68 @@ async function executeDeleteFromSupabase(table, id) {
   }
 }
 
+// ─── Notification helpers ───────────────────────────────────────────────────
+
+const TABLE_LABELS = {
+  fixed_charges: 'charge',
+  installment_payments: 'echeance',
+  planned_expenses: 'depense prevue',
+  expenses: 'depense',
+  savings_goals: 'objectif epargne',
+}
+
+function notifyForSync(table, item) {
+  if (!_userId || !_householdId) return
+  const label = TABLE_LABELS[table]
+  if (!label) return
+
+  const name = item.name || item.label || item.description || ''
+  const amount = item.amount ? `${item.amount}€ ` : ''
+  const title = `${_userName || 'Quelqu\'un'} a modifie un(e) ${label}`
+  const body = amount || name ? `${amount}${name}`.trim() : null
+
+  createNotification({
+    householdId: _householdId,
+    actorId: _userId,
+    type: table === 'expenses' ? 'expense_added' : 'charge_updated',
+    title,
+    body,
+    metadata: { table, itemId: item.id },
+  })
+}
+
+function notifyForDelete(table, id) {
+  if (!_userId || !_householdId) return
+  const label = TABLE_LABELS[table]
+  if (!label) return
+
+  createNotification({
+    householdId: _householdId,
+    actorId: _userId,
+    type: 'charge_deleted',
+    title: `${_userName || 'Quelqu\'un'} a supprime un(e) ${label}`,
+    metadata: { table, itemId: id },
+  })
+}
+
+function notifyForMonthly(month) {
+  if (!_userId || !_householdId) return
+
+  // Format month label (e.g. "2026-03" -> "Mars 2026")
+  const MONTHS = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre']
+  const [year, m] = month.split('-')
+  const monthLabel = `${MONTHS[parseInt(m, 10) - 1] || m} ${year}`
+
+  createNotification({
+    householdId: _householdId,
+    actorId: _userId,
+    type: 'salary_updated',
+    title: `${_userName || 'Quelqu\'un'} a mis a jour les revenus`,
+    body: monthLabel,
+    metadata: { month },
+  })
+}
+
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 export function syncToSupabase(table, item) {
@@ -95,6 +171,7 @@ export function deleteFromSupabase(table, id) {
     _pendingWrites.delete(key)
   }
   executeDeleteFromSupabase(table, id)
+  notifyForDelete(table, id)
 }
 
 // ─── Category rules sync (pattern-based, not id-based) ──────────────────────
@@ -124,6 +201,7 @@ export function syncMonthlyEntryToSupabase(month, entry) {
     if (!pending || !_syncMonthlyEntry) return
     try {
       await withRetry(() => _syncMonthlyEntry(pending.item.month, pending.item.entry))
+      notifyForMonthly(pending.item.month)
     } catch (err) {
       console.error('Monthly sync error:', err)
       toast.error('Erreur de sync — vos modifications pourraient ne pas etre sauvegardees')

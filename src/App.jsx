@@ -74,7 +74,7 @@ function clearInviteCode() {
 
 function AppContent({ session }) {
   const household = useHouseholdStore((s) => s.household)
-  const { loadFromSupabase, createHousehold, acceptInvite, syncMonthlyEntry, saveHousehold, createInvite } = useSupabaseSync(session)
+  const { loadFromSupabase, createHousehold, acceptInvite, syncMonthlyEntry, saveHousehold, createInvite, memberCount } = useSupabaseSync(session)
   const [loading, setLoading] = useState(!!session)
   const [inviteCode] = useState(getInviteCode)
 
@@ -119,7 +119,7 @@ function AppContent({ session }) {
   return (
     <ErrorBoundary>
       <BrowserRouter>
-        <AppShell>
+        <AppShell memberCount={memberCount}>
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<DashboardPage />} />

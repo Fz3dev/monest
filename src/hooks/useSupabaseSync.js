@@ -1,11 +1,13 @@
 import { useEffect, useCallback, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
-import { setSyncFunctions } from '../lib/syncBridge'
+import { setSyncFunctions, setUserInfo } from '../lib/syncBridge'
 import { useHouseholdStore } from '../stores/householdStore'
 import { useChargesStore } from '../stores/chargesStore'
 import { useMonthlyStore } from '../stores/monthlyStore'
 import { useSavingsStore } from '../stores/savingsStore'
 import { useExpenseStore } from '../stores/expenseStore'
+import { useNotificationStore } from '../stores/notificationStore'
+import { toast } from 'sonner'
 
 function camelToSnake(obj) {
   if (!obj || typeof obj !== 'object') return obj
@@ -31,6 +33,7 @@ function snakeToCamel(obj) {
 
 export function useSupabaseSync(session) {
   const [householdId, setHouseholdId] = useState(null)
+  const [memberCount, setMemberCount] = useState(0)
 
   const loadFromSupabase = useCallback(async () => {
     if (!isSupabaseConfigured() || !session?.user) return null
@@ -45,6 +48,13 @@ export function useSupabaseSync(session) {
 
       const hId = memberships[0].household_id
       setHouseholdId(hId)
+
+      // Count household members to know if solo or shared
+      const { count } = await supabase
+        .from('household_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('household_id', hId)
+      setMemberCount(count || 1)
 
       const [
         { data: household },
@@ -233,8 +243,19 @@ export function useSupabaseSync(session) {
   useEffect(() => {
     if (!isSupabaseConfigured() || !householdId) return
     setSyncFunctions(syncItem, deleteItem, syncMonthlyEntry)
-    return () => setSyncFunctions(null, null, null)
-  }, [syncItem, deleteItem, syncMonthlyEntry, householdId])
+    // Pass user info for notifications
+    const household = useHouseholdStore.getState().household
+    const userName = session?.user?.user_metadata?.name
+      || session?.user?.user_metadata?.full_name
+      || household?.personAName
+      || session?.user?.email?.split('@')[0]
+      || 'Quelqu\'un'
+    setUserInfo(session?.user?.id, userName, householdId)
+    return () => {
+      setSyncFunctions(null, null, null)
+      setUserInfo(null, null, null)
+    }
+  }, [syncItem, deleteItem, syncMonthlyEntry, householdId, session])
 
   // Real-time subscriptions
   useEffect(() => {
@@ -269,6 +290,45 @@ export function useSupabaseSync(session) {
       supabase.removeChannel(channel)
     }
   }, [householdId, loadFromSupabase])
+
+  // Load & subscribe to notifications
+  useEffect(() => {
+    if (!isSupabaseConfigured() || !householdId || !session?.user) return
+
+    // Load existing notifications
+    const loadNotifications = async () => {
+      const { data } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false })
+        .limit(50)
+      if (data) {
+        useNotificationStore.getState().setNotifications(data)
+      }
+    }
+    loadNotifications()
+
+    // Real-time subscription for new notifications
+    const channel = supabase
+      .channel('user-notifications')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications',
+        filter: `user_id=eq.${session.user.id}`,
+      }, (payload) => {
+        const notif = payload.new
+        useNotificationStore.getState().addNotification(notif)
+        // Show toast for new notification
+        toast(notif.title, { description: notif.body || undefined })
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [householdId, session])
 
   const createInvite = useCallback(async () => {
     if (!isSupabaseConfigured() || !session?.user || !householdId) return null
@@ -334,5 +394,6 @@ export function useSupabaseSync(session) {
     deleteItem,
     syncMonthlyEntry,
     householdId,
+    memberCount,
   }
 }

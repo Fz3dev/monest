@@ -1,5 +1,9 @@
+import { useState, useRef, useEffect } from 'react'
 import { NavLink } from 'react-router-dom'
-import { Home, Receipt, CreditCard, PiggyBank, Calendar, Settings, ShoppingBag } from 'lucide-react'
+import { Home, Receipt, CreditCard, PiggyBank, Calendar, Settings, ShoppingBag, Bell, Check, CreditCard as ChargeIcon, Wallet, Trash2, UserPlus, TrendingUp } from 'lucide-react'
+import { formatDistanceToNow } from 'date-fns'
+import { fr } from 'date-fns/locale'
+import { useNotificationStore } from '../../stores/notificationStore'
 import QuickAddExpense from '../QuickAddExpense'
 
 const navItems = [
@@ -10,7 +14,123 @@ const navItems = [
   { to: '/parametres', icon: Settings, label: 'Reglages' },
 ]
 
-export default function AppShell({ children }) {
+const TYPE_ICONS = {
+  member_joined: UserPlus,
+  charge_added: ChargeIcon,
+  charge_updated: ChargeIcon,
+  charge_deleted: Trash2,
+  expense_added: ShoppingBag,
+  salary_updated: Wallet,
+  savings_updated: TrendingUp,
+}
+
+function NotificationPanel({ onClose }) {
+  const notifications = useNotificationStore((s) => s.notifications)
+  const markAsRead = useNotificationStore((s) => s.markAsRead)
+  const markAllAsRead = useNotificationStore((s) => s.markAllAsRead)
+  const unreadCount = useNotificationStore((s) => s.unreadCount)
+  const panelRef = useRef(null)
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (panelRef.current && !panelRef.current.contains(e.target)) {
+        onClose()
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [onClose])
+
+  return (
+    <div
+      ref={panelRef}
+      className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-bg-surface/95 backdrop-blur-xl border border-white/[0.08] rounded-2xl shadow-2xl z-50"
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
+        <span className="text-sm font-semibold text-text-primary">Notifications</span>
+        {unreadCount() > 0 && (
+          <button
+            onClick={() => { markAllAsRead(); }}
+            className="text-xs text-brand hover:text-brand/80 transition-colors"
+          >
+            Tout marquer comme lu
+          </button>
+        )}
+      </div>
+
+      {/* List */}
+      {notifications.length === 0 ? (
+        <div className="px-4 py-8 text-center text-text-muted text-sm">
+          Aucune notification
+        </div>
+      ) : (
+        <div className="divide-y divide-white/[0.04]">
+          {notifications.slice(0, 30).map((notif) => {
+            const Icon = TYPE_ICONS[notif.type] || Bell
+            return (
+              <div
+                key={notif.id}
+                className={`flex gap-3 px-4 py-3 transition-colors cursor-pointer hover:bg-white/[0.03] ${
+                  !notif.read ? 'bg-brand/[0.04]' : ''
+                }`}
+                onClick={() => { if (!notif.read) markAsRead(notif.id) }}
+              >
+                <div className={`flex-shrink-0 mt-0.5 w-8 h-8 rounded-full flex items-center justify-center ${
+                  !notif.read ? 'bg-brand/10 text-brand' : 'bg-white/[0.06] text-text-muted'
+                }`}>
+                  <Icon size={14} strokeWidth={1.8} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm leading-snug ${!notif.read ? 'text-text-primary font-medium' : 'text-text-secondary'}`}>
+                    {notif.title}
+                  </p>
+                  {notif.body && (
+                    <p className="text-xs text-text-muted mt-0.5 truncate">{notif.body}</p>
+                  )}
+                  <p className="text-[11px] text-text-muted mt-1">
+                    {formatDistanceToNow(new Date(notif.created_at), { locale: fr, addSuffix: true })}
+                  </p>
+                </div>
+                {!notif.read && (
+                  <div className="flex-shrink-0 mt-2 w-2 h-2 rounded-full bg-brand" />
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function NotificationBell() {
+  const [open, setOpen] = useState(false)
+  const unreadCount = useNotificationStore((s) => s.unreadCount)
+  const count = unreadCount()
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="relative p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-white/[0.04] transition-colors"
+        aria-label="Notifications"
+      >
+        <Bell size={18} strokeWidth={1.8} />
+        {count > 0 && (
+          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white px-1">
+            {count > 99 ? '99+' : count}
+          </span>
+        )}
+      </button>
+      {open && <NotificationPanel onClose={() => setOpen(false)} />}
+    </div>
+  )
+}
+
+export default function AppShell({ children, memberCount = 0 }) {
+  const isShared = memberCount >= 2
+
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary">
       {/* Desktop sidebar — hidden on mobile */}
@@ -18,6 +138,11 @@ export default function AppShell({ children }) {
         <div className="flex items-center gap-2.5 px-5 h-16 border-b border-white/[0.06]">
           <img src="/logo-crown.png" alt="Monest" className="w-7 h-7" />
           <span className="text-base font-bold tracking-tight">Monest</span>
+          {isShared && (
+            <div className="ml-auto">
+              <NotificationBell />
+            </div>
+          )}
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1">
           {navItems.map((item) => (
@@ -41,6 +166,12 @@ export default function AppShell({ children }) {
 
       {/* Main content */}
       <div className="pb-20 lg:pb-0 lg:pl-56">
+        {/* Mobile notification bell — fixed top-right */}
+        {isShared && (
+          <div className="fixed top-3 right-3 z-50 lg:hidden">
+            <NotificationBell />
+          </div>
+        )}
         <main className="max-w-lg mx-auto px-4 py-4 lg:max-w-5xl lg:px-8 lg:py-6">
           {children}
         </main>
