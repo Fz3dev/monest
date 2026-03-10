@@ -55,10 +55,11 @@ function SwipeToDelete({ onDelete, children }) {
   }
 
   return (
-    <div className="relative overflow-hidden rounded-2xl">
+    <div className="relative overflow-hidden rounded-2xl" role="group" aria-label="Glisser pour supprimer">
       <motion.div
         className="absolute inset-0 bg-danger/20 flex items-center justify-end pr-6"
         style={{ opacity: bgOpacity }}
+        aria-hidden="true"
       >
         <Trash2 size={18} className="text-danger" />
       </motion.div>

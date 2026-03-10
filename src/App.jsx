@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { useHouseholdStore } from './stores/householdStore'
+import { useThemeStore } from './stores/themeStore'
 import { supabase, isSupabaseConfigured } from './lib/supabase'
 import { useSupabaseSync } from './hooks/useSupabaseSync'
 import AppShell from './components/layout/AppShell'
@@ -86,6 +87,7 @@ function InviteJoin({ session, householdId }) {
 
 function AppContent({ session }) {
   const household = useHouseholdStore((s) => s.household)
+  const theme = useThemeStore((s) => s.theme)
   const { loadFromSupabase, createHousehold, joinHousehold, syncItem, deleteItem, syncMonthlyEntry, saveHousehold } = useSupabaseSync(session)
   const [loading, setLoading] = useState(!!session)
 
@@ -122,7 +124,7 @@ function AppContent({ session }) {
     return (
       <ErrorBoundary>
         <OnboardingWizard onComplete={createHousehold} />
-        <Toaster theme="dark" position="top-center" richColors />
+        <Toaster theme={theme} position="top-center" richColors />
       </ErrorBoundary>
     )
   }
@@ -145,7 +147,7 @@ function AppContent({ session }) {
             </Routes>
           </Suspense>
         </AppShell>
-        <Toaster theme="dark" position="top-center" richColors />
+        <Toaster theme={theme} position="top-center" richColors />
       </BrowserRouter>
     </ErrorBoundary>
   )
@@ -154,6 +156,11 @@ function AppContent({ session }) {
 export default function App() {
   const [session, setSession] = useState(null)
   const [authLoading, setAuthLoading] = useState(isSupabaseConfigured())
+  const theme = useThemeStore((s) => s.theme)
+
+  useEffect(() => {
+    document.body.setAttribute('data-theme', theme)
+  }, [theme])
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return
@@ -189,7 +196,7 @@ export default function App() {
     return (
       <ErrorBoundary>
         <InvitePage householdId={householdId} />
-        <Toaster theme="dark" position="top-center" richColors />
+        <Toaster theme={theme} position="top-center" richColors />
       </ErrorBoundary>
     )
   }
@@ -199,7 +206,7 @@ export default function App() {
     return (
       <ErrorBoundary>
         <AuthPage />
-        <Toaster theme="dark" position="top-center" richColors />
+        <Toaster theme={theme} position="top-center" richColors />
       </ErrorBoundary>
     )
   }

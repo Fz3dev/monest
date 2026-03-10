@@ -64,16 +64,19 @@ export default function CalendarPage() {
       bg: 'bg-success/10 border-success/20',
       text: 'text-success',
       icon: <CheckCircle2 size={10} className="text-success" />,
+      statusLabel: 'Confortable',
     },
     yellow: {
       bg: 'bg-warning/10 border-warning/20',
       text: 'text-warning',
       icon: <AlertTriangle size={10} className="text-warning" />,
+      statusLabel: 'Serre',
     },
     red: {
       bg: 'bg-danger/10 border-danger/20',
       text: 'text-danger',
       icon: <XCircle size={10} className="text-danger" />,
+      statusLabel: 'Critique',
     },
   }
 
@@ -99,6 +102,7 @@ export default function CalendarPage() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.03 }}
               onClick={() => setSelectedMonth(m.month === selectedMonth ? null : m.month)}
+              aria-label={`${m.label}: ${formatCurrency(m.result.resteFoyer)} — ${cfg.statusLabel}`}
               className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer relative overflow-hidden ${cfg.bg} ${
                 selectedMonth === m.month ? 'ring-2 ring-white/30 scale-105' : 'hover:scale-[1.03]'
               } ${m.isCurrent ? 'ring-1 ring-brand/40' : ''}`}

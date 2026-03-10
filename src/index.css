@@ -26,9 +26,20 @@ html {
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
   margin: 0;
-  background: #0B0B0F;
-  color: #E8E8ED;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Light theme */
+[data-theme="light"] {
+  --color-bg-primary: #F5F5F7;
+  --color-bg-surface: #FFFFFF;
+  --color-bg-elevated: #F0F0F5;
+  --color-text-primary: #1C1C1E;
+  --color-text-secondary: #636366;
+  --color-text-muted: #AEAEB2;
 }
 
 .glass {
@@ -36,6 +47,11 @@ body {
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="light"] .glass {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 0, 0, 0.06);
 }
 
 .safe-area-bottom {
@@ -54,6 +70,8 @@ input[type="number"] {
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

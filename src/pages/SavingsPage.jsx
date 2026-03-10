@@ -114,10 +114,11 @@ function SwipeToDelete({ onDelete, children }) {
   }
 
   return (
-    <div className="relative overflow-hidden rounded-2xl">
+    <div className="relative overflow-hidden rounded-2xl" role="group" aria-label="Glisser pour supprimer">
       <motion.div
         className="absolute inset-0 bg-danger/20 flex items-center justify-end pr-6"
         style={{ opacity: bgOpacity }}
+        aria-hidden="true"
       >
         <Trash2 size={18} className="text-danger" />
       </motion.div>
@@ -235,6 +236,12 @@ function GoalForm({ initialValues, onSubmit, onCancel }) {
         value={form.deadline}
         onChange={(e) => update('deadline', e.target.value)}
       />
+      {!form.name.trim() && form.targetAmount && (
+        <p className="text-xs text-danger">Le nom est requis</p>
+      )}
+      {form.name.trim() && form.targetAmount && parseFloat(form.targetAmount) <= 0 && (
+        <p className="text-xs text-danger">Le montant doit etre positif</p>
+      )}
       <div className="flex gap-3 pt-2">
         <Button variant="secondary" onClick={onCancel} className="flex-1">
           Annuler
@@ -249,7 +256,7 @@ function GoalForm({ initialValues, onSubmit, onCancel }) {
               deadline: form.deadline || null,
             })
           }
-          disabled={!form.name.trim() || !form.targetAmount}
+          disabled={!form.name.trim() || !form.targetAmount || parseFloat(form.targetAmount) <= 0}
           className="flex-1"
         >
           {initialValues ? 'Modifier' : 'Creer'}

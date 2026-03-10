@@ -17,6 +17,14 @@ const CATEGORIES = [
   { emoji: '🎁', label: 'Autre', value: 'autre' },
 ]
 
+const EXPENSE_TEMPLATES = [
+  { label: 'Courses', amount: '', categoryIdx: 0, note: 'Courses' },
+  { label: 'Resto', amount: '', categoryIdx: 1, note: 'Restaurant' },
+  { label: 'Essence', amount: '', categoryIdx: 2, note: 'Essence' },
+  { label: 'Medecin', amount: '25', categoryIdx: 3, note: 'Consultation' },
+  { label: 'Pharmacie', amount: '', categoryIdx: 3, note: 'Pharmacie' },
+]
+
 const todayISO = () => new Date().toISOString().split('T')[0]
 
 export default function QuickAddExpense() {
@@ -182,6 +190,27 @@ export default function QuickAddExpense() {
               </div>
 
               <div className="px-5 pb-6 space-y-5">
+                {/* Quick templates */}
+                {!amount && category === null && (
+                  <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                    {EXPENSE_TEMPLATES.map((tpl) => (
+                      <button
+                        key={tpl.label}
+                        type="button"
+                        onClick={() => {
+                          setCategory(tpl.categoryIdx)
+                          setNote(tpl.note)
+                          if (tpl.amount) setAmount(tpl.amount)
+                          if (!tpl.amount && amountRef.current) amountRef.current.focus()
+                        }}
+                        className="flex-shrink-0 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] text-xs text-text-secondary hover:border-brand/40 hover:text-brand transition-all cursor-pointer"
+                      >
+                        {CATEGORIES[tpl.categoryIdx].emoji} {tpl.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 {/* Amount */}
                 <div className="flex items-center justify-center py-3">
                   <div className="relative inline-flex items-baseline gap-1">

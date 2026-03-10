@@ -25,10 +25,11 @@ function SwipeToDelete({ onDelete, children }) {
   }
 
   return (
-    <div className="relative overflow-hidden rounded-2xl">
+    <div className="relative overflow-hidden rounded-2xl" role="group" aria-label="Glisser pour supprimer">
       <motion.div
         className="absolute inset-0 bg-danger/20 flex items-center justify-end pr-6"
         style={{ opacity: bgOpacity }}
+        aria-hidden="true"
       >
         <Trash2 size={18} className="text-danger" />
       </motion.div>
@@ -135,9 +136,15 @@ function ChargeForm({ initialValues, onSubmit, onCancel, household }) {
       <Input label="Jour du mois" type="number" min="1" max="31" value={form.dayOfMonth} onChange={(e) => update('dayOfMonth', parseInt(e.target.value) || 1)} />
       <Select label="Categorie" value={form.category} onChange={(e) => update('category', e.target.value)} options={CATEGORIES} />
       <Input label="Decalage prelevement (mois)" type="number" min="0" value={form.paymentDelayMonths} onChange={(e) => update('paymentDelayMonths', parseInt(e.target.value) || 0)} />
+      {!form.name.trim() && form.amount && (
+        <p className="text-xs text-danger">Le nom est requis</p>
+      )}
+      {form.name.trim() && form.amount && parseFloat(form.amount) <= 0 && (
+        <p className="text-xs text-danger">Le montant doit etre positif</p>
+      )}
       <div className="flex gap-3 pt-2">
         <Button variant="secondary" onClick={onCancel} className="flex-1">Annuler</Button>
-        <Button onClick={() => onSubmit({ ...form, amount: parseFloat(form.amount) || 0 })} disabled={!form.name.trim() || !form.amount} className="flex-1">
+        <Button onClick={() => onSubmit({ ...form, amount: parseFloat(form.amount) || 0 })} disabled={!form.name.trim() || !form.amount || parseFloat(form.amount) <= 0} className="flex-1">
           {initialValues ? 'Modifier' : 'Ajouter'}
         </Button>
       </div>

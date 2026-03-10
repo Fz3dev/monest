@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
+import { withRetry } from '../utils/retry'
 import { useHouseholdStore } from '../stores/householdStore'
 import { useChargesStore } from '../stores/chargesStore'
 import { useMonthlyStore } from '../stores/monthlyStore'
@@ -54,7 +55,7 @@ export function useSupabaseSync(session) {
         { data: goals },
         { data: expenses },
         { data: rules },
-      ] = await Promise.all([
+      ] = await withRetry(() => Promise.all([
         supabase.from('households').select('*').eq('id', hId).single(),
         supabase.from('fixed_charges').select('*').eq('household_id', hId),
         supabase.from('installment_payments').select('*').eq('household_id', hId),
@@ -63,7 +64,7 @@ export function useSupabaseSync(session) {
         supabase.from('savings_goals').select('*').eq('household_id', hId),
         supabase.from('expenses').select('*').eq('household_id', hId).order('created_at', { ascending: false }),
         supabase.from('category_rules').select('*').eq('household_id', hId),
-      ])
+      ]))
 
       if (household) {
         const h = snakeToCamel(household)
@@ -243,23 +244,23 @@ export function useSupabaseSync(session) {
     if (!isSupabaseConfigured() || !householdId) return
     const data = { ...camelToSnake(item), household_id: householdId }
     delete data.created_at
-    await supabase.from(table).upsert(data, { onConflict: 'id' })
+    await withRetry(() => supabase.from(table).upsert(data, { onConflict: 'id' }))
   }, [householdId])
 
   const deleteItem = useCallback(async (table, id) => {
     if (!isSupabaseConfigured()) return
-    await supabase.from(table).delete().eq('id', id)
+    await withRetry(() => supabase.from(table).delete().eq('id', id))
   }, [])
 
   const syncMonthlyEntry = useCallback(async (month, entry) => {
     if (!isSupabaseConfigured() || !householdId) return
-    await supabase.from('monthly_entries').upsert({
+    await withRetry(() => supabase.from('monthly_entries').upsert({
       household_id: householdId,
       month,
       income_a: entry.incomeA || 0,
       income_b: entry.incomeB || 0,
       variable_overrides: entry.variableOverrides || {},
-    }, { onConflict: 'household_id,month' })
+    }, { onConflict: 'household_id,month' }))
   }, [householdId])
 
   // Real-time subscriptions
@@ -279,6 +280,7 @@ export function useSupabaseSync(session) {
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [householdId])
 
   return {

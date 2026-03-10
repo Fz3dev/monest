@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
+import { AnimatePresence } from 'motion/react'
 import { useHouseholdStore } from '../stores/householdStore'
 import { useChargesStore } from '../stores/chargesStore'
 import { useMonthlyStore } from '../stores/monthlyStore'
@@ -20,7 +20,6 @@ export default function MonthlyPage() {
   const updateVariable = useMonthlyStore((s) => s.updateVariable)
 
   const [currentMonth, setCurrentMonth] = useState(getCurrentMonth())
-  const [swipeDir, setSwipeDir] = useState(0)
   const touchStartX = useRef(null)
 
   const entry = entries[currentMonth] || null
@@ -30,7 +29,6 @@ export default function MonthlyPage() {
   )
 
   const navigateMonth = (direction) => {
-    setSwipeDir(direction === 'next' ? 1 : -1)
     const date = new Date(currentMonth + '-01')
     const newDate = direction === 'next' ? addMonths(date, 1) : subMonths(date, 1)
     setCurrentMonth(format(newDate, 'yyyy-MM'))

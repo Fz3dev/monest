@@ -1,5 +1,4 @@
 import { useMemo } from 'react'
-import { motion } from 'motion/react'
 import { Link } from 'react-router-dom'
 import { useHouseholdStore } from '../stores/householdStore'
 import { useChargesStore } from '../stores/chargesStore'
