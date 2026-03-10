@@ -374,5 +374,10 @@
     "chargesDown": "Charges r\u00e9duites de {{percent}}% par rapport au mois dernier ({{amount}} \u00e9conomies).",
     "categoryUp": "{{label}} : +{{percent}}% ce mois (+{{amount}}).",
     "heavyMonth": "Attention : {{amount}} de charges pr\u00e9vues en {{month}}."
+  },
+  "dashboardGrid": {
+    "editLayout": "Personnaliser la disposition",
+    "done": "Terminer",
+    "resetLayout": "Réinitialiser"
   }
 }

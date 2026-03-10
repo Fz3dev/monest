@@ -58,6 +58,15 @@ input[type="number"] {
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* react-grid-layout overrides */
+.react-grid-item.react-grid-placeholder {
+  background: var(--color-brand) !important;
+  opacity: 0.1 !important;
+  border-radius: 1rem;
+  border: 2px dashed var(--color-brand) !important;
+}
+.react-grid-item > .react-resizable-handle { display: none; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

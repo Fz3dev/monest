@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { motion, AnimatePresence, useMotionValue, animate } from 'motion/react'
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'motion/react'
 import { useHouseholdStore } from '../stores/householdStore'
 import { useChargesStore } from '../stores/chargesStore'
 import { formatCurrency, PAYER_OPTIONS, getTranslatedCategories, getTranslatedFrequencies, getCategoryLabel, getFrequencyLabel } from '../utils/format'
@@ -13,47 +13,36 @@ import Modal from '../components/ui/Modal'
 import { Plus, Trash2, ToggleLeft, ToggleRight, Edit3 } from 'lucide-react'
 import { toast } from 'sonner'
 
-function SwipeableCard({ onDelete, onEdit, children, t }) {
+function SwipeableCard({ onDelete, children }) {
   const x = useMotionValue(0)
-  const actionsWidth = onEdit ? -140 : -70
+  const deleteOpacity = useTransform(x, [-120, -40, 0], [1, 0.5, 0])
+  const iconScale = useTransform(x, [-120, -40, 0], [1.1, 0.8, 0.5])
 
   const handleDragEnd = (_, info) => {
-    if (info.offset.x < -50) {
-      animate(x, actionsWidth, { type: 'spring', stiffness: 400, damping: 35 })
+    if (info.offset.x < -100) {
+      animate(x, -400, { duration: 0.2 })
+      setTimeout(onDelete, 200)
     } else {
-      animate(x, 0, { type: 'spring', stiffness: 400, damping: 35 })
+      animate(x, 0, { type: 'spring', stiffness: 500, damping: 40 })
     }
   }
 
-  const close = () => animate(x, 0, { type: 'spring', stiffness: 400, damping: 35 })
-
   return (
     <div className="relative overflow-hidden rounded-2xl">
-      {/* Mobile swipe actions (hidden on desktop) */}
-      <div className="absolute inset-y-0 right-0 flex lg:hidden">
-        {onEdit && (
-          <button
-            onClick={() => { close(); setTimeout(onEdit, 150) }}
-            className="w-[70px] bg-brand flex items-center justify-center"
-            aria-label={t('common.edit')}
-          >
-            <Edit3 size={16} className="text-white" />
-          </button>
-        )}
-        <button
-          onClick={() => { close(); setTimeout(onDelete, 150) }}
-          className="w-[70px] bg-danger flex items-center justify-center"
-          aria-label={t('common.delete')}
-        >
-          <Trash2 size={16} className="text-white" />
-        </button>
-      </div>
+      <motion.div
+        className="absolute inset-0 bg-danger flex items-center justify-end pr-6 lg:hidden"
+        style={{ opacity: deleteOpacity }}
+      >
+        <motion.div style={{ scale: iconScale }}>
+          <Trash2 size={18} className="text-white" />
+        </motion.div>
+      </motion.div>
       <motion.div
         style={{ x }}
         drag="x"
         dragDirectionLock
-        dragConstraints={{ left: actionsWidth, right: 0 }}
-        dragElastic={0.05}
+        dragConstraints={{ left: -120, right: 0 }}
+        dragElastic={0.1}
         onDragEnd={handleDragEnd}
         className="relative z-10 lg:!transform-none"
       >
@@ -338,8 +327,6 @@ export default function ChargesPage() {
               <SwipeableCard
                 key={charge.id}
                 onDelete={() => handleDelete('fixed', charge.id, charge.name)}
-                onEdit={() => setModal({ type: 'fixed', editId: charge.id })}
-                t={t}
               >
                 <Card className={`${!charge.active ? 'opacity-40' : ''}`} animate={false}>
                   <div className="flex items-center gap-3">
@@ -404,8 +391,6 @@ export default function ChargesPage() {
               <SwipeableCard
                 key={payment.id}
                 onDelete={() => handleDelete('installment', payment.id, payment.name)}
-                onEdit={() => setModal({ type: 'installment', editId: payment.id })}
-                t={t}
               >
                 <Card animate={false}>
                   <div className="flex items-center gap-3">
@@ -454,8 +439,6 @@ export default function ChargesPage() {
               <SwipeableCard
                 key={expense.id}
                 onDelete={() => handleDelete('planned', expense.id, expense.name)}
-                onEdit={() => setModal({ type: 'planned', editId: expense.id })}
-                t={t}
               >
                 <Card animate={false}>
                   <div className="flex items-center gap-3">

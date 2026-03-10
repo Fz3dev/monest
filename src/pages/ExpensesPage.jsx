@@ -45,14 +45,15 @@ const CATEGORY_COLORS = {
 
 function SwipeToDelete({ onDelete, children, t }) {
   const x = useMotionValue(0)
-  const bgOpacity = useTransform(x, [-120, -60, 0], [1, 0.5, 0])
+  const deleteOpacity = useTransform(x, [-120, -40, 0], [1, 0.5, 0])
+  const iconScale = useTransform(x, [-120, -40, 0], [1.1, 0.8, 0.5])
 
   const handleDragEnd = (_, info) => {
     if (info.offset.x < -100) {
-      animate(x, -300, { duration: 0.2 })
+      animate(x, -400, { duration: 0.2 })
       setTimeout(onDelete, 200)
     } else {
-      animate(x, 0, { type: 'spring', stiffness: 300, damping: 30 })
+      animate(x, 0, { type: 'spring', stiffness: 500, damping: 40 })
     }
   }
 
@@ -68,20 +69,23 @@ function SwipeToDelete({ onDelete, children, t }) {
           <Trash2 size={14} />
         </button>
       </div>
-      {/* Mobile: swipe */}
+      {/* Mobile: swipe to delete */}
       <motion.div
-        className="absolute inset-0 bg-danger/20 flex items-center justify-end pr-6 lg:hidden"
-        style={{ opacity: bgOpacity }}
+        className="absolute inset-0 bg-danger flex items-center justify-end pr-6 lg:hidden"
+        style={{ opacity: deleteOpacity }}
       >
-        <Trash2 size={18} className="text-danger" />
+        <motion.div style={{ scale: iconScale }}>
+          <Trash2 size={18} className="text-white" />
+        </motion.div>
       </motion.div>
       <motion.div
         style={{ x }}
         drag="x"
+        dragDirectionLock
         dragConstraints={{ left: -120, right: 0 }}
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
-        className="lg:!transform-none"
+        className="relative z-10 lg:!transform-none"
       >
         {children}
       </motion.div>
