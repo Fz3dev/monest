@@ -10,7 +10,7 @@ async function nukeAndReload() {
     await Promise.all(regs.map(r => r.unregister()))
     const keys = await caches.keys()
     await Promise.all(keys.map(k => caches.delete(k)))
-  } catch (e) { /* ignore */ }
+  } catch { /* ignore */ }
   window.location.reload()
 }
 
@@ -23,7 +23,7 @@ if (window.location.search.includes('reset')) {
       const keys = await caches.keys()
       await Promise.all(keys.map(k => caches.delete(k)))
       localStorage.clear()
-    } catch (e) { /* ignore */ }
+    } catch { /* ignore */ }
     window.location.replace(window.location.pathname)
   })()
 } else {
