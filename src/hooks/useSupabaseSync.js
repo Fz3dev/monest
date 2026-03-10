@@ -191,6 +191,54 @@ export function useSupabaseSync(session) {
     return data.id
   }, [session])
 
+  const joinHousehold = useCallback(async (targetHouseholdId) => {
+    if (!isSupabaseConfigured() || !session?.user) return null
+
+    try {
+      // Check if already a member
+      const { data: existing } = await supabase
+        .from('household_members')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .eq('household_id', targetHouseholdId)
+
+      if (existing?.length) {
+        setHouseholdId(targetHouseholdId)
+        return 'already_member'
+      }
+
+      // Check household exists
+      const { data: household } = await supabase
+        .from('households')
+        .select('id')
+        .eq('id', targetHouseholdId)
+        .single()
+
+      if (!household) return null
+
+      // Remove from any previous household memberships
+      await supabase
+        .from('household_members')
+        .delete()
+        .eq('user_id', session.user.id)
+
+      // Join the household
+      const { error } = await supabase.from('household_members').insert({
+        household_id: targetHouseholdId,
+        user_id: session.user.id,
+        role: 'member',
+      })
+
+      if (error) { console.error('Join household error:', error); return null }
+
+      setHouseholdId(targetHouseholdId)
+      return 'joined'
+    } catch (err) {
+      console.error('Join household error:', err)
+      return null
+    }
+  }, [session])
+
   const syncItem = useCallback(async (table, item) => {
     if (!isSupabaseConfigured() || !householdId) return
     const data = { ...camelToSnake(item), household_id: householdId }
@@ -237,6 +285,7 @@ export function useSupabaseSync(session) {
     loadFromSupabase,
     saveHousehold,
     createHousehold,
+    joinHousehold,
     syncItem,
     deleteItem,
     syncMonthlyEntry,

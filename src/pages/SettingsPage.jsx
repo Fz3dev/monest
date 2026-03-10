@@ -96,10 +96,10 @@ export default function SettingsPage({ session, saveHousehold }) {
   }
 
   const handleCopyInvite = () => {
-    const url = window.location.origin
+    const url = `${window.location.origin}/invite/${household?.id}`
     navigator.clipboard.writeText(url)
     setCopied(true)
-    toast.success('Lien copie !')
+    toast.success('Lien d\'invitation copie !')
     setTimeout(() => setCopied(false), 2000)
   }
 
@@ -144,7 +144,7 @@ export default function SettingsPage({ session, saveHousehold }) {
             <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Inviter {household?.personBName || 'partenaire'}</h2>
           </div>
           <p className="text-xs text-text-muted mb-3">
-            Partagez ce lien pour que votre partenaire puisse se connecter et acceder au budget partage.
+            Envoyez ce lien a {household?.personBName || 'votre partenaire'} pour rejoindre votre budget partage.
           </p>
           <Button variant="secondary" size="sm" onClick={handleCopyInvite} className="w-full">
             {copied ? <Check size={14} className="inline mr-1.5 text-success" /> : <Copy size={14} className="inline mr-1.5" />}
