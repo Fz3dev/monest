@@ -334,12 +334,6 @@ export default function ChargesPage() {
                 key={charge.id}
                 actions={[
                   {
-                    icon: charge.active ? ToggleRight : ToggleLeft,
-                    color: charge.active ? '#4ADE80' : '#48484A',
-                    label: charge.active ? t('charges.deactivate') : t('charges.activate'),
-                    onClick: () => toggleFixedCharge(charge.id),
-                  },
-                  {
                     icon: Edit3,
                     color: '#6C63FF',
                     label: t('common.edit'),
@@ -372,6 +366,14 @@ export default function ChargesPage() {
                         {formatCurrency(charge.amount)} · {getPayerLabel(charge.payer)} · {getFrequencyLabel(charge.frequency)}
                       </div>
                     </div>
+                    {/* Mobile: toggle visible on card */}
+                    <button
+                      onClick={() => toggleFixedCharge(charge.id)}
+                      className="lg:hidden p-1.5 text-text-muted"
+                      aria-label={charge.active ? t('charges.deactivate') : t('charges.activate')}
+                    >
+                      {charge.active ? <ToggleRight size={24} className="text-success" /> : <ToggleLeft size={24} />}
+                    </button>
                     {/* Desktop: toggle + edit + delete inline */}
                     <div className="hidden lg:flex items-center gap-2">
                       <button
