@@ -7,6 +7,7 @@ import AppShell from './components/layout/AppShell'
 import ErrorBoundary from './components/ErrorBoundary'
 import OnboardingWizard from './components/onboarding/OnboardingWizard'
 import AuthPage from './components/auth/AuthPage'
+import InvitePage from './components/invite/InvitePage'
 import { Toaster } from 'sonner'
 
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
@@ -35,15 +36,76 @@ function NotFound() {
   )
 }
 
+function InviteJoin({ session, householdId }) {
+  const { joinHousehold, loadFromSupabase } = useSupabaseSync(session)
+  const [joining, setJoining] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    async function doJoin() {
+      try {
+        const result = await joinHousehold(householdId)
+        if (result === 'already_member' || result === 'joined') {
+          sessionStorage.removeItem('monest-invite')
+          await loadFromSupabase()
+          window.location.href = '/'
+        } else {
+          setError('Impossible de rejoindre ce foyer')
+          setJoining(false)
+        }
+      } catch {
+        setError('Une erreur est survenue')
+        setJoining(false)
+      }
+    }
+    doJoin()
+  }, [householdId, joinHousehold, loadFromSupabase])
+
+  if (joining) {
+    return (
+      <div className="min-h-screen bg-bg-primary flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-brand/30 border-t-brand rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-text-secondary text-sm">Rejoindre le foyer...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-bg-primary flex items-center justify-center px-4">
+      <div className="text-center">
+        <p className="text-danger mb-4">{error}</p>
+        <button onClick={() => window.location.href = '/'} className="text-brand underline">
+          Retour a l'accueil
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function AppContent({ session }) {
   const household = useHouseholdStore((s) => s.household)
-  const { loadFromSupabase, createHousehold, syncItem, deleteItem, syncMonthlyEntry, saveHousehold } = useSupabaseSync(session)
+  const { loadFromSupabase, createHousehold, joinHousehold, syncItem, deleteItem, syncMonthlyEntry, saveHousehold } = useSupabaseSync(session)
   const [loading, setLoading] = useState(!!session)
 
   useEffect(() => {
     if (!session) return
-    loadFromSupabase().finally(() => setLoading(false))
-  }, [session, loadFromSupabase])
+
+    async function init() {
+      // Check if user arrived via invite link
+      const inviteId = sessionStorage.getItem('monest-invite')
+      if (inviteId) {
+        const result = await joinHousehold(inviteId)
+        if (result === 'joined' || result === 'already_member') {
+          sessionStorage.removeItem('monest-invite')
+        }
+      }
+      await loadFromSupabase()
+    }
+
+    init().finally(() => setLoading(false))
+  }, [session, loadFromSupabase, joinHousehold])
 
   if (loading) {
     return (
@@ -113,6 +175,22 @@ export default function App() {
       <div className="min-h-screen bg-bg-primary flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-brand/30 border-t-brand rounded-full animate-spin" />
       </div>
+    )
+  }
+
+  // Check if on invite route
+  const isInviteRoute = window.location.pathname.startsWith('/invite/')
+
+  if (isInviteRoute) {
+    const householdId = window.location.pathname.split('/invite/')[1]
+    if (session) {
+      return <InviteJoin session={session} householdId={householdId} />
+    }
+    return (
+      <ErrorBoundary>
+        <InvitePage householdId={householdId} />
+        <Toaster theme="dark" position="top-center" richColors />
+      </ErrorBoundary>
     )
   }
 
