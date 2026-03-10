@@ -96,7 +96,7 @@ export default function DashboardPage() {
   const totalIncome = result.incomeA + result.incomeB
   const totalCharges = result.totalCommon + result.personalACharges + result.personalBCharges
   const hasIncome = result.incomeA > 0 || result.incomeB > 0
-  const savingsRate = totalIncome > 0 ? Math.round((result.resteFoyer / totalIncome) * 100) : 0
+  const chargesRate = totalIncome > 0 ? Math.round((totalCharges / totalIncome) * 100) : 0
   const flexNumber = result.resteFoyer - monthExpenses
 
   const getFlexColor = (val) => {
@@ -175,9 +175,9 @@ export default function DashboardPage() {
         {hasIncome && (
           <div className="mt-4 pt-3 border-t border-white/[0.06] lg:mt-6 lg:pt-4">
             <div className="flex items-center justify-center gap-2">
-              <PiggyBank size={14} className={savingsRate >= 20 ? 'text-success' : savingsRate >= 10 ? 'text-warning' : 'text-danger'} />
-              <span className={`text-sm font-semibold ${savingsRate >= 20 ? 'text-success' : savingsRate >= 10 ? 'text-warning' : 'text-danger'}`}>
-                {t('dashboard.savingsRate', { rate: savingsRate })}
+              <Wallet size={14} className={chargesRate <= 40 ? 'text-success' : chargesRate <= 60 ? 'text-warning' : 'text-danger'} />
+              <span className={`text-sm font-semibold ${chargesRate <= 40 ? 'text-success' : chargesRate <= 60 ? 'text-warning' : 'text-danger'}`}>
+                {t('dashboard.chargesRate', { rate: chargesRate })}
               </span>
             </div>
           </div>

@@ -61,7 +61,7 @@
     "income": "Revenus",
     "charges": "Charges",
     "expense": "D\u00e9pense",
-    "savingsRate": "{{rate}}% d'\u00e9pargne",
+    "chargesRate": "{{rate}}% de charges",
     "remainingToSpend": "reste \u00e0 d\u00e9penser",
     "personalIncome": "Revenu",
     "startingBalance": "Solde initial",
