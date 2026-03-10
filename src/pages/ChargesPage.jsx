@@ -359,7 +359,6 @@ export default function ChargesPage() {
                       onClick={() => setModal({ type: 'fixed', editId: charge.id })}
                     >
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getCategoryColor(charge.category || 'autre') }} />
                         <span className="font-medium text-sm truncate">{charge.name}</span>
                         {charge.category && charge.category !== 'autre' && (
                           <span
