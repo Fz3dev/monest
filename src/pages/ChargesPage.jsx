@@ -26,9 +26,28 @@ function SwipeableCard({ onDelete, onEdit, children }) {
   const close = () => animate(x, 0, { type: 'spring', stiffness: 400, damping: 35 })
 
   return (
-    <div className="relative overflow-hidden rounded-2xl">
-      {/* Action buttons revealed on swipe */}
-      <div className="absolute inset-y-0 right-0 flex">
+    <div className="relative group overflow-hidden rounded-2xl">
+      {/* Desktop: hover buttons */}
+      <div className="hidden lg:flex absolute inset-y-0 right-3 items-center gap-1.5 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+        {onEdit && (
+          <button
+            onClick={onEdit}
+            className="p-2 rounded-lg bg-brand/10 hover:bg-brand/20 text-brand transition-colors"
+            aria-label="Modifier"
+          >
+            <Edit3 size={14} />
+          </button>
+        )}
+        <button
+          onClick={onDelete}
+          className="p-2 rounded-lg bg-danger/10 hover:bg-danger/20 text-danger transition-colors"
+          aria-label="Supprimer"
+        >
+          <Trash2 size={14} />
+        </button>
+      </div>
+      {/* Mobile: swipe actions */}
+      <div className="absolute inset-y-0 right-0 flex lg:hidden">
         {onEdit && (
           <button
             onClick={() => { close(); setTimeout(onEdit, 150) }}
@@ -53,7 +72,7 @@ function SwipeableCard({ onDelete, onEdit, children }) {
         dragConstraints={{ left: actionsWidth, right: 0 }}
         dragElastic={0.05}
         onDragEnd={handleDragEnd}
-        className="relative z-10"
+        className="relative z-10 lg:!transform-none"
       >
         {children}
       </motion.div>
@@ -303,7 +322,7 @@ export default function ChargesPage() {
         ))}
       </div>
 
-      <p className="text-[10px] text-text-muted text-center">Glissez vers la gauche pour modifier ou supprimer</p>
+      <p className="text-[10px] text-text-muted text-center lg:hidden">Glissez vers la gauche pour modifier ou supprimer</p>
 
       {/* Fixed charges */}
       <AnimatePresence mode="wait">

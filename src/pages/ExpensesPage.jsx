@@ -55,9 +55,20 @@ function SwipeToDelete({ onDelete, children }) {
   }
 
   return (
-    <div className="relative overflow-hidden rounded-2xl">
+    <div className="relative group overflow-hidden rounded-2xl">
+      {/* Desktop: hover delete button */}
+      <div className="hidden lg:flex absolute inset-y-0 right-3 items-center z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button
+          onClick={onDelete}
+          className="p-2 rounded-lg bg-danger/10 hover:bg-danger/20 text-danger transition-colors"
+          aria-label="Supprimer"
+        >
+          <Trash2 size={14} />
+        </button>
+      </div>
+      {/* Mobile: swipe */}
       <motion.div
-        className="absolute inset-0 bg-danger/20 flex items-center justify-end pr-6"
+        className="absolute inset-0 bg-danger/20 flex items-center justify-end pr-6 lg:hidden"
         style={{ opacity: bgOpacity }}
       >
         <Trash2 size={18} className="text-danger" />
@@ -68,6 +79,7 @@ function SwipeToDelete({ onDelete, children }) {
         dragConstraints={{ left: -120, right: 0 }}
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
+        className="lg:!transform-none"
       >
         {children}
       </motion.div>
@@ -253,7 +265,8 @@ export default function ExpensesPage() {
       {/* Expenses list grouped by date */}
       {groupedExpenses.length > 0 && (
         <p className="text-[10px] text-text-muted text-center">
-          Glissez vers la gauche pour supprimer
+          <span className="lg:hidden">Glissez vers la gauche pour supprimer</span>
+          <span className="hidden lg:inline">Survolez une depense pour la supprimer</span>
         </p>
       )}
 
