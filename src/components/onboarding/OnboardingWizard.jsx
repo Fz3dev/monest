@@ -1,15 +1,9 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
 import { useHouseholdStore } from '../../stores/householdStore'
 import Button from '../ui/Button'
 import Input from '../ui/Input'
-
-const CONFIG_MODELS = [
-  { value: 'common_and_personal', label: 'Commun + Perso', description: 'Un compte commun et des comptes personnels' },
-  { value: 'full_common', label: 'Tout commun', description: 'Un seul compte partage' },
-  { value: 'full_personal', label: 'Tout perso', description: 'Uniquement des comptes personnels' },
-  { value: 'solo', label: 'Solo', description: 'Utilisation individuelle' },
-]
 
 const COLORS = [
   { value: '#6C63FF', label: 'Indigo' },
@@ -21,6 +15,7 @@ const COLORS = [
 ]
 
 export default function OnboardingWizard({ onComplete }) {
+  const { t } = useTranslation()
   const setHousehold = useHouseholdStore((s) => s.setHousehold)
   const [step, setStep] = useState(1)
   const [form, setForm] = useState({
@@ -51,6 +46,13 @@ export default function OnboardingWizard({ onComplete }) {
     if (onComplete) await onComplete(household)
   }
 
+  const CONFIG_MODELS = [
+    { value: 'common_and_personal', label: t('onboarding.models.common_and_personal'), description: t('onboarding.models.common_and_personal_desc') },
+    { value: 'full_common', label: t('onboarding.models.full_common'), description: t('onboarding.models.full_common_desc') },
+    { value: 'full_personal', label: t('onboarding.models.full_personal'), description: t('onboarding.models.full_personal_desc') },
+    { value: 'solo', label: t('onboarding.models.solo'), description: t('onboarding.models.solo_desc') },
+  ]
+
   return (
     <div className="min-h-screen bg-bg-primary flex items-center justify-center px-4">
       <div className="w-full max-w-md">
@@ -62,7 +64,7 @@ export default function OnboardingWizard({ onComplete }) {
           <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-brand to-brand-light bg-clip-text text-transparent">
             Monest
           </h1>
-          <p className="text-text-secondary text-sm">Configurez votre budget</p>
+          <p className="text-text-secondary text-sm">{t('onboarding.setupBudget')}</p>
         </motion.div>
 
         {/* Progress */}
@@ -89,16 +91,16 @@ export default function OnboardingWizard({ onComplete }) {
               exit={{ opacity: 0, x: -20 }}
               className="space-y-6"
             >
-              <h2 className="text-xl font-semibold">Qui etes-vous ?</h2>
+              <h2 className="text-xl font-semibold">{t('onboarding.whoAreYou')}</h2>
               <Input
-                label="Votre prenom"
+                label={t('onboarding.yourFirstName')}
                 value={form.personAName}
                 onChange={(e) => update('personAName', e.target.value)}
                 placeholder="Ex: Fawsy"
                 autoFocus
               />
               <div>
-                <label className="block text-xs font-medium text-text-secondary mb-2">Votre couleur</label>
+                <label className="block text-xs font-medium text-text-secondary mb-2">{t('onboarding.yourColor')}</label>
                 <div className="flex gap-3">
                   {COLORS.map((c) => (
                     <button
@@ -116,7 +118,7 @@ export default function OnboardingWizard({ onComplete }) {
                 </div>
               </div>
               <Button onClick={() => setStep(2)} disabled={!form.personAName.trim()} className="w-full" size="lg">
-                Continuer
+                {t('common.continue')}
               </Button>
             </motion.div>
           )}
@@ -129,7 +131,7 @@ export default function OnboardingWizard({ onComplete }) {
               exit={{ opacity: 0, x: -20 }}
               className="space-y-6"
             >
-              <h2 className="text-xl font-semibold">Modele de comptes</h2>
+              <h2 className="text-xl font-semibold">{t('onboarding.accountModel')}</h2>
               <div className="space-y-2">
                 {CONFIG_MODELS.map((model) => (
                   <button
@@ -153,13 +155,13 @@ export default function OnboardingWizard({ onComplete }) {
               {form.configModel !== 'solo' && (
                 <>
                   <Input
-                    label="Prenom du/de la partenaire"
+                    label={t('onboarding.partnerFirstName')}
                     value={form.personBName}
                     onChange={(e) => update('personBName', e.target.value)}
                     placeholder="Ex: Carla"
                   />
                   <div>
-                    <label className="block text-xs font-medium text-text-secondary mb-2">Sa couleur</label>
+                    <label className="block text-xs font-medium text-text-secondary mb-2">{t('onboarding.partnerColor')}</label>
                     <div className="flex gap-3">
                       {COLORS.map((c) => (
                         <button
@@ -180,9 +182,9 @@ export default function OnboardingWizard({ onComplete }) {
               )}
 
               <div className="flex gap-3">
-                <Button variant="secondary" onClick={() => setStep(1)} className="flex-1">Retour</Button>
+                <Button variant="secondary" onClick={() => setStep(1)} className="flex-1">{t('common.back')}</Button>
                 <Button onClick={() => setStep(3)} disabled={form.configModel !== 'solo' && !form.personBName.trim()} className="flex-1">
-                  Continuer
+                  {t('common.continue')}
                 </Button>
               </div>
             </motion.div>
@@ -196,10 +198,10 @@ export default function OnboardingWizard({ onComplete }) {
               exit={{ opacity: 0, x: -20 }}
               className="space-y-6"
             >
-              <h2 className="text-xl font-semibold">Repartition des charges</h2>
+              <h2 className="text-xl font-semibold">{t('onboarding.chargeDistribution')}</h2>
 
               {form.configModel === 'solo' ? (
-                <p className="text-text-secondary text-sm">En mode solo, toutes les charges vous sont attribuees.</p>
+                <p className="text-text-secondary text-sm">{t('onboarding.soloMode')}</p>
               ) : (
                 <>
                   <div className="space-y-2">
@@ -216,9 +218,9 @@ export default function OnboardingWizard({ onComplete }) {
                             : 'border-white/[0.06] bg-bg-surface/60 hover:border-white/[0.12]'
                         }`}
                       >
-                        {mode === '50/50' && <><div className="font-medium text-sm">50/50</div><div className="text-xs text-text-muted mt-0.5">Partage egal</div></>}
-                        {mode === 'custom' && <><div className="font-medium text-sm">Pourcentage personnalise</div><div className="text-xs text-text-muted mt-0.5">Ex: 60/40, 70/30...</div></>}
-                        {mode === 'prorata' && <><div className="font-medium text-sm">Au prorata des salaires</div><div className="text-xs text-text-muted mt-0.5">Calcule automatiquement chaque mois</div></>}
+                        {mode === '50/50' && <><div className="font-medium text-sm">50/50</div><div className="text-xs text-text-muted mt-0.5">{t('onboarding.equalSplit')}</div></>}
+                        {mode === 'custom' && <><div className="font-medium text-sm">{t('onboarding.customPercentage')}</div><div className="text-xs text-text-muted mt-0.5">{t('onboarding.customExample')}</div></>}
+                        {mode === 'prorata' && <><div className="font-medium text-sm">{t('onboarding.prorata')}</div><div className="text-xs text-text-muted mt-0.5">{t('onboarding.prorataDescription')}</div></>}
                       </button>
                     ))}
                   </div>
@@ -226,7 +228,7 @@ export default function OnboardingWizard({ onComplete }) {
                   {form.splitMode === 'custom' && (
                     <div>
                       <label className="block text-xs font-medium text-text-secondary mb-2">
-                        Part de {form.personAName || 'Personne A'} : {Math.round(form.splitRatio * 100)}%
+                        {t('onboarding.shareOf', { name: form.personAName || t('common.personA'), percent: Math.round(form.splitRatio * 100) })}
                       </label>
                       <input
                         type="range"
@@ -246,8 +248,8 @@ export default function OnboardingWizard({ onComplete }) {
               )}
 
               <div className="flex gap-3">
-                <Button variant="secondary" onClick={() => setStep(2)} className="flex-1">Retour</Button>
-                <Button onClick={handleFinish} className="flex-1" size="lg">Commencer</Button>
+                <Button variant="secondary" onClick={() => setStep(2)} className="flex-1">{t('common.back')}</Button>
+                <Button onClick={handleFinish} className="flex-1" size="lg">{t('onboarding.start')}</Button>
               </div>
             </motion.div>
           )}

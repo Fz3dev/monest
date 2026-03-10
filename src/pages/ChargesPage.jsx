@@ -1,8 +1,10 @@
 import { useState, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence, useMotionValue, animate } from 'motion/react'
 import { useHouseholdStore } from '../stores/householdStore'
 import { useChargesStore } from '../stores/chargesStore'
-import { formatCurrency, CATEGORIES, FREQUENCIES, PAYER_OPTIONS } from '../utils/format'
+import { formatCurrency, PAYER_OPTIONS, getTranslatedCategories, getTranslatedFrequencies, getCategoryLabel, getFrequencyLabel } from '../utils/format'
+import { syncToSupabase } from '../lib/syncBridge'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
@@ -11,7 +13,7 @@ import Modal from '../components/ui/Modal'
 import { Plus, Trash2, ToggleLeft, ToggleRight, Edit3 } from 'lucide-react'
 import { toast } from 'sonner'
 
-function SwipeableCard({ onDelete, onEdit, children }) {
+function SwipeableCard({ onDelete, onEdit, children, t }) {
   const x = useMotionValue(0)
   const actionsWidth = onEdit ? -140 : -70
 
@@ -26,33 +28,14 @@ function SwipeableCard({ onDelete, onEdit, children }) {
   const close = () => animate(x, 0, { type: 'spring', stiffness: 400, damping: 35 })
 
   return (
-    <div className="relative group overflow-hidden rounded-2xl">
-      {/* Desktop: hover buttons */}
-      <div className="hidden lg:flex absolute inset-y-0 right-3 items-center gap-1.5 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
-        {onEdit && (
-          <button
-            onClick={onEdit}
-            className="p-2 rounded-lg bg-brand/10 hover:bg-brand/20 text-brand transition-colors"
-            aria-label="Modifier"
-          >
-            <Edit3 size={14} />
-          </button>
-        )}
-        <button
-          onClick={onDelete}
-          className="p-2 rounded-lg bg-danger/10 hover:bg-danger/20 text-danger transition-colors"
-          aria-label="Supprimer"
-        >
-          <Trash2 size={14} />
-        </button>
-      </div>
-      {/* Mobile: swipe actions */}
+    <div className="relative overflow-hidden rounded-2xl">
+      {/* Mobile swipe actions (hidden on desktop) */}
       <div className="absolute inset-y-0 right-0 flex lg:hidden">
         {onEdit && (
           <button
             onClick={() => { close(); setTimeout(onEdit, 150) }}
             className="w-[70px] bg-brand flex items-center justify-center"
-            aria-label="Modifier"
+            aria-label={t('common.edit')}
           >
             <Edit3 size={16} className="text-white" />
           </button>
@@ -60,7 +43,7 @@ function SwipeableCard({ onDelete, onEdit, children }) {
         <button
           onClick={() => { close(); setTimeout(onDelete, 150) }}
           className="w-[70px] bg-danger flex items-center justify-center"
-          aria-label="Supprimer"
+          aria-label={t('common.delete')}
         >
           <Trash2 size={16} className="text-white" />
         </button>
@@ -80,8 +63,10 @@ function SwipeableCard({ onDelete, onEdit, children }) {
   )
 }
 
-function ChargeForm({ initialValues, onSubmit, onCancel, household }) {
-  const payerOptions = PAYER_OPTIONS(household)
+function ChargeForm({ initialValues, onSubmit, onCancel, household, t }) {
+  const payerOptions = PAYER_OPTIONS(household, t)
+  const categories = getTranslatedCategories(t)
+  const frequencies = getTranslatedFrequencies(t)
   const [form, setForm] = useState(
     initialValues || {
       name: '',
@@ -108,13 +93,13 @@ function ChargeForm({ initialValues, onSubmit, onCancel, household }) {
 
   return (
     <div className="space-y-4">
-      <Input label="Nom" value={form.name} onChange={(e) => update('name', e.target.value)} placeholder="Ex: Pret maison" />
-      <Input label="Montant" type="number" value={form.amount} onChange={(e) => update('amount', e.target.value)} placeholder="0" suffix="€" />
-      <Select label="Qui paie ?" value={form.payer} onChange={(e) => update('payer', e.target.value)} options={payerOptions} />
-      <Select label="Frequence" value={form.frequency} onChange={(e) => update('frequency', e.target.value)} options={FREQUENCIES} />
+      <Input label={t('charges.formName')} value={form.name} onChange={(e) => update('name', e.target.value)} placeholder={t('charges.formNamePlaceholder')} />
+      <Input label={t('charges.formAmount')} type="number" value={form.amount} onChange={(e) => update('amount', e.target.value)} placeholder="0" suffix="\u20ac" />
+      <Select label={t('charges.formWhoPays')} value={form.payer} onChange={(e) => update('payer', e.target.value)} options={payerOptions} />
+      <Select label={t('charges.formFrequency')} value={form.frequency} onChange={(e) => update('frequency', e.target.value)} options={frequencies} />
       {showStartMonth && (
         <Input
-          label="Mois de debut (1-12)"
+          label={t('charges.formStartMonth')}
           type="number"
           min="1"
           max="12"
@@ -122,21 +107,21 @@ function ChargeForm({ initialValues, onSubmit, onCancel, household }) {
           onChange={(e) => update('startMonth', parseInt(e.target.value) || 1)}
         />
       )}
-      <Input label="Jour du mois" type="number" min="1" max="31" value={form.dayOfMonth} onChange={(e) => update('dayOfMonth', parseInt(e.target.value) || 1)} />
-      <Select label="Categorie" value={form.category} onChange={(e) => update('category', e.target.value)} options={CATEGORIES} />
-      <Input label="Decalage prelevement (mois)" type="number" min="0" value={form.paymentDelayMonths} onChange={(e) => update('paymentDelayMonths', parseInt(e.target.value) || 0)} />
+      <Input label={t('charges.formDayOfMonth')} type="number" min="1" max="31" value={form.dayOfMonth} onChange={(e) => update('dayOfMonth', parseInt(e.target.value) || 1)} />
+      <Select label={t('charges.formCategory')} value={form.category} onChange={(e) => update('category', e.target.value)} options={categories} />
+      <Input label={t('charges.formPaymentDelay')} type="number" min="0" value={form.paymentDelayMonths} onChange={(e) => update('paymentDelayMonths', parseInt(e.target.value) || 0)} />
       <div className="flex gap-3 pt-2">
-        <Button variant="secondary" onClick={onCancel} className="flex-1">Annuler</Button>
+        <Button variant="secondary" onClick={onCancel} className="flex-1">{t('common.cancel')}</Button>
         <Button onClick={handleSubmit} disabled={!form.name.trim() || !form.amount || submitting} className="flex-1">
-          {initialValues ? 'Modifier' : 'Ajouter'}
+          {initialValues ? t('common.edit') : t('common.add')}
         </Button>
       </div>
     </div>
   )
 }
 
-function InstallmentForm({ initialValues, onSubmit, onCancel, household }) {
-  const payerOptions = PAYER_OPTIONS(household)
+function InstallmentForm({ initialValues, onSubmit, onCancel, household, t }) {
+  const payerOptions = PAYER_OPTIONS(household, t)
   const [form, setForm] = useState(
     initialValues || {
       name: '',
@@ -173,28 +158,28 @@ function InstallmentForm({ initialValues, onSubmit, onCancel, household }) {
 
   return (
     <div className="space-y-4">
-      <Input label="Nom" value={form.name} onChange={(e) => update('name', e.target.value)} placeholder="Ex: Tennis Abel" />
-      <Input label="Montant total" type="number" value={form.totalAmount} onChange={(e) => update('totalAmount', e.target.value)} suffix="€" />
-      <Input label="Nombre de versements" type="number" min="2" value={form.installmentCount} onChange={(e) => update('installmentCount', parseInt(e.target.value) || 2)} />
-      <Input label="Montant par versement" type="number" value={form.installmentAmount} onChange={(e) => update('installmentAmount', e.target.value)} suffix="€" />
-      <Input label="Date du 1er versement" type="date" value={form.firstPaymentDate} onChange={(e) => update('firstPaymentDate', e.target.value)} />
-      <Select label="Qui paie ?" value={form.payer} onChange={(e) => update('payer', e.target.value)} options={payerOptions} />
+      <Input label={t('charges.formName')} value={form.name} onChange={(e) => update('name', e.target.value)} placeholder={t('charges.installmentNamePlaceholder')} />
+      <Input label={t('charges.formTotalAmount')} type="number" value={form.totalAmount} onChange={(e) => update('totalAmount', e.target.value)} suffix="\u20ac" />
+      <Input label={t('charges.formInstallmentCount')} type="number" min="2" value={form.installmentCount} onChange={(e) => update('installmentCount', parseInt(e.target.value) || 2)} />
+      <Input label={t('charges.formInstallmentAmount')} type="number" value={form.installmentAmount} onChange={(e) => update('installmentAmount', e.target.value)} suffix="\u20ac" />
+      <Input label={t('charges.formFirstPaymentDate')} type="date" value={form.firstPaymentDate} onChange={(e) => update('firstPaymentDate', e.target.value)} />
+      <Select label={t('charges.formWhoPays')} value={form.payer} onChange={(e) => update('payer', e.target.value)} options={payerOptions} />
       <div className="flex gap-3 pt-2">
-        <Button variant="secondary" onClick={onCancel} className="flex-1">Annuler</Button>
+        <Button variant="secondary" onClick={onCancel} className="flex-1">{t('common.cancel')}</Button>
         <Button
           onClick={handleSubmit}
           disabled={!form.name.trim() || !form.totalAmount || !form.firstPaymentDate || submitting}
           className="flex-1"
         >
-          {initialValues ? 'Modifier' : 'Ajouter'}
+          {initialValues ? t('common.edit') : t('common.add')}
         </Button>
       </div>
     </div>
   )
 }
 
-function PlannedExpenseForm({ initialValues, onSubmit, onCancel, household }) {
-  const payerOptions = PAYER_OPTIONS(household)
+function PlannedExpenseForm({ initialValues, onSubmit, onCancel, household, t }) {
+  const payerOptions = PAYER_OPTIONS(household, t)
   const [form, setForm] = useState(
     initialValues || {
       name: '',
@@ -216,19 +201,19 @@ function PlannedExpenseForm({ initialValues, onSubmit, onCancel, household }) {
 
   return (
     <div className="space-y-4">
-      <Input label="Nom" value={form.name} onChange={(e) => update('name', e.target.value)} placeholder="Ex: Vacances Thailande" />
-      <Input label="Montant estime" type="number" value={form.estimatedAmount} onChange={(e) => update('estimatedAmount', e.target.value)} suffix="€" />
-      <Input label="Mois cible" type="month" value={form.targetMonth} onChange={(e) => update('targetMonth', e.target.value)} />
-      <Select label="Qui paie ?" value={form.payer} onChange={(e) => update('payer', e.target.value)} options={payerOptions} />
-      <Input label="Note" value={form.note} onChange={(e) => update('note', e.target.value)} placeholder="Details optionnels..." />
+      <Input label={t('charges.formName')} value={form.name} onChange={(e) => update('name', e.target.value)} placeholder={t('charges.plannedNamePlaceholder')} />
+      <Input label={t('charges.formEstimatedAmount')} type="number" value={form.estimatedAmount} onChange={(e) => update('estimatedAmount', e.target.value)} suffix="\u20ac" />
+      <Input label={t('charges.formTargetMonth')} type="month" value={form.targetMonth} onChange={(e) => update('targetMonth', e.target.value)} />
+      <Select label={t('charges.formWhoPays')} value={form.payer} onChange={(e) => update('payer', e.target.value)} options={payerOptions} />
+      <Input label={t('charges.formNote')} value={form.note} onChange={(e) => update('note', e.target.value)} placeholder={t('charges.formNotePlaceholder')} />
       <div className="flex gap-3 pt-2">
-        <Button variant="secondary" onClick={onCancel} className="flex-1">Annuler</Button>
+        <Button variant="secondary" onClick={onCancel} className="flex-1">{t('common.cancel')}</Button>
         <Button
           onClick={handleSubmit}
           disabled={!form.name.trim() || !form.estimatedAmount || !form.targetMonth || submitting}
           className="flex-1"
         >
-          {initialValues ? 'Modifier' : 'Ajouter'}
+          {initialValues ? t('common.edit') : t('common.add')}
         </Button>
       </div>
     </div>
@@ -236,6 +221,7 @@ function PlannedExpenseForm({ initialValues, onSubmit, onCancel, household }) {
 }
 
 export default function ChargesPage() {
+  const { t } = useTranslation()
   const household = useHouseholdStore((s) => s.household)
   const {
     fixedCharges, installmentPayments, plannedExpenses,
@@ -248,9 +234,9 @@ export default function ChargesPage() {
   const [tab, setTab] = useState('fixed')
 
   const tabs = [
-    { id: 'fixed', label: 'Fixes', count: fixedCharges.length },
-    { id: 'installment', label: 'Etalees', count: installmentPayments.length },
-    { id: 'planned', label: 'Prevues', count: plannedExpenses.length },
+    { id: 'fixed', label: t('charges.fixedTab'), count: fixedCharges.length },
+    { id: 'installment', label: t('charges.installmentTab'), count: installmentPayments.length },
+    { id: 'planned', label: t('charges.plannedTab'), count: plannedExpenses.length },
   ]
 
   const totalMonthly = fixedCharges
@@ -266,7 +252,7 @@ export default function ChargesPage() {
   const getPayerLabel = (payer) => {
     if (payer === 'person_a') return household?.personAName || 'A'
     if (payer === 'person_b') return household?.personBName || 'B'
-    return 'Commun'
+    return t('payer.common')
   }
 
   const getPayerColor = (payer) => {
@@ -275,12 +261,29 @@ export default function ChargesPage() {
     return '#6C63FF'
   }
 
-  const handleSwipeDelete = useCallback((type, id, name) => {
+  const handleDelete = useCallback((type, id, name) => {
+    const tableMap = { fixed: 'fixedCharges', installment: 'installmentPayments', planned: 'plannedExpenses' }
+    const supaTableMap = { fixed: 'fixed_charges', installment: 'installment_payments', planned: 'planned_expenses' }
+    const storeKey = tableMap[type]
+    const item = useChargesStore.getState()[storeKey].find((c) => c.id === id)
+
     if (type === 'fixed') removeFixedCharge(id)
     else if (type === 'installment') removeInstallment(id)
     else removePlannedExpense(id)
-    toast.success(`"${name}" supprime`)
-  }, [removeFixedCharge, removeInstallment, removePlannedExpense])
+
+    toast(t('charges.deleted', { name }), {
+      action: item ? {
+        label: t('common.cancel'),
+        onClick: () => {
+          useChargesStore.setState((state) => ({
+            [storeKey]: [...state[storeKey], item],
+          }))
+          syncToSupabase(supaTableMap[type], item)
+          toast.success(t('charges.restored', { name }))
+        },
+      } : undefined,
+    })
+  }, [removeFixedCharge, removeInstallment, removePlannedExpense, t])
 
   return (
     <div className="space-y-4">
@@ -290,10 +293,10 @@ export default function ChargesPage() {
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
         >
-          Charges
+          {t('charges.title')}
         </motion.h1>
         <Button size="sm" onClick={() => setModal({ type: tab })}>
-          <Plus size={14} className="inline mr-1" /> Ajouter
+          <Plus size={14} className="inline mr-1" /> {t('common.add')}
         </Button>
       </div>
 
@@ -301,7 +304,7 @@ export default function ChargesPage() {
       {fixedCharges.length > 0 && (
         <Card className="glass !border-brand/10">
           <div className="flex justify-between items-center">
-            <span className="text-xs text-text-secondary">Total mensualise</span>
+            <span className="text-xs text-text-secondary">{t('charges.totalMonthly')}</span>
             <span className="text-lg font-bold text-brand tabular-nums">{formatCurrency(Math.round(totalMonthly))}</span>
           </div>
         </Card>
@@ -309,52 +312,81 @@ export default function ChargesPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-bg-surface/60 rounded-xl p-1">
-        {tabs.map((t) => (
+        {tabs.map((tabItem) => (
           <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
+            key={tabItem.id}
+            onClick={() => setTab(tabItem.id)}
             className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-              tab === t.id ? 'bg-brand text-white shadow-lg shadow-brand/20' : 'text-text-muted hover:text-white'
+              tab === tabItem.id ? 'bg-brand text-white shadow-lg shadow-brand/20' : 'text-text-muted hover:text-white'
             }`}
           >
-            {t.label} ({t.count})
+            {tabItem.label} ({tabItem.count})
           </button>
         ))}
       </div>
 
-      <p className="text-[10px] text-text-muted text-center lg:hidden">Glissez vers la gauche pour modifier ou supprimer</p>
+      <p className="text-[10px] text-text-muted text-center lg:hidden">{t('charges.swipeHint')}</p>
 
       {/* Fixed charges */}
       <AnimatePresence mode="wait">
         {tab === 'fixed' && (
           <motion.div key="fixed" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-2">
             {fixedCharges.length === 0 && (
-              <Card><p className="text-center text-text-muted py-6 text-sm">Aucune charge fixe.</p></Card>
+              <Card><p className="text-center text-text-muted py-6 text-sm">{t('charges.noFixed')}</p></Card>
             )}
             {fixedCharges.map((charge) => (
               <SwipeableCard
                 key={charge.id}
-                onDelete={() => handleSwipeDelete('fixed', charge.id, charge.name)}
+                onDelete={() => handleDelete('fixed', charge.id, charge.name)}
                 onEdit={() => setModal({ type: 'fixed', editId: charge.id })}
+                t={t}
               >
                 <Card className={`${!charge.active ? 'opacity-40' : ''}`} animate={false}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="flex-1 min-w-0 lg:cursor-pointer"
+                      onClick={() => setModal({ type: 'fixed', editId: charge.id })}
+                    >
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getPayerColor(charge.payer) }} />
                         <span className="font-medium text-sm truncate">{charge.name}</span>
                         {charge.category && charge.category !== 'autre' && (
                           <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/[0.06] text-text-muted flex-shrink-0">
-                            {CATEGORIES.find((c) => c.value === charge.category)?.label}
+                            {getCategoryLabel(charge.category)}
                           </span>
                         )}
                       </div>
                       <div className="text-xs text-text-muted mt-1">
-                        {formatCurrency(charge.amount)} · {getPayerLabel(charge.payer)} · {FREQUENCIES.find((f) => f.value === charge.frequency)?.label}
+                        {formatCurrency(charge.amount)} · {getPayerLabel(charge.payer)} · {getFrequencyLabel(charge.frequency)}
                       </div>
                     </div>
-                    <button onClick={() => toggleFixedCharge(charge.id)} className="text-text-muted hover:text-white p-2" aria-label={charge.active ? 'Desactiver' : 'Activer'}>
-                      {charge.active ? <ToggleRight size={20} className="text-success" /> : <ToggleLeft size={20} />}
+                    {/* Desktop: toggle + edit + delete inline */}
+                    <div className="hidden lg:flex items-center gap-2">
+                      <button
+                        onClick={() => toggleFixedCharge(charge.id)}
+                        className="p-1.5 rounded-lg text-text-muted hover:text-white transition-colors"
+                        aria-label={charge.active ? t('charges.deactivate') : t('charges.activate')}
+                      >
+                        {charge.active ? <ToggleRight size={28} className="text-success" /> : <ToggleLeft size={28} />}
+                      </button>
+                      <button
+                        onClick={() => setModal({ type: 'fixed', editId: charge.id })}
+                        className="p-1.5 rounded-lg text-text-muted hover:text-brand transition-colors"
+                        aria-label={t('common.edit')}
+                      >
+                        <Edit3 size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete('fixed', charge.id, charge.name)}
+                        className="p-1.5 rounded-lg text-text-muted hover:text-danger transition-colors"
+                        aria-label={t('common.delete')}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                    {/* Mobile: toggle only */}
+                    <button onClick={() => toggleFixedCharge(charge.id)} className="text-text-muted hover:text-white p-2 lg:hidden" aria-label={charge.active ? t('charges.deactivate') : t('charges.activate')}>
+                      {charge.active ? <ToggleRight size={24} className="text-success" /> : <ToggleLeft size={24} />}
                     </button>
                   </div>
                 </Card>
@@ -366,24 +398,45 @@ export default function ChargesPage() {
         {tab === 'installment' && (
           <motion.div key="installment" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-2">
             {installmentPayments.length === 0 && (
-              <Card><p className="text-center text-text-muted py-6 text-sm">Aucun paiement etale.</p></Card>
+              <Card><p className="text-center text-text-muted py-6 text-sm">{t('charges.noInstallment')}</p></Card>
             )}
             {installmentPayments.map((payment) => (
               <SwipeableCard
                 key={payment.id}
-                onDelete={() => handleSwipeDelete('installment', payment.id, payment.name)}
+                onDelete={() => handleDelete('installment', payment.id, payment.name)}
                 onEdit={() => setModal({ type: 'installment', editId: payment.id })}
+                t={t}
               >
                 <Card animate={false}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="flex-1 min-w-0 lg:cursor-pointer"
+                      onClick={() => setModal({ type: 'installment', editId: payment.id })}
+                    >
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getPayerColor(payment.payer) }} />
                         <span className="font-medium text-sm truncate">{payment.name}</span>
                       </div>
                       <div className="text-xs text-text-muted mt-1">
-                        {formatCurrency(payment.totalAmount)} en {payment.installmentCount}x ({formatCurrency(payment.installmentAmount)}/mois)
+                        {t('charges.installmentSummary', { total: formatCurrency(payment.totalAmount), count: payment.installmentCount, monthly: formatCurrency(payment.installmentAmount) })}
                       </div>
+                    </div>
+                    {/* Desktop: edit + delete inline */}
+                    <div className="hidden lg:flex items-center gap-1">
+                      <button
+                        onClick={() => setModal({ type: 'installment', editId: payment.id })}
+                        className="p-1.5 rounded-lg text-text-muted hover:text-brand transition-colors"
+                        aria-label={t('common.edit')}
+                      >
+                        <Edit3 size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete('installment', payment.id, payment.name)}
+                        className="p-1.5 rounded-lg text-text-muted hover:text-danger transition-colors"
+                        aria-label={t('common.delete')}
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   </div>
                 </Card>
@@ -395,17 +448,21 @@ export default function ChargesPage() {
         {tab === 'planned' && (
           <motion.div key="planned" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-2">
             {plannedExpenses.length === 0 && (
-              <Card><p className="text-center text-text-muted py-6 text-sm">Aucune depense planifiee.</p></Card>
+              <Card><p className="text-center text-text-muted py-6 text-sm">{t('charges.noPlanned')}</p></Card>
             )}
             {plannedExpenses.map((expense) => (
               <SwipeableCard
                 key={expense.id}
-                onDelete={() => handleSwipeDelete('planned', expense.id, expense.name)}
+                onDelete={() => handleDelete('planned', expense.id, expense.name)}
                 onEdit={() => setModal({ type: 'planned', editId: expense.id })}
+                t={t}
               >
                 <Card animate={false}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="flex-1 min-w-0 lg:cursor-pointer"
+                      onClick={() => setModal({ type: 'planned', editId: expense.id })}
+                    >
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getPayerColor(expense.payer) }} />
                         <span className="font-medium text-sm truncate">{expense.name}</span>
@@ -414,6 +471,23 @@ export default function ChargesPage() {
                         ~{formatCurrency(expense.estimatedAmount)} · {expense.targetMonth}
                       </div>
                       {expense.note && <div className="text-[10px] text-text-muted mt-0.5">{expense.note}</div>}
+                    </div>
+                    {/* Desktop: edit + delete inline */}
+                    <div className="hidden lg:flex items-center gap-1">
+                      <button
+                        onClick={() => setModal({ type: 'planned', editId: expense.id })}
+                        className="p-1.5 rounded-lg text-text-muted hover:text-brand transition-colors"
+                        aria-label={t('common.edit')}
+                      >
+                        <Edit3 size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete('planned', expense.id, expense.name)}
+                        className="p-1.5 rounded-lg text-text-muted hover:text-danger transition-colors"
+                        aria-label={t('common.delete')}
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   </div>
                 </Card>
@@ -424,42 +498,45 @@ export default function ChargesPage() {
       </AnimatePresence>
 
       {/* Modals */}
-      <Modal isOpen={modal?.type === 'fixed'} onClose={() => setModal(null)} title={modal?.editId ? 'Modifier la charge' : 'Nouvelle charge fixe'}>
+      <Modal isOpen={modal?.type === 'fixed'} onClose={() => setModal(null)} title={modal?.editId ? t('charges.editFixedTitle') : t('charges.newFixedTitle')}>
         <ChargeForm
           initialValues={modal?.editId ? fixedCharges.find((c) => c.id === modal.editId) : undefined}
           onSubmit={(data) => {
             if (modal?.editId) updateFixedCharge(modal.editId, data)
-            else { addFixedCharge(data); toast.success(`"${data.name}" ajoutee`) }
+            else { addFixedCharge(data); toast.success(t('charges.added', { name: data.name })) }
             setModal(null)
           }}
           onCancel={() => setModal(null)}
           household={household}
+          t={t}
         />
       </Modal>
 
-      <Modal isOpen={modal?.type === 'installment'} onClose={() => setModal(null)} title={modal?.editId ? "Modifier l'echeancier" : 'Nouveau paiement etale'}>
+      <Modal isOpen={modal?.type === 'installment'} onClose={() => setModal(null)} title={modal?.editId ? t('charges.editInstallmentTitle') : t('charges.newInstallmentTitle')}>
         <InstallmentForm
           initialValues={modal?.editId ? installmentPayments.find((p) => p.id === modal.editId) : undefined}
           onSubmit={(data) => {
             if (modal?.editId) updateInstallment(modal.editId, data)
-            else { addInstallment(data); toast.success(`"${data.name}" ajoute`) }
+            else { addInstallment(data); toast.success(t('charges.installmentAdded', { name: data.name })) }
             setModal(null)
           }}
           onCancel={() => setModal(null)}
           household={household}
+          t={t}
         />
       </Modal>
 
-      <Modal isOpen={modal?.type === 'planned'} onClose={() => setModal(null)} title={modal?.editId ? 'Modifier la depense' : 'Nouvelle depense planifiee'}>
+      <Modal isOpen={modal?.type === 'planned'} onClose={() => setModal(null)} title={modal?.editId ? t('charges.editPlannedTitle') : t('charges.newPlannedTitle')}>
         <PlannedExpenseForm
           initialValues={modal?.editId ? plannedExpenses.find((e) => e.id === modal.editId) : undefined}
           onSubmit={(data) => {
             if (modal?.editId) updatePlannedExpense(modal.editId, data)
-            else { addPlannedExpense(data); toast.success(`"${data.name}" ajoutee`) }
+            else { addPlannedExpense(data); toast.success(t('charges.added', { name: data.name })) }
             setModal(null)
           }}
           onCancel={() => setModal(null)}
           household={household}
+          t={t}
         />
       </Modal>
     </div>

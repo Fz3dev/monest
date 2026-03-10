@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
 import { useHouseholdStore } from '../stores/householdStore'
 import { useChargesStore } from '../stores/chargesStore'
@@ -13,6 +14,7 @@ import { ChevronLeft, ChevronRight, Wallet, TrendingDown, AlertTriangle, CheckCi
 import { addMonths, subMonths, format } from 'date-fns'
 
 export default function MonthlyPage() {
+  const { t } = useTranslation()
   const household = useHouseholdStore((s) => s.household)
   const { fixedCharges, installmentPayments, plannedExpenses } = useChargesStore()
   const entries = useMonthlyStore((s) => s.entries)
@@ -62,7 +64,7 @@ export default function MonthlyPage() {
         <button
           onClick={() => navigateMonth('prev')}
           className="p-2 text-text-muted hover:text-white rounded-xl hover:bg-white/[0.06] transition-colors"
-          aria-label="Mois precedent"
+          aria-label={t('expenses.prevMonth')}
         >
           <ChevronLeft size={22} />
         </button>
@@ -81,7 +83,7 @@ export default function MonthlyPage() {
         <button
           onClick={() => navigateMonth('next')}
           className="p-2 text-text-muted hover:text-white rounded-xl hover:bg-white/[0.06] transition-colors"
-          aria-label="Mois suivant"
+          aria-label={t('expenses.nextMonth')}
         >
           <ChevronRight size={22} />
         </button>
@@ -90,24 +92,24 @@ export default function MonthlyPage() {
       {/* Revenus + Solde — side by side on desktop */}
       <div className="lg:grid lg:grid-cols-2 lg:gap-4 space-y-4 lg:space-y-0">
         <Card>
-          <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">Revenus</h2>
+          <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">{t('monthly.income')}</h2>
           <div className="space-y-3">
             <Input
-              label={`Salaire ${household?.personAName || 'Personne A'}`}
+              label={t('monthly.salary', { name: household?.personAName || t('common.personA') })}
               type="number"
               value={entry?.incomeA || ''}
               onChange={(e) => handleIncomeChange('incomeA', e.target.value)}
               placeholder="0"
-              suffix="€"
+              suffix="\u20ac"
             />
             {household?.personBName && (
               <Input
-                label={`Salaire ${household.personBName}`}
+                label={t('monthly.salary', { name: household.personBName })}
                 type="number"
                 value={entry?.incomeB || ''}
                 onChange={(e) => handleIncomeChange('incomeB', e.target.value)}
                 placeholder="0"
-                suffix="€"
+                suffix="\u20ac"
               />
             )}
           </div>
@@ -116,34 +118,34 @@ export default function MonthlyPage() {
         <Card>
           <div className="flex items-center gap-2 mb-3">
             <AlertTriangle size={12} className="text-warning" />
-            <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Solde avant salaire</h2>
+            <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">{t('monthly.balanceBefore')}</h2>
             <div className="relative group ml-auto">
               <span className="text-text-muted text-[10px] cursor-help border border-white/10 rounded-full w-4 h-4 flex items-center justify-center hover:text-text-secondary transition-colors">?</span>
               <div className="absolute right-0 top-6 w-56 p-2.5 rounded-xl bg-bg-elevated border border-white/10 text-[11px] text-text-muted shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-20">
-                Si votre compte est a decouvert avant de recevoir le salaire, entrez le montant negatif (ex: -200).
+                {t('monthly.balanceBeforeHint')}
               </div>
             </div>
           </div>
           <p className="text-[11px] text-text-muted mb-3 lg:hidden">
-            Si votre compte est a decouvert avant le salaire, entrez un montant negatif.
+            {t('monthly.balanceBeforeHintMobile')}
           </p>
           <div className="space-y-3">
             <Input
-              label={`Solde ${household?.personAName || 'Personne A'}`}
+              label={t('monthly.balance', { name: household?.personAName || t('common.personA') })}
               type="number"
               value={entry?.startingBalanceA ?? ''}
               onChange={(e) => handleIncomeChange('startingBalanceA', e.target.value)}
               placeholder="0"
-              suffix="€"
+              suffix="\u20ac"
             />
             {household?.personBName && (
               <Input
-                label={`Solde ${household.personBName}`}
+                label={t('monthly.balance', { name: household.personBName })}
                 type="number"
                 value={entry?.startingBalanceB ?? ''}
                 onChange={(e) => handleIncomeChange('startingBalanceB', e.target.value)}
                 placeholder="0"
-                suffix="€"
+                suffix="\u20ac"
               />
             )}
           </div>
@@ -152,7 +154,7 @@ export default function MonthlyPage() {
 
       {/* Charges */}
       <Card>
-        <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">Charges du mois</h2>
+        <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">{t('monthly.monthCharges')}</h2>
         <div className="space-y-1">
           {result.charges.map((charge) => (
             <div key={charge.id} className="flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0">
@@ -182,7 +184,7 @@ export default function MonthlyPage() {
                     }
                     className="w-24 text-right bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-brand/50"
                   />
-                  <span className="text-xs text-text-muted">€</span>
+                  <span className="text-xs text-text-muted">\u20ac</span>
                 </div>
               ) : (
                 <span className="text-sm font-medium tabular-nums">{formatCurrency(charge.amount)}</span>
@@ -192,7 +194,7 @@ export default function MonthlyPage() {
 
           {result.charges.length === 0 && (
             <p className="text-sm text-text-muted text-center py-6">
-              Aucune charge configuree. Ajoutez-en dans l'onglet Charges.
+              {t('monthly.noCharges')}
             </p>
           )}
         </div>
@@ -201,14 +203,14 @@ export default function MonthlyPage() {
       {/* Reste a vivre + Repartition — side by side on desktop */}
       <div className="lg:grid lg:grid-cols-2 lg:gap-4 space-y-4 lg:space-y-0">
       <Card className="glass !border-brand/20">
-        <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">Reste a vivre</h2>
+        <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">{t('monthly.remainingToLive')}</h2>
         <div className="space-y-3">
           {/* Income vs charges bar */}
           {(result.incomeA > 0 || result.incomeB > 0) && (
             <div className="space-y-1.5 mb-2">
               <div className="flex justify-between text-[10px] text-text-muted">
-                <div className="flex items-center gap-1"><Wallet size={10} /> Revenus</div>
-                <div className="flex items-center gap-1"><TrendingDown size={10} /> Charges</div>
+                <div className="flex items-center gap-1"><Wallet size={10} /> {t('monthly.incomeLabel')}</div>
+                <div className="flex items-center gap-1"><TrendingDown size={10} /> {t('monthly.chargesLabel')}</div>
               </div>
               <ProgressBar
                 value={result.totalCommon + result.personalACharges + result.personalBCharges}
@@ -247,7 +249,7 @@ export default function MonthlyPage() {
             </div>
           )}
           <div className="border-t border-white/[0.06] pt-3 flex justify-between items-center">
-            <span className="text-text-secondary font-medium">Foyer</span>
+            <span className="text-text-secondary font-medium">{t('monthly.household')}</span>
             <span className={`text-2xl font-bold ${getResteColor(result.resteFoyer)}`}>
               <AnimatedNumber value={result.resteFoyer} format={(v) => formatCurrency(Math.round(v))} />
             </span>
@@ -258,21 +260,21 @@ export default function MonthlyPage() {
       {/* Repartition */}
       {household?.personBName ? (
         <Card>
-          <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">Repartition</h2>
+          <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">{t('monthly.distribution')}</h2>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between text-text-muted">
-              <span>Charges communes</span>
+              <span>{t('monthly.commonCharges')}</span>
               <span className="tabular-nums">{formatCurrency(result.totalCommon)}</span>
             </div>
             <div className="flex justify-between">
               <span style={{ color: household?.personAColor }}>
-                Part {household.personAName} ({Math.round((result.ratio || 0.5) * 100)}%)
+                {t('monthly.share', { name: household.personAName, percent: Math.round((result.ratio || 0.5) * 100) })}
               </span>
               <span className="tabular-nums">{formatCurrency(result.shareA)}</span>
             </div>
             <div className="flex justify-between">
               <span style={{ color: household?.personBColor }}>
-                Part {household.personBName} ({Math.round((1 - (result.ratio || 0.5)) * 100)}%)
+                {t('monthly.share', { name: household.personBName, percent: Math.round((1 - (result.ratio || 0.5)) * 100) })}
               </span>
               <span className="tabular-nums">{formatCurrency(result.shareB)}</span>
             </div>
@@ -286,27 +288,27 @@ export default function MonthlyPage() {
         <Card>
           <div className="flex items-center gap-2 mb-3">
             <CheckCircle2 size={12} className="text-success" />
-            <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Virements effectues</h2>
+            <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">{t('monthly.transfersDone')}</h2>
           </div>
           <p className="text-[11px] text-text-muted mb-3">
-            Notez ce que chacun a deja vire sur le compte commun ce mois-ci.
+            {t('monthly.transfersHint')}
           </p>
           <div className="space-y-3">
             <Input
-              label={`Vire par ${household.personAName}`}
+              label={t('monthly.transferredBy', { name: household.personAName })}
               type="number"
               value={entry?.transferredA ?? ''}
               onChange={(e) => handleIncomeChange('transferredA', e.target.value)}
               placeholder="0"
-              suffix="€"
+              suffix="\u20ac"
             />
             <Input
-              label={`Vire par ${household.personBName}`}
+              label={t('monthly.transferredBy', { name: household.personBName })}
               type="number"
               value={entry?.transferredB ?? ''}
               onChange={(e) => handleIncomeChange('transferredB', e.target.value)}
               placeholder="0"
-              suffix="€"
+              suffix="\u20ac"
             />
           </div>
 
@@ -323,18 +325,18 @@ export default function MonthlyPage() {
                 <div className="flex items-center gap-2 mb-2">
                   <ArrowUpDown size={12} className={hasRegul ? 'text-warning' : 'text-success'} />
                   <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
-                    {hasRegul ? 'Regularisation' : 'A jour'}
+                    {hasRegul ? t('monthly.regularization') : t('monthly.upToDate')}
                   </span>
                 </div>
                 {!hasRegul ? (
-                  <p className="text-sm text-success">Les virements correspondent aux parts. Rien a regulariser.</p>
+                  <p className="text-sm text-success">{t('monthly.transfersMatch')}</p>
                 ) : (
                   <div className="space-y-2">
                     {Math.abs(regulA) >= 0.01 && (
                       <div className="flex justify-between items-center text-sm">
                         <span style={{ color: household.personAColor }}>{household.personAName}</span>
                         <span className={`font-semibold ${regulA > 0 ? 'text-danger' : 'text-success'}`}>
-                          {regulA > 0 ? `doit remettre ${formatCurrency(regulA)}` : `a trop vire de ${formatCurrency(Math.abs(regulA))}`}
+                          {regulA > 0 ? t('monthly.mustTransfer', { amount: formatCurrency(regulA) }) : t('monthly.overTransferred', { amount: formatCurrency(Math.abs(regulA)) })}
                         </span>
                       </div>
                     )}
@@ -342,7 +344,7 @@ export default function MonthlyPage() {
                       <div className="flex justify-between items-center text-sm">
                         <span style={{ color: household.personBColor }}>{household.personBName}</span>
                         <span className={`font-semibold ${regulB > 0 ? 'text-danger' : 'text-success'}`}>
-                          {regulB > 0 ? `doit remettre ${formatCurrency(regulB)}` : `a trop vire de ${formatCurrency(Math.abs(regulB))}`}
+                          {regulB > 0 ? t('monthly.mustTransfer', { amount: formatCurrency(regulB) }) : t('monthly.overTransferred', { amount: formatCurrency(Math.abs(regulB)) })}
                         </span>
                       </div>
                     )}

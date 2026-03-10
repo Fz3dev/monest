@@ -1,3 +1,5 @@
+import i18n from '../i18n'
+
 const currencyFormatter = new Intl.NumberFormat('fr-FR', {
   style: 'currency',
   currency: 'EUR',
@@ -16,24 +18,16 @@ export function formatCurrency(amount, decimals = false) {
   return decimals ? currencyFormatterDecimals.format(amount) : currencyFormatter.format(amount)
 }
 
-const MONTH_NAMES = [
-  'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
-]
-
-const SHORT_MONTH_NAMES = [
-  'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun',
-  'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc',
-]
-
 export function formatMonth(monthStr) {
   const [year, month] = monthStr.split('-')
-  return `${MONTH_NAMES[parseInt(month, 10) - 1]} ${year}`
+  const months = i18n.t('months.full', { returnObjects: true })
+  return `${months[parseInt(month, 10) - 1]} ${year}`
 }
 
 export function formatMonthShort(monthStr) {
   const [year, month] = monthStr.split('-')
-  return `${SHORT_MONTH_NAMES[parseInt(month, 10) - 1]} ${year.slice(2)}`
+  const months = i18n.t('months.short', { returnObjects: true })
+  return `${months[parseInt(month, 10) - 1]} ${year.slice(2)}`
 }
 
 export function getCurrentMonth() {
@@ -42,33 +36,55 @@ export function getCurrentMonth() {
 }
 
 export const CATEGORIES = [
-  { value: 'logement', label: 'Logement' },
-  { value: 'assurance', label: 'Assurance' },
-  { value: 'credit', label: 'Crédit' },
-  { value: 'abonnement', label: 'Abonnement' },
-  { value: 'impot', label: 'Impôt' },
-  { value: 'transport', label: 'Transport' },
-  { value: 'alimentation', label: 'Alimentation' },
-  { value: 'sante', label: 'Santé' },
-  { value: 'education', label: 'Éducation' },
-  { value: 'loisirs', label: 'Loisirs' },
-  { value: 'enfants', label: 'Enfants' },
-  { value: 'autre', label: 'Autre' },
+  { value: 'logement', labelKey: 'categories.logement' },
+  { value: 'assurance', labelKey: 'categories.assurance' },
+  { value: 'credit', labelKey: 'categories.credit' },
+  { value: 'abonnement', labelKey: 'categories.abonnement' },
+  { value: 'impot', labelKey: 'categories.impot' },
+  { value: 'transport', labelKey: 'categories.transport' },
+  { value: 'alimentation', labelKey: 'categories.alimentation' },
+  { value: 'sante', labelKey: 'categories.sante' },
+  { value: 'education', labelKey: 'categories.education' },
+  { value: 'loisirs', labelKey: 'categories.loisirs' },
+  { value: 'enfants', labelKey: 'categories.enfants' },
+  { value: 'autre', labelKey: 'categories.autre' },
 ]
+
+// Helper to get translated label for a category
+export function getCategoryLabel(value) {
+  const cat = CATEGORIES.find((c) => c.value === value)
+  return cat ? i18n.t(cat.labelKey) : value
+}
+
+// Returns CATEGORIES with translated labels (for Select components)
+export function getTranslatedCategories(t) {
+  return CATEGORIES.map((c) => ({ value: c.value, label: t(c.labelKey) }))
+}
 
 export const FREQUENCIES = [
-  { value: 'monthly', label: 'Mensuelle' },
-  { value: 'bimonthly', label: 'Bimestrielle' },
-  { value: 'quarterly', label: 'Trimestrielle' },
-  { value: 'annual', label: 'Annuelle' },
+  { value: 'monthly', labelKey: 'frequencies.monthly' },
+  { value: 'bimonthly', labelKey: 'frequencies.bimonthly' },
+  { value: 'quarterly', labelKey: 'frequencies.quarterly' },
+  { value: 'annual', labelKey: 'frequencies.annual' },
 ]
 
-export const PAYER_OPTIONS = (household) => {
+// Helper to get translated label for a frequency
+export function getFrequencyLabel(value) {
+  const freq = FREQUENCIES.find((f) => f.value === value)
+  return freq ? i18n.t(freq.labelKey) : value
+}
+
+// Returns FREQUENCIES with translated labels (for Select components)
+export function getTranslatedFrequencies(t) {
+  return FREQUENCIES.map((f) => ({ value: f.value, label: t(f.labelKey) }))
+}
+
+export const PAYER_OPTIONS = (household, t) => {
   const options = []
   if (household?.configModel !== 'solo' && household?.configModel !== 'full_personal') {
-    options.push({ value: 'common', label: 'Compte commun' })
+    options.push({ value: 'common', label: t ? t('payer.commonAccount') : 'Compte commun' })
   }
-  options.push({ value: 'person_a', label: household?.personAName || 'Personne A' })
+  options.push({ value: 'person_a', label: household?.personAName || (t ? t('common.personA') : 'Personne A') })
   if (household?.personBName) {
     options.push({ value: 'person_b', label: household.personBName })
   }

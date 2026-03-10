@@ -1,6 +1,7 @@
 import { subMonths, format } from 'date-fns'
 import { computeMonth } from './calculations'
-import { formatCurrency } from './format'
+import { formatCurrency, formatMonth } from './format'
+import i18n from '../i18n'
 
 export function generateInsights(currentMonth, household, fixedCharges, installments, planned, entries) {
   if (!household) return []
@@ -24,22 +25,22 @@ export function generateInsights(currentMonth, household, fixedCharges, installm
     if (savingsRate >= 30) {
       insights.push({
         type: 'positive',
-        message: `Excellent ! Vous epargnez ${savingsRate}% de vos revenus ce mois.`,
+        message: i18n.t('insights.excellentSavings', { rate: savingsRate }),
       })
     } else if (savingsRate >= 15) {
       insights.push({
         type: 'positive',
-        message: `Bon rythme d'epargne : ${savingsRate}% de vos revenus preserves.`,
+        message: i18n.t('insights.goodSavings', { rate: savingsRate }),
       })
     } else if (savingsRate >= 0) {
       insights.push({
         type: 'warning',
-        message: `Taux d'epargne faible (${savingsRate}%). Objectif recommande : 20%.`,
+        message: i18n.t('insights.lowSavings', { rate: savingsRate }),
       })
     } else {
       insights.push({
         type: 'danger',
-        message: `Deficit de ${formatCurrency(Math.abs(result.resteFoyer))} ce mois. Revenus insuffisants.`,
+        message: i18n.t('insights.deficit', { amount: formatCurrency(Math.abs(result.resteFoyer)) }),
       })
     }
   }
@@ -50,12 +51,12 @@ export function generateInsights(currentMonth, household, fixedCharges, installm
     if (changePct > 15) {
       insights.push({
         type: 'warning',
-        message: `Charges en hausse de ${changePct}% par rapport au mois dernier (+${formatCurrency(totalCharges - prevTotalCharges)}).`,
+        message: i18n.t('insights.chargesUp', { percent: changePct, amount: formatCurrency(totalCharges - prevTotalCharges) }),
       })
     } else if (changePct < -10) {
       insights.push({
         type: 'positive',
-        message: `Charges reduites de ${Math.abs(changePct)}% par rapport au mois dernier (${formatCurrency(prevTotalCharges - totalCharges)} economies).`,
+        message: i18n.t('insights.chargesDown', { percent: Math.abs(changePct), amount: formatCurrency(prevTotalCharges - totalCharges) }),
       })
     }
   }
@@ -80,10 +81,10 @@ export function generateInsights(currentMonth, household, fixedCharges, installm
       }
     }
     if (maxIncrease.cat && insights.length < 3) {
-      const label = maxIncrease.cat.charAt(0).toUpperCase() + maxIncrease.cat.slice(1)
+      const label = i18n.t(`categories.${maxIncrease.cat}`, { defaultValue: maxIncrease.cat.charAt(0).toUpperCase() + maxIncrease.cat.slice(1) })
       insights.push({
         type: 'warning',
-        message: `${label} : +${maxIncrease.pct}% ce mois (+${formatCurrency(maxIncrease.delta)}).`,
+        message: i18n.t('insights.categoryUp', { label, percent: maxIncrease.pct, amount: formatCurrency(maxIncrease.delta) }),
       })
     }
   }
@@ -96,10 +97,10 @@ export function generateInsights(currentMonth, household, fixedCharges, installm
     const futureTotalCharges = futureResult.totalCommon + futureResult.personalACharges + futureResult.personalBCharges
 
     if (totalCharges > 0 && futureTotalCharges > totalCharges * 1.3 && insights.length < 4) {
-      const monthLabel = format(new Date(futureMonth + '-01'), 'MMMM')
+      const monthLabel = formatMonth(futureMonth)
       insights.push({
         type: 'warning',
-        message: `Attention : ${formatCurrency(futureTotalCharges)} de charges prevues en ${monthLabel}.`,
+        message: i18n.t('insights.heavyMonth', { amount: formatCurrency(futureTotalCharges), month: monthLabel }),
       })
       break
     }

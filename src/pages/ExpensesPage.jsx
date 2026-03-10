@@ -1,8 +1,10 @@
 import { useState, useMemo, useRef, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'motion/react'
 import { useExpenseStore } from '../stores/expenseStore'
 import { useHouseholdStore } from '../stores/householdStore'
-import { formatCurrency, getCurrentMonth, formatMonth, CATEGORIES } from '../utils/format'
+import { formatCurrency, getCurrentMonth, formatMonth, getCategoryLabel } from '../utils/format'
+import { syncToSupabase } from '../lib/syncBridge'
 import Card from '../components/ui/Card'
 import AnimatedNumber from '../components/ui/AnimatedNumber'
 import { ChevronLeft, ChevronRight, Trash2, Receipt } from 'lucide-react'
@@ -41,7 +43,7 @@ const CATEGORY_COLORS = {
   autre: '#94A3B8',
 }
 
-function SwipeToDelete({ onDelete, children }) {
+function SwipeToDelete({ onDelete, children, t }) {
   const x = useMotionValue(0)
   const bgOpacity = useTransform(x, [-120, -60, 0], [1, 0.5, 0])
 
@@ -61,7 +63,7 @@ function SwipeToDelete({ onDelete, children }) {
         <button
           onClick={onDelete}
           className="p-2 rounded-lg bg-danger/10 hover:bg-danger/20 text-danger transition-colors"
-          aria-label="Supprimer"
+          aria-label={t('common.delete')}
         >
           <Trash2 size={14} />
         </button>
@@ -87,19 +89,15 @@ function SwipeToDelete({ onDelete, children }) {
   )
 }
 
-function formatDateLabel(dateStr) {
+function formatDateLabel(dateStr, t) {
   const date = parseISO(dateStr)
-  if (isToday(date)) return "Aujourd'hui"
-  if (isYesterday(date)) return 'Hier'
+  if (isToday(date)) return t('expenses.today')
+  if (isYesterday(date)) return t('expenses.yesterday')
   return format(date, 'EEEE d MMMM', { locale: fr })
 }
 
-function getCategoryLabel(categoryKey) {
-  const found = CATEGORIES.find((c) => c.value === categoryKey)
-  return found ? found.label : categoryKey
-}
-
 export default function ExpensesPage() {
+  const { t } = useTranslation()
   const household = useHouseholdStore((s) => s.household)
   const expenses = useExpenseStore((s) => s.expenses)
   const removeExpense = useExpenseStore((s) => s.removeExpense)
@@ -174,10 +172,23 @@ export default function ExpensesPage() {
 
   const handleDelete = useCallback(
     (id, note) => {
+      const item = useExpenseStore.getState().expenses.find((e) => e.id === id)
       removeExpense(id)
-      toast.success(`"${note || 'Depense'}" supprimee`)
+      const name = note || t('expenses.defaultExpenseName')
+      toast(t('expenses.deleted', { name }), {
+        action: item ? {
+          label: t('common.cancel'),
+          onClick: () => {
+            useExpenseStore.setState((state) => ({
+              expenses: [item, ...state.expenses],
+            }))
+            syncToSupabase('expenses', item)
+            toast.success(t('expenses.restored', { name }))
+          },
+        } : undefined,
+      })
     },
-    [removeExpense]
+    [removeExpense, t]
   )
 
   return (
@@ -187,7 +198,7 @@ export default function ExpensesPage() {
         <button
           onClick={() => navigateMonth('prev')}
           className="p-2 text-text-muted hover:text-white rounded-xl hover:bg-white/[0.06] transition-colors"
-          aria-label="Mois precedent"
+          aria-label={t('expenses.prevMonth')}
         >
           <ChevronLeft size={22} />
         </button>
@@ -206,7 +217,7 @@ export default function ExpensesPage() {
         <button
           onClick={() => navigateMonth('next')}
           className="p-2 text-text-muted hover:text-white rounded-xl hover:bg-white/[0.06] transition-colors"
-          aria-label="Mois suivant"
+          aria-label={t('expenses.nextMonth')}
         >
           <ChevronRight size={22} />
         </button>
@@ -221,7 +232,7 @@ export default function ExpensesPage() {
           />
         </div>
         <p className="text-xs text-text-muted mt-1">
-          {monthExpenses.length} depense{monthExpenses.length !== 1 ? 's' : ''} ce mois
+          {t('expenses.expenseCount', { count: monthExpenses.length })}
         </p>
       </Card>
 
@@ -236,7 +247,7 @@ export default function ExpensesPage() {
                 : 'bg-white/[0.06] text-text-muted hover:text-white'
             }`}
           >
-            Tout
+            {t('common.all')}
           </button>
           {categoryBreakdown.map(({ category, total }) => (
             <button
@@ -265,8 +276,8 @@ export default function ExpensesPage() {
       {/* Expenses list grouped by date */}
       {groupedExpenses.length > 0 && (
         <p className="text-[10px] text-text-muted text-center">
-          <span className="lg:hidden">Glissez vers la gauche pour supprimer</span>
-          <span className="hidden lg:inline">Survolez une depense pour la supprimer</span>
+          <span className="lg:hidden">{t('expenses.swipeHintMobile')}</span>
+          <span className="hidden lg:inline">{t('expenses.swipeHintDesktop')}</span>
         </p>
       )}
 
@@ -280,11 +291,11 @@ export default function ExpensesPage() {
           >
             <Card className="text-center py-10">
               <Receipt size={40} className="text-text-muted mx-auto mb-3 opacity-40" />
-              <p className="text-text-secondary font-medium">Aucune depense enregistree</p>
+              <p className="text-text-secondary font-medium">{t('expenses.noExpenses')}</p>
               <p className="text-xs text-text-muted mt-1">
                 {activeCategory
-                  ? 'Aucune depense dans cette categorie'
-                  : 'Les depenses ajoutees apparaitront ici'}
+                  ? t('expenses.noExpensesInCategory')
+                  : t('expenses.expensesWillAppear')}
               </p>
             </Card>
           </motion.div>
@@ -310,7 +321,7 @@ export default function ExpensesPage() {
                   {/* Date group header */}
                   <div className="flex items-center justify-between px-1">
                     <span className="text-xs font-semibold text-text-secondary capitalize">
-                      {formatDateLabel(dateKey)}
+                      {formatDateLabel(dateKey, t)}
                     </span>
                     <span className="text-xs font-medium text-danger tabular-nums">
                       - {formatCurrency(Math.round(dayTotal))}
@@ -331,6 +342,7 @@ export default function ExpensesPage() {
                       >
                         <SwipeToDelete
                           onDelete={() => handleDelete(expense.id, expense.note)}
+                          t={t}
                         >
                           <Card animate={false}>
                             <div className="flex items-center gap-3">

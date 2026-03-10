@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
 import { Link } from 'react-router-dom'
 import { useHouseholdStore } from '../stores/householdStore'
@@ -8,7 +9,7 @@ import { useSavingsStore } from '../stores/savingsStore'
 import { useExpenseStore } from '../stores/expenseStore'
 import { computeMonth } from '../utils/calculations'
 import { generateInsights } from '../utils/insights'
-import { formatCurrency, formatMonth, getCurrentMonth, formatMonthShort, CATEGORIES } from '../utils/format'
+import { formatCurrency, formatMonth, getCurrentMonth, formatMonthShort, getCategoryLabel } from '../utils/format'
 import Card from '../components/ui/Card'
 import AnimatedNumber from '../components/ui/AnimatedNumber'
 import ProgressBar from '../components/ui/ProgressBar'
@@ -51,6 +52,7 @@ function CustomTooltip({ active, payload, label }) {
 }
 
 export default function DashboardPage() {
+  const { t } = useTranslation()
   const household = useHouseholdStore((s) => s.household)
   const { fixedCharges, installmentPayments, plannedExpenses } = useChargesStore()
   const entries = useMonthlyStore((s) => s.entries)
@@ -117,7 +119,7 @@ export default function DashboardPage() {
     return Object.entries(cats)
       .map(([name, value]) => ({
         name,
-        label: CATEGORIES.find((c) => c.value === name)?.label || name,
+        label: getCategoryLabel(name),
         value,
         color: CATEGORY_COLORS[name] || '#94A3B8',
       }))
@@ -142,9 +144,7 @@ export default function DashboardPage() {
         <Card className="!border-warning/20 !bg-warning/5">
           <div className="flex items-start gap-3">
             <AlertTriangle size={18} className="text-warning mt-0.5 flex-shrink-0" />
-            <p className="text-warning/90 text-sm">
-              Saisissez vos revenus dans l'onglet <strong>Mensuel</strong> pour voir votre reste a vivre.
-            </p>
+            <p className="text-warning/90 text-sm" dangerouslySetInnerHTML={{ __html: t('dashboard.noIncomeWarning') }} />
           </div>
         </Card>
       )}
@@ -157,18 +157,18 @@ export default function DashboardPage() {
           <Card className="glass !border-brand/20">
             <div className="text-center py-3 lg:py-5">
               <div className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest mb-1 lg:text-xs">
-                {household?.configModel === 'solo' ? 'Il te reste' : 'Il vous reste'}
+                {household?.configModel === 'solo' ? t('dashboard.remainingSolo') : t('dashboard.remainingCouple')}
               </div>
               <div className={`text-5xl font-black tracking-tight lg:text-6xl ${getFlexColor(flexNumber)}`}>
                 <AnimatedNumber value={flexNumber} format={(v) => formatCurrency(Math.round(v))} />
               </div>
-              <div className="text-[11px] text-text-muted mt-2 lg:text-sm">a depenser ce mois</div>
+              <div className="text-[11px] text-text-muted mt-2 lg:text-sm">{t('dashboard.toSpendThisMonth')}</div>
 
               <div className="flex items-center justify-center gap-5 mt-4 lg:gap-10 lg:mt-6">
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1 text-xs text-text-muted mb-0.5">
                     <Wallet size={11} className="text-brand" />
-                    <span>Revenus</span>
+                    <span>{t('dashboard.income')}</span>
                   </div>
                   <span className="text-sm font-semibold lg:text-base">{formatCurrency(totalIncome)}</span>
                 </div>
@@ -176,7 +176,7 @@ export default function DashboardPage() {
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1 text-xs text-text-muted mb-0.5">
                     <TrendingDown size={11} className="text-danger" />
-                    <span>Charges</span>
+                    <span>{t('dashboard.charges')}</span>
                   </div>
                   <span className="text-sm font-semibold lg:text-base">{formatCurrency(totalCharges)}</span>
                 </div>
@@ -184,7 +184,7 @@ export default function DashboardPage() {
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1 text-xs text-text-muted mb-0.5">
                     <ShoppingBag size={11} className="text-warning" />
-                    <span>Depense</span>
+                    <span>{t('dashboard.expense')}</span>
                   </div>
                   <span className="text-sm font-semibold lg:text-base">{formatCurrency(monthExpenses)}</span>
                 </div>
@@ -195,7 +195,7 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-center gap-2">
                     <PiggyBank size={14} className={savingsRate >= 20 ? 'text-success' : savingsRate >= 10 ? 'text-warning' : 'text-danger'} />
                     <span className={`text-sm font-semibold ${savingsRate >= 20 ? 'text-success' : savingsRate >= 10 ? 'text-warning' : 'text-danger'}`}>
-                      {savingsRate}% d'epargne
+                      {t('dashboard.savingsRate', { rate: savingsRate })}
                     </span>
                   </div>
                 </div>
@@ -207,7 +207,7 @@ export default function DashboardPage() {
           <div className={`grid gap-3 ${household?.personBName ? 'grid-cols-2' : 'grid-cols-1'}`}>
             <Card>
               <div className="flex items-center justify-between mb-2">
-                <div className="text-xs text-text-secondary font-medium">{household?.personAName || 'Personne A'}</div>
+                <div className="text-xs text-text-secondary font-medium">{household?.personAName || t('common.personA')}</div>
                 <div className="flex items-center gap-1">
                   {getHealthIcon(result.resteA)}
                 </div>
@@ -215,16 +215,16 @@ export default function DashboardPage() {
               <div className="text-2xl font-bold lg:text-3xl" style={{ color: household?.personAColor }}>
                 <AnimatedNumber value={result.resteA} format={(v) => formatCurrency(Math.round(v))} />
               </div>
-              <div className="text-[10px] text-text-muted mb-2">reste a depenser</div>
+              <div className="text-[10px] text-text-muted mb-2">{t('dashboard.remainingToSpend')}</div>
               {hasIncome && (
                 <div className="space-y-1.5 pt-2 border-t border-white/[0.06]">
                   <div className="flex justify-between text-[11px]">
-                    <span className="text-text-muted">Revenu</span>
+                    <span className="text-text-muted">{t('dashboard.personalIncome')}</span>
                     <span className="text-text-secondary tabular-nums">{formatCurrency(result.incomeA)}</span>
                   </div>
                   {result.startingBalanceA !== 0 && (
                     <div className="flex justify-between text-[11px]">
-                      <span className="text-text-muted">Solde initial</span>
+                      <span className="text-text-muted">{t('dashboard.startingBalance')}</span>
                       <span className={`tabular-nums ${result.startingBalanceA < 0 ? 'text-danger' : 'text-text-secondary'}`}>
                         {formatCurrency(result.startingBalanceA)}
                       </span>
@@ -232,13 +232,13 @@ export default function DashboardPage() {
                   )}
                   {result.shareA > 0 && (
                     <div className="flex justify-between text-[11px]">
-                      <span className="text-text-muted">Part communes ({Math.round(result.ratio * 100)}%)</span>
+                      <span className="text-text-muted">{t('dashboard.commonShare', { percent: Math.round(result.ratio * 100) })}</span>
                       <span className="text-danger tabular-nums">- {formatCurrency(Math.round(result.shareA))}</span>
                     </div>
                   )}
                   {result.personalACharges > 0 && (
                     <div className="flex justify-between text-[11px]">
-                      <span className="text-text-muted">Charges perso</span>
+                      <span className="text-text-muted">{t('dashboard.personalCharges')}</span>
                       <span className="text-danger tabular-nums">- {formatCurrency(result.personalACharges)}</span>
                     </div>
                   )}
@@ -256,16 +256,16 @@ export default function DashboardPage() {
                 <div className="text-2xl font-bold lg:text-3xl" style={{ color: household?.personBColor }}>
                   <AnimatedNumber value={result.resteB} format={(v) => formatCurrency(Math.round(v))} />
                 </div>
-                <div className="text-[10px] text-text-muted mb-2">reste a depenser</div>
+                <div className="text-[10px] text-text-muted mb-2">{t('dashboard.remainingToSpend')}</div>
                 {hasIncome && (
                   <div className="space-y-1.5 pt-2 border-t border-white/[0.06]">
                     <div className="flex justify-between text-[11px]">
-                      <span className="text-text-muted">Revenu</span>
+                      <span className="text-text-muted">{t('dashboard.personalIncome')}</span>
                       <span className="text-text-secondary tabular-nums">{formatCurrency(result.incomeB)}</span>
                     </div>
                     {result.startingBalanceB !== 0 && (
                       <div className="flex justify-between text-[11px]">
-                        <span className="text-text-muted">Solde initial</span>
+                        <span className="text-text-muted">{t('dashboard.startingBalance')}</span>
                         <span className={`tabular-nums ${result.startingBalanceB < 0 ? 'text-danger' : 'text-text-secondary'}`}>
                           {formatCurrency(result.startingBalanceB)}
                         </span>
@@ -273,13 +273,13 @@ export default function DashboardPage() {
                     )}
                     {result.shareB > 0 && (
                       <div className="flex justify-between text-[11px]">
-                        <span className="text-text-muted">Part communes ({Math.round((1 - result.ratio) * 100)}%)</span>
+                        <span className="text-text-muted">{t('dashboard.commonShare', { percent: Math.round((1 - result.ratio) * 100) })}</span>
                         <span className="text-danger tabular-nums">- {formatCurrency(Math.round(result.shareB))}</span>
                       </div>
                     )}
                     {result.personalBCharges > 0 && (
                       <div className="flex justify-between text-[11px]">
-                        <span className="text-text-muted">Charges perso</span>
+                        <span className="text-text-muted">{t('dashboard.personalCharges')}</span>
                         <span className="text-danger tabular-nums">- {formatCurrency(result.personalBCharges)}</span>
                       </div>
                     )}
@@ -295,36 +295,36 @@ export default function DashboardPage() {
               <Card className="hover:border-brand/20 transition-colors cursor-pointer">
                 <div className="flex items-center gap-2">
                   <Wallet size={16} className="text-brand" />
-                  <span className="text-sm font-medium">Mensuel</span>
+                  <span className="text-sm font-medium">{t('dashboard.monthly')}</span>
                 </div>
-                <p className="text-[11px] text-text-muted mt-1">Saisir revenus</p>
+                <p className="text-[11px] text-text-muted mt-1">{t('dashboard.enterIncome')}</p>
               </Card>
             </Link>
             <Link to="/calendrier">
               <Card className="hover:border-brand/20 transition-colors cursor-pointer">
                 <div className="flex items-center gap-2">
                   <Target size={16} className="text-brand" />
-                  <span className="text-sm font-medium">Calendrier</span>
+                  <span className="text-sm font-medium">{t('dashboard.calendar')}</span>
                 </div>
-                <p className="text-[11px] text-text-muted mt-1">Previsions 12 mois</p>
+                <p className="text-[11px] text-text-muted mt-1">{t('dashboard.forecast12Months')}</p>
               </Card>
             </Link>
             <Link to="/import" className="hidden lg:block">
               <Card className="hover:border-brand/20 transition-colors cursor-pointer">
                 <div className="flex items-center gap-2">
                   <ArrowUpRight size={16} className="text-brand" />
-                  <span className="text-sm font-medium">Import</span>
+                  <span className="text-sm font-medium">{t('dashboard.import')}</span>
                 </div>
-                <p className="text-[11px] text-text-muted mt-1">Importer CSV</p>
+                <p className="text-[11px] text-text-muted mt-1">{t('dashboard.importCSV')}</p>
               </Card>
             </Link>
             <Link to="/depenses" className="hidden lg:block">
               <Card className="hover:border-brand/20 transition-colors cursor-pointer">
                 <div className="flex items-center gap-2">
                   <ShoppingBag size={16} className="text-brand" />
-                  <span className="text-sm font-medium">Depenses</span>
+                  <span className="text-sm font-medium">{t('dashboard.expensesLink')}</span>
                 </div>
-                <p className="text-[11px] text-text-muted mt-1">Voir tout</p>
+                <p className="text-[11px] text-text-muted mt-1">{t('dashboard.viewAll')}</p>
               </Card>
             </Link>
           </div>
@@ -339,7 +339,7 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Target size={14} className="text-brand" />
-                    <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Objectifs</span>
+                    <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">{t('dashboard.goals')}</span>
                   </div>
                   <ChevronRight size={14} className="text-text-muted" />
                 </div>
@@ -356,7 +356,7 @@ export default function DashboardPage() {
                 <div className="flex gap-2 mt-3 overflow-x-auto">
                   {savingsGoals.slice(0, 4).map((goal) => (
                     <div key={goal.id} className="flex items-center gap-1.5 bg-white/[0.04] rounded-lg px-2.5 py-1.5 flex-shrink-0">
-                      <span className="text-sm">{goal.icon || '💰'}</span>
+                      <span className="text-sm">{goal.icon || '\u{1F4B0}'}</span>
                       <span className="text-[11px] text-text-secondary">{goal.name}</span>
                       <span className="text-[10px] text-text-muted">
                         {Math.round((goal.currentAmount / goal.targetAmount) * 100)}%
@@ -373,7 +373,7 @@ export default function DashboardPage() {
             <Card>
               <div className="flex items-center gap-2 mb-3">
                 <Lightbulb size={14} className="text-brand" />
-                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Insights</span>
+                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">{t('dashboard.insights')}</span>
               </div>
               <div className="space-y-2">
                 {insights.map((insight, i) => (
@@ -396,7 +396,7 @@ export default function DashboardPage() {
           {result.charges.length > 0 && (
             <Card>
               <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">
-                Repartition par categorie
+                {t('dashboard.categoryBreakdown')}
               </div>
 
               {categoryData.length > 1 && (
@@ -438,7 +438,7 @@ export default function DashboardPage() {
         {trendData.some((d) => d.reste > 0 || d.charges > 0) && (
           <Card>
             <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">
-              Tendance 6 mois
+              {t('dashboard.trend6Months')}
             </div>
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={trendData} barGap={2}>
@@ -455,10 +455,10 @@ export default function DashboardPage() {
             </ResponsiveContainer>
             <div className="flex gap-4 justify-center mt-2 text-[10px] text-text-muted">
               <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-success" /> Reste a vivre
+                <div className="w-2 h-2 rounded-full bg-success" /> {t('dashboard.remainingToLive')}
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-danger/50" /> Charges
+                <div className="w-2 h-2 rounded-full bg-danger/50" /> {t('dashboard.charges')}
               </div>
             </div>
           </Card>
@@ -468,7 +468,7 @@ export default function DashboardPage() {
         {result.charges.length > 0 && (
           <Card>
             <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">
-              Detail des charges
+              {t('dashboard.chargesDetail')}
             </div>
             <div className="space-y-2">
               {result.charges.map((charge) => (
@@ -485,10 +485,10 @@ export default function DashboardPage() {
                     />
                     <span className="text-text-secondary truncate">{charge.name}</span>
                     {charge.type === 'installment' && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-brand/10 text-brand flex-shrink-0">ech.</span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-brand/10 text-brand flex-shrink-0">{t('dashboard.installmentBadge')}</span>
                     )}
                     {charge.type === 'planned' && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-warning/10 text-warning flex-shrink-0">prevu</span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-warning/10 text-warning flex-shrink-0">{t('dashboard.plannedBadge')}</span>
                     )}
                   </div>
                   <span className="font-medium tabular-nums ml-2">{formatCurrency(charge.amount)}</span>

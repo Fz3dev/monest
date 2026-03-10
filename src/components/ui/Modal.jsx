@@ -1,8 +1,10 @@
 import { useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
 import { X } from 'lucide-react'
 
 export default function Modal({ isOpen, onClose, title, children }) {
+  const { t } = useTranslation()
   const handleKeyDown = useCallback(
     (e) => { if (e.key === 'Escape') onClose() },
     [onClose]
@@ -46,7 +48,7 @@ export default function Modal({ isOpen, onClose, title, children }) {
               <button
                 onClick={onClose}
                 className="text-text-secondary hover:text-white p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors"
-                aria-label="Fermer"
+                aria-label={t('common.close')}
               >
                 <X size={20} />
               </button>

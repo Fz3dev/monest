@@ -1,16 +1,19 @@
 import { useState, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
 import { useChargesStore } from '../stores/chargesStore'
 import { parseCSV, detectColumns, detectRecurring } from '../utils/csvParser'
-import { formatCurrency, CATEGORIES } from '../utils/format'
+import { formatCurrency, getTranslatedCategories } from '../utils/format'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import { Upload, Check, X, Loader2, FileText, Tag } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function ImportPage() {
+  const { t } = useTranslation()
   const { addFixedCharge, matchCategory, addCategoryRule } = useChargesStore()
   const fileInputRef = useRef(null)
+  const categories = getTranslatedCategories(t)
 
   const [status, setStatus] = useState('idle')
   const [suggestions, setSuggestions] = useState([])
@@ -33,18 +36,17 @@ export default function ImportPage() {
 
     try {
       const result = await parseCSV(file)
-      if (!result.data || result.data.length === 0) throw new Error('Fichier vide ou format non reconnu')
+      if (!result.data || result.data.length === 0) throw new Error(t('import.emptyFile'))
 
       const headers = result.meta.fields || Object.keys(result.data[0])
       const columns = detectColumns(headers)
 
       if (!columns.dateCol || !columns.labelCol) {
-        throw new Error('Colonnes date/libelle non detectees.')
+        throw new Error(t('import.columnsNotDetected'))
       }
 
       const recurring = detectRecurring(result.data, columns)
 
-      // Auto-categorize each suggestion
       const enriched = recurring.map((s) => ({
         ...s,
         suggestedCategory: matchCategory(s.suggestedName),
@@ -53,11 +55,11 @@ export default function ImportPage() {
       setStats({ totalRows: result.data.length, detectedRecurring: enriched.length, fileName: file.name })
       setSuggestions(enriched)
       setStatus('detected')
-      toast.success(`${enriched.length} charges recurrentes detectees`)
+      toast.success(t('import.recurringDetected', { count: enriched.length }))
     } catch (err) {
       setError(err.message)
       setStatus('error')
-      toast.error('Erreur lors de l\'analyse')
+      toast.error(t('import.parseError'))
     }
 
     e.target.value = ''
@@ -84,11 +86,10 @@ export default function ImportPage() {
       paymentDelayMonths: 0,
     })
 
-    // Learn from user's category choice for future imports
     addCategoryRule(suggestion.suggestedName, category)
 
     setAdded((prev) => new Set([...prev, suggestion.suggestedName]))
-    toast.success(`"${suggestion.suggestedName}" ajoutee`)
+    toast.success(t('import.added', { name: suggestion.suggestedName }))
   }
 
   const handleDismiss = (name) => {
@@ -106,7 +107,7 @@ export default function ImportPage() {
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
       >
-        Import CSV
+        {t('import.title')}
       </motion.h1>
 
       <Card>
@@ -115,15 +116,15 @@ export default function ImportPage() {
             <FileText size={28} className="text-brand" />
           </div>
           <p className="text-text-secondary text-sm mb-1">
-            Importez votre releve bancaire CSV
+            {t('import.uploadDescription')}
           </p>
           <p className="text-text-muted text-xs mb-4">
-            Traitement 100% local, rien n'est envoye.
+            {t('import.localProcessing')}
           </p>
           <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileSelect} className="hidden" />
           <Button onClick={() => fileInputRef.current?.click()} size="lg">
             <Upload size={16} className="inline mr-2" />
-            Choisir un fichier
+            {t('import.chooseFile')}
           </Button>
         </div>
       </Card>
@@ -132,7 +133,7 @@ export default function ImportPage() {
         <Card>
           <div className="flex items-center justify-center gap-3 py-4">
             <Loader2 size={20} className="animate-spin text-brand" />
-            <span className="text-text-secondary text-sm">Analyse en cours...</span>
+            <span className="text-text-secondary text-sm">{t('import.analyzing')}</span>
           </div>
         </Card>
       )}
@@ -148,23 +149,23 @@ export default function ImportPage() {
           {stats && (
             <Card>
               <div className="text-xs text-text-secondary space-y-1">
-                <div>Fichier : {stats.fileName}</div>
-                <div>{stats.totalRows} transactions analysees</div>
-                <div className="text-brand font-medium">{stats.detectedRecurring} charges recurrentes</div>
+                <div>{t('import.file', { name: stats.fileName })}</div>
+                <div>{t('import.transactionsAnalyzed', { count: stats.totalRows })}</div>
+                <div className="text-brand font-medium">{t('import.recurringCharges', { count: stats.detectedRecurring })}</div>
               </div>
             </Card>
           )}
 
           {added.size > 0 && (
             <Card className="!border-success/30 !bg-success/5">
-              <p className="text-success text-sm">{added.size} charge(s) ajoutee(s)</p>
+              <p className="text-success text-sm">{t('import.chargesAdded', { count: added.size })}</p>
             </Card>
           )}
 
           {activeSuggestions.length === 0 && added.size > 0 && (
             <Card>
               <p className="text-center text-text-secondary py-4 text-sm">
-                Toutes les suggestions traitees. Verifiez dans l'onglet Charges.
+                {t('import.allProcessed')}
               </p>
             </Card>
           )}
@@ -185,7 +186,7 @@ export default function ImportPage() {
                         <span className="font-medium text-sm">{s.suggestedName}</span>
                         <div className="text-xs text-text-muted mt-0.5">
                           ~{formatCurrency(s.avgAmount, true)}/mois — {s.occurrences}x
-                          {s.isStable && <span className="text-success ml-1">(stable)</span>}
+                          {s.isStable && <span className="text-success ml-1">{t('import.stable')}</span>}
                         </div>
                         <div className="flex items-center gap-2 mt-2">
                           <Tag size={10} className="text-text-muted flex-shrink-0" />
@@ -194,7 +195,7 @@ export default function ImportPage() {
                             onChange={(e) => handleCategoryChange(s.suggestedName, e.target.value)}
                             className="text-[11px] bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1 text-text-secondary"
                           >
-                            {CATEGORIES.map((c) => (
+                            {categories.map((c) => (
                               <option key={c.value} value={c.value}>{c.label}</option>
                             ))}
                           </select>
@@ -202,7 +203,7 @@ export default function ImportPage() {
                       </div>
                       <div className="flex gap-1.5 flex-shrink-0">
                         <Button size="sm" onClick={() => handleAdd(s)}>
-                          <Check size={12} className="mr-1" /> Ajouter
+                          <Check size={12} className="mr-1" /> {t('common.add')}
                         </Button>
                         <Button size="sm" variant="ghost" onClick={() => handleDismiss(s.suggestedName)}>
                           <X size={12} />
@@ -218,12 +219,12 @@ export default function ImportPage() {
       )}
 
       <Card>
-        <h3 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">Formats supportes</h3>
+        <h3 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">{t('import.supportedFormats')}</h3>
         <ul className="text-xs text-text-muted space-y-1">
-          <li>BoursoBank, Boursorama (Latin-1 et UTF-8)</li>
-          <li>Detection automatique pour les autres banques</li>
-          <li>Colonnes requises : Date, Libelle, Debit/Montant</li>
-          <li>Categorisation automatique intelligente</li>
+          <li>{t('import.boursobank')}</li>
+          <li>{t('import.autoDetect')}</li>
+          <li>{t('import.requiredColumns')}</li>
+          <li>{t('import.autoCategorize')}</li>
         </ul>
       </Card>
     </div>

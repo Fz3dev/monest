@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
 import { Plus, X } from 'lucide-react'
 import { toast } from 'sonner'
@@ -6,20 +7,21 @@ import { useExpenseStore } from '../stores/expenseStore'
 import { useHouseholdStore } from '../stores/householdStore'
 
 const CATEGORIES = [
-  { emoji: '🛒', label: 'Courses', value: 'alimentation' },
-  { emoji: '🍽️', label: 'Restaurant', value: 'loisirs' },
-  { emoji: '⛽', label: 'Transport', value: 'transport' },
-  { emoji: '🏥', label: 'Santé', value: 'sante' },
-  { emoji: '🎮', label: 'Loisirs', value: 'loisirs' },
-  { emoji: '👶', label: 'Enfants', value: 'enfants' },
-  { emoji: '🏠', label: 'Logement', value: 'logement' },
-  { emoji: '📱', label: 'Abonnement', value: 'abonnement' },
-  { emoji: '🎁', label: 'Autre', value: 'autre' },
+  { emoji: '\u{1F6D2}', labelKey: 'quickAdd.categories.courses', value: 'alimentation' },
+  { emoji: '\u{1F37D}\uFE0F', labelKey: 'quickAdd.categories.restaurant', value: 'loisirs' },
+  { emoji: '\u26FD', labelKey: 'quickAdd.categories.transport', value: 'transport' },
+  { emoji: '\u{1F3E5}', labelKey: 'quickAdd.categories.sante', value: 'sante' },
+  { emoji: '\u{1F3AE}', labelKey: 'quickAdd.categories.loisirs', value: 'loisirs' },
+  { emoji: '\u{1F476}', labelKey: 'quickAdd.categories.enfants', value: 'enfants' },
+  { emoji: '\u{1F3E0}', labelKey: 'quickAdd.categories.logement', value: 'logement' },
+  { emoji: '\u{1F4F1}', labelKey: 'quickAdd.categories.abonnement', value: 'abonnement' },
+  { emoji: '\u{1F381}', labelKey: 'quickAdd.categories.autre', value: 'autre' },
 ]
 
 const todayISO = () => new Date().toISOString().split('T')[0]
 
 export default function QuickAddExpense() {
+  const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
   const [amount, setAmount] = useState('')
   const [category, setCategory] = useState(null)
@@ -93,7 +95,7 @@ export default function QuickAddExpense() {
       payer: isCouple ? payer : 'person_a',
     })
 
-    toast.success(`${selected.emoji} ${selected.label} — ${parseFloat(amount).toFixed(2)} €`, {
+    toast.success(`${selected.emoji} ${t(selected.labelKey)} \u2014 ${parseFloat(amount).toFixed(2)} \u20ac`, {
       duration: 2000,
     })
 
@@ -102,8 +104,8 @@ export default function QuickAddExpense() {
   }
 
   const payerOptions = [
-    { value: 'common', label: 'Commun' },
-    { value: 'person_a', label: household?.personAName || 'Personne A', color: household?.personAColor },
+    { value: 'common', label: t('payer.common') },
+    { value: 'person_a', label: household?.personAName || t('common.personA'), color: household?.personAColor },
     ...(household?.personBName
       ? [{ value: 'person_b', label: household.personBName, color: household?.personBColor }]
       : []),
@@ -132,7 +134,7 @@ export default function QuickAddExpense() {
             ease: 'easeOut',
           },
         }}
-        aria-label="Ajouter une dépense"
+        aria-label={t('quickAdd.addExpense')}
       >
         <motion.div
           animate={{ rotate: isOpen ? 45 : 0 }}
@@ -165,7 +167,7 @@ export default function QuickAddExpense() {
               className="relative w-full max-w-lg bg-bg-primary border-t border-white/[0.08] rounded-t-3xl max-h-[90vh] overflow-y-auto"
               role="dialog"
               aria-modal="true"
-              aria-label="Ajouter une dépense"
+              aria-label={t('quickAdd.addExpense')}
             >
               {/* Handle bar */}
               <div className="flex justify-center pt-3 pb-1">
@@ -174,11 +176,11 @@ export default function QuickAddExpense() {
 
               {/* Header */}
               <div className="flex items-center justify-between px-5 pb-3">
-                <h2 className="text-lg font-semibold text-text-primary">Nouvelle dépense</h2>
+                <h2 className="text-lg font-semibold text-text-primary">{t('quickAdd.title')}</h2>
                 <button
                   onClick={handleClose}
                   className="text-text-secondary hover:text-white p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors cursor-pointer"
-                  aria-label="Fermer"
+                  aria-label={t('common.close')}
                 >
                   <X size={20} />
                 </button>
@@ -199,7 +201,7 @@ export default function QuickAddExpense() {
                       placeholder="0"
                       className="bg-transparent text-center text-4xl font-bold text-text-primary placeholder-text-muted/50 focus:outline-none w-40 tabular-nums"
                     />
-                    <span className="text-2xl font-semibold text-text-secondary">€</span>
+                    <span className="text-2xl font-semibold text-text-secondary">\u20ac</span>
                   </div>
                 </div>
 
@@ -210,7 +212,7 @@ export default function QuickAddExpense() {
                       const isSelected = category === idx
                       return (
                         <motion.button
-                          key={cat.label}
+                          key={cat.labelKey}
                           type="button"
                           whileTap={{ scale: 0.92 }}
                           onClick={() => setCategory(idx)}
@@ -232,7 +234,7 @@ export default function QuickAddExpense() {
                               isSelected ? 'text-brand-light' : 'text-text-secondary'
                             }`}
                           >
-                            {cat.label}
+                            {t(cat.labelKey)}
                           </span>
                         </motion.button>
                       )
@@ -248,7 +250,7 @@ export default function QuickAddExpense() {
                     className="overflow-hidden"
                   >
                     <label className="block text-xs font-medium text-text-secondary mb-2">
-                      Payé par
+                      {t('quickAdd.paidBy')}
                     </label>
                     <div className="flex gap-1.5 bg-white/[0.03] rounded-2xl p-1 border border-white/[0.06]">
                       {payerOptions.map((opt) => (
@@ -276,7 +278,7 @@ export default function QuickAddExpense() {
                     type="text"
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
-                    placeholder="Note (optionnel)"
+                    placeholder={t('quickAdd.notePlaceholder')}
                     className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-transparent transition-all"
                   />
                   <input
@@ -299,7 +301,7 @@ export default function QuickAddExpense() {
                       : 'bg-white/[0.06] text-text-muted cursor-not-allowed'
                   }`}
                 >
-                  Ajouter
+                  {t('quickAdd.submit')}
                 </motion.button>
               </div>
             </motion.div>

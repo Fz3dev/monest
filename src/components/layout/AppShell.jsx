@@ -1,18 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { NavLink } from 'react-router-dom'
 import { Home, Receipt, CreditCard, PiggyBank, Calendar, Settings, ShoppingBag, Bell, Check, CreditCard as ChargeIcon, Wallet, Trash2, UserPlus, TrendingUp } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { useNotificationStore } from '../../stores/notificationStore'
 import QuickAddExpense from '../QuickAddExpense'
-
-const navItems = [
-  { to: '/', icon: Home, label: 'Accueil' },
-  { to: '/depenses', icon: ShoppingBag, label: 'Depenses' },
-  { to: '/charges', icon: CreditCard, label: 'Charges' },
-  { to: '/epargne', icon: PiggyBank, label: 'Epargne' },
-  { to: '/parametres', icon: Settings, label: 'Reglages' },
-]
 
 const TYPE_ICONS = {
   member_joined: UserPlus,
@@ -24,7 +17,8 @@ const TYPE_ICONS = {
   savings_updated: TrendingUp,
 }
 
-function NotificationPanel({ onClose }) {
+function NotificationPanel({ onClose, bellRef }) {
+  const { t } = useTranslation()
   const notifications = useNotificationStore((s) => s.notifications)
   const markAsRead = useNotificationStore((s) => s.markAsRead)
   const markAllAsRead = useNotificationStore((s) => s.markAllAsRead)
@@ -33,36 +27,37 @@ function NotificationPanel({ onClose }) {
 
   useEffect(() => {
     function handleClickOutside(e) {
-      if (panelRef.current && !panelRef.current.contains(e.target)) {
+      if (
+        panelRef.current && !panelRef.current.contains(e.target) &&
+        bellRef?.current && !bellRef.current.contains(e.target)
+      ) {
         onClose()
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [onClose])
+  }, [onClose, bellRef])
 
   return (
     <div
       ref={panelRef}
-      className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-bg-surface/95 backdrop-blur-xl border border-white/[0.08] rounded-2xl shadow-2xl z-50"
+      className="fixed lg:absolute right-3 lg:right-auto lg:left-0 top-14 lg:top-full lg:mt-2 w-80 max-h-96 overflow-y-auto bg-bg-surface/95 backdrop-blur-xl border border-white/[0.08] rounded-2xl shadow-2xl z-50"
     >
-      {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
-        <span className="text-sm font-semibold text-text-primary">Notifications</span>
+        <span className="text-sm font-semibold text-text-primary">{t('notifications.title')}</span>
         {unreadCount() > 0 && (
           <button
             onClick={() => { markAllAsRead(); }}
             className="text-xs text-brand hover:text-brand/80 transition-colors"
           >
-            Tout marquer comme lu
+            {t('notifications.markAllRead')}
           </button>
         )}
       </div>
 
-      {/* List */}
       {notifications.length === 0 ? (
         <div className="px-4 py-8 text-center text-text-muted text-sm">
-          Aucune notification
+          {t('notifications.noNotifications')}
         </div>
       ) : (
         <div className="divide-y divide-white/[0.04]">
@@ -105,16 +100,19 @@ function NotificationPanel({ onClose }) {
 }
 
 function NotificationBell() {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
+  const bellRef = useRef(null)
   const unreadCount = useNotificationStore((s) => s.unreadCount)
   const count = unreadCount()
 
   return (
     <div className="relative">
       <button
+        ref={bellRef}
         onClick={() => setOpen(!open)}
         className="relative p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-white/[0.04] transition-colors"
-        aria-label="Notifications"
+        aria-label={t('notifications.title')}
       >
         <Bell size={18} strokeWidth={1.8} />
         {count > 0 && (
@@ -123,17 +121,25 @@ function NotificationBell() {
           </span>
         )}
       </button>
-      {open && <NotificationPanel onClose={() => setOpen(false)} />}
+      {open && <NotificationPanel onClose={() => setOpen(false)} bellRef={bellRef} />}
     </div>
   )
 }
 
 export default function AppShell({ children, memberCount = 0 }) {
+  const { t } = useTranslation()
   const isShared = memberCount >= 2
+
+  const navItems = [
+    { to: '/', icon: Home, label: t('nav.home') },
+    { to: '/depenses', icon: ShoppingBag, label: t('nav.expenses') },
+    { to: '/charges', icon: CreditCard, label: t('nav.charges') },
+    { to: '/epargne', icon: PiggyBank, label: t('nav.savings') },
+    { to: '/parametres', icon: Settings, label: t('nav.settings') },
+  ]
 
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary">
-      {/* Desktop sidebar — hidden on mobile */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-56 lg:flex-col lg:border-r lg:border-white/[0.06] lg:bg-bg-primary z-40">
         <div className="flex items-center gap-2.5 px-5 h-16 border-b border-white/[0.06]">
           <img src="/logo-crown.png" alt="Monest" className="w-7 h-7" />
@@ -164,9 +170,7 @@ export default function AppShell({ children, memberCount = 0 }) {
         </nav>
       </aside>
 
-      {/* Main content */}
       <div className="pb-20 lg:pb-0 lg:pl-56">
-        {/* Mobile notification bell — fixed top-right */}
         {isShared && (
           <div className="fixed top-3 right-3 z-50 lg:hidden">
             <NotificationBell />
@@ -179,7 +183,6 @@ export default function AppShell({ children, memberCount = 0 }) {
 
       <QuickAddExpense />
 
-      {/* Mobile bottom nav — hidden on desktop */}
       <nav className="fixed bottom-0 left-0 right-0 bg-bg-primary/90 backdrop-blur-xl border-t border-white/[0.06] safe-area-bottom z-40 lg:hidden">
         <div className="max-w-lg mx-auto flex justify-around">
           {navItems.map((item) => (

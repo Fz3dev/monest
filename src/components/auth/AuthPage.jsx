@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
 import { Mail, Eye, EyeOff, Loader2, CheckCircle2, Sparkles, UserPlus, Inbox } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
@@ -6,20 +7,23 @@ import Button from '../ui/Button'
 import Input from '../ui/Input'
 import Card from '../ui/Card'
 
-const ERROR_MAP = {
-  'Invalid login credentials': 'Email ou mot de passe incorrect',
-  'User already registered': 'Un compte existe deja avec cet email',
-  'Password should be at least 6 characters': 'Le mot de passe doit contenir au moins 6 caracteres',
-  'Email rate limit exceeded': 'Trop de tentatives. Reessayez dans quelques minutes.',
-  'For security purposes, you can only request this after 60 seconds.': 'Veuillez patienter 60 secondes avant de renvoyer.',
-}
-
-function translateError(message) {
-  return ERROR_MAP[message] || message
+function useErrorTranslation() {
+  const { t } = useTranslation()
+  const ERROR_MAP = {
+    'Invalid login credentials': t('auth.errors.invalidCredentials'),
+    'User already registered': t('auth.errors.userExists'),
+    'Password should be at least 6 characters': t('auth.errors.passwordTooShort'),
+    'Email rate limit exceeded': t('auth.errors.rateLimited'),
+    'For security purposes, you can only request this after 60 seconds.': t('auth.errors.waitBeforeResend'),
+  }
+  return (message) => ERROR_MAP[message] || message
 }
 
 export default function AuthPage({ inviteCode }) {
-  const [mode, setMode] = useState(inviteCode ? 'signup' : 'login') // 'login' | 'signup'
+  const { t } = useTranslation()
+  const translateError = useErrorTranslation()
+
+  const [mode, setMode] = useState(inviteCode ? 'signup' : 'login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -37,12 +41,12 @@ export default function AuthPage({ inviteCode }) {
     setError('')
 
     if (isSignup && password !== confirmPassword) {
-      setError('Les mots de passe ne correspondent pas')
+      setError(t('auth.passwordsNoMatch'))
       return
     }
 
     if (password.length < 6) {
-      setError('Le mot de passe doit contenir au moins 6 caracteres')
+      setError(t('auth.passwordMinLength'))
       return
     }
 
@@ -61,7 +65,6 @@ export default function AuthPage({ inviteCode }) {
         if (authError) {
           setError(translateError(authError.message))
         } else if (data?.user && !data.session) {
-          // Email confirmation required
           setSignupSent(true)
         }
       } else {
@@ -71,7 +74,7 @@ export default function AuthPage({ inviteCode }) {
         }
       }
     } catch {
-      setError('Une erreur inattendue est survenue')
+      setError(t('auth.unexpectedError'))
     } finally {
       setLoading(false)
     }
@@ -79,7 +82,7 @@ export default function AuthPage({ inviteCode }) {
 
   async function handleMagicLink() {
     if (!email) {
-      setError('Veuillez entrer votre email')
+      setError(t('auth.enterEmail'))
       return
     }
 
@@ -101,7 +104,7 @@ export default function AuthPage({ inviteCode }) {
         setMagicLinkSent(true)
       }
     } catch {
-      setError('Une erreur inattendue est survenue')
+      setError(t('auth.unexpectedError'))
     } finally {
       setMagicLinkLoading(false)
     }
@@ -140,30 +143,30 @@ export default function AuthPage({ inviteCode }) {
             </motion.div>
 
             <h2 className="text-xl font-semibold text-text-primary mb-2">
-              {signupSent ? 'Verifiez votre email' : 'Lien envoye !'}
+              {signupSent ? t('auth.checkEmail') : t('auth.linkSent')}
             </h2>
 
             <p className="text-text-secondary text-sm mb-4">
               {signupSent ? (
                 <>
-                  Un email de confirmation a ete envoye a{' '}
+                  {t('auth.confirmationSent')}{' '}
                   <span className="text-brand-light font-medium">{email}</span>.
                   <br />
-                  Cliquez sur le lien dans l'email pour activer votre compte.
+                  {t('auth.clickLink')}
                 </>
               ) : (
                 <>
-                  Un lien de connexion a ete envoye a{' '}
+                  {t('auth.loginLinkSent')}{' '}
                   <span className="text-brand-light font-medium">{email}</span>.
                   <br />
-                  Verifiez votre boite de reception.
+                  {t('auth.checkInbox')}
                 </>
               )}
             </p>
 
             <div className="bg-white/[0.04] rounded-xl p-3 mb-6">
               <p className="text-xs text-text-muted">
-                Vous ne trouvez pas l'email ? Verifiez vos <span className="text-text-secondary font-medium">spams</span> ou <span className="text-text-secondary font-medium">courrier indesirable</span>.
+                {t('auth.spamHint')} <span className="text-text-secondary font-medium">{t('auth.spams')}</span> ou <span className="text-text-secondary font-medium">{t('auth.junkMail')}</span>.
               </p>
             </div>
 
@@ -181,7 +184,7 @@ export default function AuthPage({ inviteCode }) {
                 className="w-full mb-3 flex items-center justify-center gap-2"
               >
                 {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
-                Renvoyer l'email
+                {t('auth.resendEmail')}
               </Button>
             )}
 
@@ -191,7 +194,7 @@ export default function AuthPage({ inviteCode }) {
               onClick={() => { setMagicLinkSent(false); setSignupSent(false) }}
               className="w-full"
             >
-              Retour
+              {t('common.back')}
             </Button>
           </Card>
         </motion.div>
@@ -226,7 +229,7 @@ export default function AuthPage({ inviteCode }) {
             transition={{ delay: 0.25, duration: 0.4 }}
             className="text-text-secondary text-sm"
           >
-            Votre budget, simplifie.
+            {t('auth.tagline')}
           </motion.p>
         </div>
 
@@ -241,9 +244,9 @@ export default function AuthPage({ inviteCode }) {
               <div className="flex items-center gap-3">
                 <UserPlus className="w-5 h-5 text-brand flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-text-primary">Vous avez ete invite(e) !</p>
+                  <p className="text-sm font-medium text-text-primary">{t('auth.invited')}</p>
                   <p className="text-xs text-text-muted mt-0.5">
-                    Creez un compte ou connectez-vous pour rejoindre le foyer partage.
+                    {t('auth.invitedDescription')}
                   </p>
                 </div>
               </div>
@@ -257,9 +260,9 @@ export default function AuthPage({ inviteCode }) {
             {/* Email */}
             <div className="relative">
               <Input
-                label="Email"
+                label={t('auth.emailLabel')}
                 type="email"
-                placeholder="vous@exemple.com"
+                placeholder={t('auth.emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -270,9 +273,9 @@ export default function AuthPage({ inviteCode }) {
             {/* Password */}
             <div className="relative">
               <Input
-                label="Mot de passe"
+                label={t('auth.passwordLabel')}
                 type={showPassword ? 'text' : 'password'}
-                placeholder="••••••••"
+                placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -282,7 +285,7 @@ export default function AuthPage({ inviteCode }) {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="text-text-muted hover:text-text-secondary transition-colors cursor-pointer"
-                    aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                    aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -301,16 +304,16 @@ export default function AuthPage({ inviteCode }) {
                   transition={{ duration: 0.2 }}
                 >
                   <Input
-                    label="Confirmer le mot de passe"
+                    label={t('auth.confirmPasswordLabel')}
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
+                    placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
                     minLength={6}
                     error={
                       confirmPassword && password !== confirmPassword
-                        ? 'Les mots de passe ne correspondent pas'
+                        ? t('auth.passwordsNoMatch')
                         : undefined
                     }
                   />
@@ -344,12 +347,12 @@ export default function AuthPage({ inviteCode }) {
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Chargement...
+                  {t('common.loading')}
                 </>
               ) : isSignup ? (
-                'Creer un compte'
+                t('auth.createAccount')
               ) : (
-                'Se connecter'
+                t('auth.login')
               )}
             </Button>
           </form>
@@ -357,7 +360,7 @@ export default function AuthPage({ inviteCode }) {
           {/* Divider */}
           <div className="flex items-center gap-3 my-5">
             <div className="flex-1 h-px bg-white/[0.08]" />
-            <span className="text-xs text-text-muted">ou</span>
+            <span className="text-xs text-text-muted">{t('common.or')}</span>
             <div className="flex-1 h-px bg-white/[0.08]" />
           </div>
 
@@ -372,25 +375,25 @@ export default function AuthPage({ inviteCode }) {
             {magicLinkLoading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Envoi en cours...
+                {t('auth.sending')}
               </>
             ) : (
               <>
                 <Mail className="w-4 h-4" />
-                Connexion par lien magique
+                {t('auth.magicLink')}
               </>
             )}
           </Button>
 
           {/* Toggle mode */}
           <p className="text-center text-sm text-text-secondary mt-5">
-            {isSignup ? 'Deja un compte ?' : 'Pas encore de compte ?'}{' '}
+            {isSignup ? t('auth.alreadyHaveAccount') : t('auth.noAccount')}{' '}
             <button
               type="button"
               onClick={toggleMode}
               className="text-brand-light hover:text-brand font-medium transition-colors cursor-pointer"
             >
-              {isSignup ? 'Se connecter' : 'Creer un compte'}
+              {isSignup ? t('auth.login') : t('auth.createAccount')}
             </button>
           </p>
         </Card>

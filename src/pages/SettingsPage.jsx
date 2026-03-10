@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
 import { useHouseholdStore } from '../stores/householdStore'
 import { useChargesStore } from '../stores/chargesStore'
@@ -17,6 +18,7 @@ const COLORS = [
 ]
 
 export default function SettingsPage({ session, saveHousehold, createInvite }) {
+  const { t } = useTranslation()
   const { household, updateHousehold, resetHousehold } = useHouseholdStore()
   const chargesStore = useChargesStore()
   const monthlyStore = useMonthlyStore()
@@ -46,7 +48,7 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
     a.download = `monest-backup-${new Date().toISOString().split('T')[0]}.json`
     a.click()
     URL.revokeObjectURL(url)
-    toast.success('Backup exporte')
+    toast.success(t('settings.exported'))
   }
 
   const handleImport = async (e) => {
@@ -66,9 +68,9 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
       if (data.monthlyEntries) useMonthlyStore.setState({ entries: data.monthlyEntries })
       if (data.savingsGoals) useSavingsStore.setState({ goals: data.savingsGoals })
       if (data.expenses) useExpenseStore.setState({ expenses: data.expenses })
-      toast.success('Donnees restaurees')
+      toast.success(t('settings.dataRestored'))
     } catch {
-      toast.error('Fichier invalide')
+      toast.error(t('settings.invalidFile'))
     }
     e.target.value = ''
   }
@@ -103,26 +105,19 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
     try {
       const code = await createInvite()
       if (!code) {
-        toast.error('Erreur lors de la creation de l\'invitation')
+        toast.error(t('settings.inviteError'))
         return
       }
       const url = `${window.location.origin}?invite=${code}`
       await navigator.clipboard.writeText(url)
       setCopied(true)
-      toast.success('Lien d\'invitation copie !')
+      toast.success(t('settings.inviteCopied'))
       setTimeout(() => setCopied(false), 3000)
     } catch {
-      toast.error('Erreur lors de la copie')
+      toast.error(t('settings.inviteCopyError'))
     } finally {
       setInviteLoading(false)
     }
-  }
-
-  const modelLabels = {
-    common_and_personal: 'Commun + Perso',
-    full_common: 'Tout commun',
-    full_personal: 'Tout perso',
-    solo: 'Solo',
   }
 
   return (
@@ -132,7 +127,7 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
       >
-        Reglages
+        {t('settings.title')}
       </motion.h1>
 
       <div className="lg:grid lg:grid-cols-2 lg:gap-5 space-y-4 lg:space-y-0">
@@ -142,11 +137,11 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
         <Card>
           <div className="flex items-center gap-2 mb-3">
             <Users size={14} className="text-brand" />
-            <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Compte</h2>
+            <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">{t('settings.account')}</h2>
           </div>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-text-muted">Email</span>
+              <span className="text-text-muted">{t('settings.email')}</span>
               <span className="text-text-secondary">{session.user.email}</span>
             </div>
           </div>
@@ -158,14 +153,14 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
         <Card className="!border-brand/15">
           <div className="flex items-center gap-2 mb-2">
             <Share2 size={14} className="text-brand" />
-            <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Inviter {household?.personBName || 'partenaire'}</h2>
+            <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">{t('settings.inviteTitle', { name: household?.personBName || 'partenaire' })}</h2>
           </div>
           <p className="text-xs text-text-muted mb-3">
-            Partagez ce lien pour que votre partenaire puisse se connecter et acceder au budget partage.
+            {t('settings.inviteDescription')}
           </p>
           <Button variant="secondary" size="sm" onClick={handleCopyInvite} disabled={inviteLoading} className="w-full">
             {inviteLoading ? <Loader2 size={14} className="inline mr-1.5 animate-spin" /> : copied ? <Check size={14} className="inline mr-1.5 text-success" /> : <Copy size={14} className="inline mr-1.5" />}
-            {inviteLoading ? 'Generation...' : copied ? 'Lien copie !' : 'Generer un lien d\'invitation'}
+            {inviteLoading ? t('settings.generating') : copied ? t('settings.linkCopied') : t('settings.generateInvite')}
           </Button>
         </Card>
       )}
@@ -177,29 +172,29 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <User size={14} className="text-brand" />
-            <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Foyer</h2>
+            <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">{t('settings.household')}</h2>
           </div>
           <button
             onClick={() => setEditing(!editing)}
             className="text-xs text-brand hover:text-brand-light transition-colors cursor-pointer"
           >
-            {editing ? 'Terminer' : 'Modifier'}
+            {editing ? t('common.finish') : t('common.edit')}
           </button>
         </div>
 
         {!editing ? (
           <div className="space-y-2.5">
             <div className="flex justify-between text-sm">
-              <span className="text-text-muted">Nom</span>
+              <span className="text-text-muted">{t('settings.name')}</span>
               <span>{household?.name}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-text-muted">Modele</span>
-              <span>{modelLabels[household?.configModel] || household?.configModel}</span>
+              <span className="text-text-muted">{t('settings.model')}</span>
+              <span>{t(`settings.modelLabels.${household?.configModel}`, { defaultValue: household?.configModel })}</span>
             </div>
             {household?.configModel !== 'solo' && (
               <div className="flex justify-between text-sm">
-                <span className="text-text-muted">Repartition</span>
+                <span className="text-text-muted">{t('settings.distribution')}</span>
                 <span>
                   {Math.round((household?.splitRatio || 0.5) * 100)}/
                   {Math.round((1 - (household?.splitRatio || 0.5)) * 100)}
@@ -210,12 +205,12 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
         ) : (
           <div className="space-y-3">
             <Input
-              label="Votre prenom"
+              label={t('settings.yourFirstName')}
               value={household?.personAName || ''}
               onChange={(e) => handleUpdate({ personAName: e.target.value, name: household?.personBName ? `${e.target.value} & ${household.personBName}` : e.target.value })}
             />
             <div>
-              <label className="block text-xs font-medium text-text-secondary mb-1.5">Votre couleur</label>
+              <label className="block text-xs font-medium text-text-secondary mb-1.5">{t('settings.yourColor')}</label>
               <div className="flex gap-2">
                 {COLORS.map((c) => (
                   <button
@@ -225,7 +220,7 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
                       household?.personAColor === c ? 'ring-2 ring-white ring-offset-2 ring-offset-bg-primary scale-110' : 'hover:scale-105'
                     }`}
                     style={{ backgroundColor: c }}
-                    aria-label={`Couleur ${c}`}
+                    aria-label={t('settings.colorLabel', { color: c })}
                   />
                 ))}
               </div>
@@ -233,12 +228,12 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
             {household?.configModel !== 'solo' && (
               <>
                 <Input
-                  label="Prenom partenaire"
+                  label={t('settings.partnerFirstName')}
                   value={household?.personBName || ''}
                   onChange={(e) => handleUpdate({ personBName: e.target.value, name: `${household.personAName} & ${e.target.value}` })}
                 />
                 <div>
-                  <label className="block text-xs font-medium text-text-secondary mb-1.5">Sa couleur</label>
+                  <label className="block text-xs font-medium text-text-secondary mb-1.5">{t('settings.partnerColor')}</label>
                   <div className="flex gap-2">
                     {COLORS.map((c) => (
                       <button
@@ -248,14 +243,14 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
                           household?.personBColor === c ? 'ring-2 ring-white ring-offset-2 ring-offset-bg-primary scale-110' : 'hover:scale-105'
                         }`}
                         style={{ backgroundColor: c }}
-                        aria-label={`Couleur ${c}`}
+                        aria-label={t('settings.colorLabel', { color: c })}
                       />
                     ))}
                   </div>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                    Part de {household?.personAName} : {Math.round((household?.splitRatio || 0.5) * 100)}%
+                    {t('settings.shareOf', { name: household?.personAName, percent: Math.round((household?.splitRatio || 0.5) * 100) })}
                   </label>
                   <input
                     type="range"
@@ -280,31 +275,31 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
       <Card>
         <div className="flex items-center gap-2 mb-3">
           <Database size={14} className="text-brand" />
-          <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Donnees</h2>
+          <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">{t('settings.data')}</h2>
         </div>
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-text-muted">Charges fixes</span>
+            <span className="text-text-muted">{t('settings.fixedCharges')}</span>
             <span>{chargesStore.fixedCharges.length}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-text-muted">Paiements etales</span>
+            <span className="text-text-muted">{t('settings.installmentPayments')}</span>
             <span>{chargesStore.installmentPayments.length}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-text-muted">Depenses planifiees</span>
+            <span className="text-text-muted">{t('settings.plannedExpenses')}</span>
             <span>{chargesStore.plannedExpenses.length}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-text-muted">Objectifs d'epargne</span>
+            <span className="text-text-muted">{t('settings.savingsGoals')}</span>
             <span>{savingsStore.goals.length}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-text-muted">Depenses rapides</span>
+            <span className="text-text-muted">{t('settings.quickExpenses')}</span>
             <span>{expenseStore.expenses.length}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-text-muted">Mois saisis</span>
+            <span className="text-text-muted">{t('settings.monthsEntered')}</span>
             <span>{Object.keys(monthlyStore.entries).length}</span>
           </div>
         </div>
@@ -316,12 +311,12 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
       {/* Export / Import */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Button variant="secondary" onClick={handleExport} className="w-full">
-          <Download size={14} className="inline mr-1.5" /> Exporter
+          <Download size={14} className="inline mr-1.5" /> {t('settings.export')}
         </Button>
         <div>
           <input ref={fileInputRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
           <Button variant="secondary" onClick={() => fileInputRef.current?.click()} className="w-full">
-            <Upload size={14} className="inline mr-1.5" /> Restaurer
+            <Upload size={14} className="inline mr-1.5" /> {t('settings.restore')}
           </Button>
         </div>
       </div>
@@ -329,7 +324,7 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
       {/* Logout */}
       {session && (
         <Button variant="secondary" onClick={handleLogout} className="w-full">
-          <LogOut size={14} className="inline mr-1.5" /> Se deconnecter
+          <LogOut size={14} className="inline mr-1.5" /> {t('settings.logout')}
         </Button>
       )}
 
@@ -337,16 +332,16 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
       <div className="pt-4 border-t border-white/[0.06]">
         {!confirmReset ? (
           <Button variant="danger" onClick={() => setConfirmReset(true)} className="w-full">
-            <Trash2 size={14} className="inline mr-1.5" /> Reinitialiser l'application
+            <Trash2 size={14} className="inline mr-1.5" /> {t('settings.resetApp')}
           </Button>
         ) : (
           <div className="space-y-2">
             <p className="text-sm text-danger text-center">
-              Toutes vos donnees seront supprimees. Irreversible.
+              {t('settings.resetWarning')}
             </p>
             <div className="flex gap-3">
-              <Button variant="secondary" onClick={() => setConfirmReset(false)} className="flex-1">Annuler</Button>
-              <Button variant="danger" onClick={handleReset} className="flex-1">Confirmer</Button>
+              <Button variant="secondary" onClick={() => setConfirmReset(false)} className="flex-1">{t('common.cancel')}</Button>
+              <Button variant="danger" onClick={handleReset} className="flex-1">{t('common.confirm')}</Button>
             </div>
           </div>
         )}
