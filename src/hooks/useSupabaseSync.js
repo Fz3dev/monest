@@ -276,13 +276,16 @@ export function useSupabaseSync(session) {
     // Check not expired
     if (new Date(invite.expires_at) < new Date()) return null
 
-    // Add user to household
+    // Add user to household (ignore duplicate — they may already be a member)
     const { error: memberError } = await supabase.from('household_members').insert({
       household_id: invite.household_id,
       user_id: session.user.id,
       role: 'member',
     })
-    if (memberError) { console.error('Join household error:', memberError); return null }
+    if (memberError && !memberError.message?.includes('duplicate')) {
+      console.error('Join household error:', memberError)
+      return null
+    }
 
     // Mark invite as accepted
     await supabase.from('household_invites')

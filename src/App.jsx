@@ -37,7 +37,18 @@ function NotFound() {
 
 function getInviteCode() {
   const params = new URLSearchParams(window.location.search)
-  return params.get('invite') || null
+  const fromUrl = params.get('invite')
+  if (fromUrl) {
+    // Persist invite code so it survives email confirmation/magic link redirects
+    localStorage.setItem('monest-invite-code', fromUrl)
+    return fromUrl
+  }
+  return localStorage.getItem('monest-invite-code') || null
+}
+
+function clearInviteCode() {
+  localStorage.removeItem('monest-invite-code')
+  window.history.replaceState({}, '', window.location.pathname)
 }
 
 function AppContent({ session }) {
@@ -55,9 +66,9 @@ function AppContent({ session }) {
       // If no household but has invite code, try to join
       if (!hId && inviteCode) {
         await acceptInvite(inviteCode)
-        // Clean URL
-        window.history.replaceState({}, '', window.location.pathname)
       }
+      // Clean up invite code from localStorage and URL
+      clearInviteCode()
       setLoading(false)
     }
 
