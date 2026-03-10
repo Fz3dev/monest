@@ -15,7 +15,7 @@ import Card from '../components/ui/Card'
 import AnimatedNumber from '../components/ui/AnimatedNumber'
 import ProgressBar from '../components/ui/ProgressBar'
 import DashboardGrid, { EditModeButton } from '../components/dashboard/DashboardGrid'
-import { subMonths, format } from 'date-fns'
+import { subMonths, format, getDaysInMonth, getDate } from 'date-fns'
 import {
   AlertTriangle, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight,
   Wallet, PiggyBank, Lightbulb, ShieldCheck, ShieldAlert,
@@ -86,6 +86,8 @@ export default function DashboardPage() {
   const hasIncome = result.incomeA > 0 || result.incomeB > 0
   const chargesRate = totalIncome > 0 ? Math.round((totalCharges / totalIncome) * 100) : 0
   const flexNumber = result.resteFoyer - monthExpenses
+  const today = new Date()
+  const daysLeft = getDaysInMonth(today) - getDate(today) + 1
 
   const getFlexColor = (val) => {
     if (val >= 1500) return 'text-success'
@@ -133,6 +135,12 @@ export default function DashboardPage() {
           <AnimatedNumber value={flexNumber} format={(v) => formatCurrency(Math.round(v))} />
         </div>
         <div className="text-[11px] text-text-muted mt-2 lg:text-sm">{t('dashboard.toSpendThisMonth')}</div>
+        {flexNumber > 0 && (
+          <div className="text-sm text-text-secondary mt-1 lg:text-base">
+            <span className="font-semibold">{formatCurrency(Math.round(flexNumber / Math.max(daysLeft, 1)))}</span>
+            <span className="text-text-muted"> / {t('dashboard.day')}</span>
+          </div>
+        )}
 
         <div className="flex items-center justify-center gap-5 mt-4 lg:gap-10 lg:mt-6">
           <div className="text-center">
@@ -480,7 +488,14 @@ export default function DashboardPage() {
         <Card className="!border-warning/20 !bg-warning/5">
           <div className="flex items-start gap-3">
             <AlertTriangle size={18} className="text-warning mt-0.5 flex-shrink-0" />
-            <p className="text-warning/90 text-sm" dangerouslySetInnerHTML={{ __html: t('dashboard.noIncomeWarning') }} />
+            <p className="text-warning/90 text-sm">
+              {t('dashboard.noIncomeWarning').split(t('dashboard.noIncomeWarningBold')).map((part, i, arr) => (
+                <span key={i}>
+                  {part}
+                  {i < arr.length - 1 && <Link to="/mensuel" className="font-semibold underline underline-offset-2">{t('dashboard.noIncomeWarningBold')}</Link>}
+                </span>
+              ))}
+            </p>
           </div>
         </Card>
       )}

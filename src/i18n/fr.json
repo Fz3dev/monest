@@ -54,10 +54,12 @@
     "common": "Commun"
   },
   "dashboard": {
-    "noIncomeWarning": "Saisissez vos revenus dans l'onglet <strong>Mensuel</strong> pour voir votre reste \u00e0 vivre.",
+    "noIncomeWarning": "Saisissez vos revenus dans l'onglet Mensuel pour voir votre reste \u00e0 vivre.",
+    "noIncomeWarningBold": "Mensuel",
     "remainingSolo": "Il te reste",
     "remainingCouple": "Il vous reste",
     "toSpendThisMonth": "\u00e0 d\u00e9penser ce mois",
+    "day": "jour",
     "income": "Revenus",
     "charges": "Charges",
     "expense": "D\u00e9pense",

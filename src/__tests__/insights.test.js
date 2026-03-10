@@ -17,7 +17,7 @@ describe('generateInsights', () => {
     expect(result).toEqual([])
   })
 
-  it('returns positive insight for high savings rate', () => {
+  it('returns positive insight for low charges rate', () => {
     const entries = {
       '2026-03': { incomeA: 3000, incomeB: 2000, month: '2026-03' },
     }
@@ -26,9 +26,9 @@ describe('generateInsights', () => {
     ]
     const result = generateInsights('2026-03', household, charges, [], [], entries)
     expect(result.length).toBeGreaterThan(0)
-    const savingsInsight = result.find((i) => i.message.includes('epargnez') || i.message.includes('epargne'))
-    expect(savingsInsight).toBeTruthy()
-    expect(savingsInsight.type).toBe('positive')
+    const chargesInsight = result.find((i) => i.message.includes('charges'))
+    expect(chargesInsight).toBeTruthy()
+    expect(chargesInsight.type).toBe('positive')
   })
 
   it('returns warning for deficit', () => {

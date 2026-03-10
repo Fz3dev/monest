@@ -157,6 +157,7 @@ export function useSupabaseSync(session) {
       return hId
     } catch (err) {
       console.error('Supabase sync error:', err)
+      toast.error('Erreur de synchronisation. Vos données locales sont affichées.')
       return null
     }
   }, [session])
