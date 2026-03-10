@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Responsive, useContainerWidth } from 'react-grid-layout'
 import { motion, AnimatePresence } from 'motion/react'
@@ -15,7 +15,7 @@ export function EditModeButton() {
   return (
     <button
       onClick={toggleEditMode}
-      className={`p-2.5 rounded-xl transition-colors ${
+      className={`hidden lg:flex p-2.5 rounded-xl transition-colors ${
         isEditMode
           ? 'bg-brand/15 text-brand'
           : 'bg-white/[0.06] text-text-secondary active:bg-white/[0.1]'
@@ -35,6 +35,22 @@ export default function DashboardGrid({ widgets }) {
   const isEditMode = useDashboardLayoutStore((s) => s.isEditMode)
   const toggleEditMode = useDashboardLayoutStore((s) => s.toggleEditMode)
   const resetLayouts = useDashboardLayoutStore((s) => s.resetLayouts)
+
+  // Long press to enter edit mode on mobile
+  const longPressTimer = useRef(null)
+  const handleTouchStart = useCallback(() => {
+    if (isEditMode) return
+    longPressTimer.current = setTimeout(() => {
+      toggleEditMode()
+      if (navigator.vibrate) navigator.vibrate(50)
+    }, 600)
+  }, [isEditMode, toggleEditMode])
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
+    }
+  }, [])
 
   const visibleIds = useMemo(() => Object.keys(widgets), [widgets])
 
@@ -65,7 +81,12 @@ export default function DashboardGrid({ widgets }) {
   )
 
   return (
-    <div ref={containerRef}>
+    <div
+      ref={containerRef}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchMove={handleTouchEnd}
+    >
       {mounted && (
         <Responsive
           width={width}
