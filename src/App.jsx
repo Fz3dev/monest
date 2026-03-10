@@ -8,7 +8,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 import OnboardingWizard from './components/onboarding/OnboardingWizard'
 import AuthPage from './components/auth/AuthPage'
 import ResetPasswordPage from './components/auth/ResetPasswordPage'
-import { Toaster } from 'sonner'
+import { Toaster, toast } from 'sonner'
 
 // Lazy import with auto-recovery: if chunk fails (stale cache), nuke SW & reload
 function lazyRetry(importFn) {
@@ -87,7 +87,18 @@ function AppContent({ session }) {
 
       // If no household but has invite code, try to join
       if (!hId && inviteCode) {
-        await acceptInvite(inviteCode)
+        const result = await acceptInvite(inviteCode)
+        if (result?.error) {
+          const messages = {
+            not_found: 'Cette invitation est invalide ou a déjà été utilisée.',
+            expired: 'Cette invitation a expiré.',
+            invalid_code: 'Code d\'invitation invalide.',
+            join_failed: 'Impossible de rejoindre le foyer.',
+          }
+          toast.error(messages[result.error] || 'Erreur lors de l\'acceptation de l\'invitation.')
+        } else if (result?.householdId) {
+          toast.success('Vous avez rejoint le foyer !')
+        }
       }
       // Clean up invite code from localStorage and URL
       clearInviteCode()

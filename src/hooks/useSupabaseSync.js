@@ -347,7 +347,10 @@ export function useSupabaseSync(session) {
   }, [session, householdId])
 
   const acceptInvite = useCallback(async (code) => {
-    if (!isSupabaseConfigured() || !session?.user) return null
+    if (!isSupabaseConfigured() || !session?.user) return { error: 'not_configured' }
+
+    // Validate code format (8 chars alphanumeric)
+    if (!code || !/^[A-Z2-9]{8}$/.test(code)) return { error: 'invalid_code' }
 
     // Look up invite
     const { data: invite, error: lookupError } = await supabase
@@ -357,10 +360,10 @@ export function useSupabaseSync(session) {
       .eq('status', 'pending')
       .single()
 
-    if (lookupError || !invite) return null
+    if (lookupError || !invite) return { error: 'not_found' }
 
     // Check not expired
-    if (new Date(invite.expires_at) < new Date()) return null
+    if (invite.expires_at && new Date(invite.expires_at) < new Date()) return { error: 'expired' }
 
     // Add user to household (ignore duplicate — they may already be a member)
     const { error: memberError } = await supabase.from('household_members').insert({
@@ -368,12 +371,14 @@ export function useSupabaseSync(session) {
       user_id: session.user.id,
       role: 'member',
     })
-    if (memberError && !memberError.message?.includes('duplicate')) {
+
+    const isDuplicate = memberError?.message?.includes('duplicate') || memberError?.code === '23505'
+    if (memberError && !isDuplicate) {
       console.error('Join household error:', memberError)
-      return null
+      return { error: 'join_failed' }
     }
 
-    // Mark invite as accepted
+    // Only mark invite as accepted if member was actually added (or already a member)
     await supabase.from('household_invites')
       .update({ status: 'accepted', used_by: session.user.id })
       .eq('id', invite.id)
@@ -381,7 +386,7 @@ export function useSupabaseSync(session) {
     setHouseholdId(invite.household_id)
     // Load shared household data
     await loadFromSupabase()
-    return invite.household_id
+    return { householdId: invite.household_id }
   }, [session, loadFromSupabase])
 
   return {
