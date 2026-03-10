@@ -50,7 +50,7 @@ function SwipeableCard({ actions = [], children }) {
         dragConstraints={{ left: -totalWidth, right: 0 }}
         dragElastic={0.08}
         onDragEnd={handleDragEnd}
-        className="relative z-10 lg:!transform-none"
+        className="relative z-10 bg-bg-primary lg:!transform-none"
       >
         {children}
       </motion.div>
