@@ -109,27 +109,26 @@ export default function MonthlyPage() {
               suffix="€"
             />
           )}
+          {household?.configModel !== 'solo' && (
+            <Input
+              label="Revenu complementaire (CAF, APL...)"
+              type="number"
+              value={entry?.complementaryIncome || ''}
+              onChange={(e) => handleIncomeChange('complementaryIncome', e.target.value)}
+              placeholder="0"
+              suffix="€"
+            />
+          )}
         </div>
       </Card>
 
-      {/* Charges */}
+      {/* Charges communes */}
       <Card>
-        <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">Charges du mois</h2>
+        <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">Charges communes</h2>
         <div className="space-y-1">
-          {result.charges.map((charge) => (
+          {result.charges.filter((c) => c.payer === 'common').map((charge) => (
             <div key={charge.id} className="flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0">
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <div
-                  className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{
-                    backgroundColor:
-                      charge.payer === 'person_a' ? household?.personAColor
-                      : charge.payer === 'person_b' ? household?.personBColor
-                      : '#6C63FF',
-                  }}
-                />
-                <span className="text-sm text-text-secondary truncate">{charge.name}</span>
-              </div>
+              <span className="text-sm text-text-secondary truncate flex-1 min-w-0">{charge.name}</span>
               {charge.type === 'fixed' ? (
                 <div className="flex items-center gap-1">
                   <input
@@ -151,11 +150,154 @@ export default function MonthlyPage() {
               )}
             </div>
           ))}
+          {result.charges.filter((c) => c.payer === 'common').length === 0 && (
+            <p className="text-sm text-text-muted text-center py-4">Aucune charge commune.</p>
+          )}
+        </div>
+        {result.totalCommon > 0 && (
+          <div className="border-t border-white/[0.06] mt-2 pt-2 space-y-1.5">
+            <div className="flex justify-between text-sm">
+              <span className="text-text-muted">Total charges communes</span>
+              <span className="font-medium tabular-nums">{formatCurrency(result.totalCommon)}</span>
+            </div>
+            {result.complementaryIncome > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-text-muted">- CAF / Complement</span>
+                <span className="font-medium tabular-nums text-success">-{formatCurrency(result.complementaryIncome)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-sm font-semibold">
+              <span className="text-brand">Montant a partager</span>
+              <span className="text-brand tabular-nums">{formatCurrency(result.amountToSplit)}</span>
+            </div>
+          </div>
+        )}
+      </Card>
 
-          {result.charges.length === 0 && (
-            <p className="text-sm text-text-muted text-center py-6">
-              Aucune charge configuree. Ajoutez-en dans l'onglet Charges.
-            </p>
+      {/* Repartition */}
+      {household?.personBName && result.amountToSplit > 0 && (
+        <Card className="!border-brand/15">
+          <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">Virement compte commun</h2>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-sm">
+              <span style={{ color: household?.personAColor }}>
+                Part {household.personAName} ({Math.round((result.ratio || 0.5) * 100)}%)
+              </span>
+              <span className="text-lg font-bold tabular-nums" style={{ color: household?.personAColor }}>
+                {formatCurrency(result.shareA)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <span style={{ color: household?.personBColor }}>
+                Part {household.personBName} ({Math.round((1 - (result.ratio || 0.5)) * 100)}%)
+              </span>
+              <span className="text-lg font-bold tabular-nums" style={{ color: household?.personBColor }}>
+                {formatCurrency(result.shareB)}
+              </span>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Charges perso A */}
+      {result.charges.filter((c) => c.payer === 'person_a').length > 0 && (
+        <Card>
+          <h2 className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: household?.personAColor }}>
+            Charges perso {household?.personAName}
+          </h2>
+          <div className="space-y-1">
+            {result.charges.filter((c) => c.payer === 'person_a').map((charge) => (
+              <div key={charge.id} className="flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0">
+                <span className="text-sm text-text-secondary truncate flex-1 min-w-0">{charge.name}</span>
+                {charge.type === 'fixed' ? (
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      value={
+                        entry?.variableOverrides?.[charge.id] !== undefined
+                          ? entry.variableOverrides[charge.id]
+                          : charge.originalAmount
+                      }
+                      onChange={(e) =>
+                        updateVariable(currentMonth, charge.id, parseFloat(e.target.value) || 0)
+                      }
+                      className="w-24 text-right bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-brand/50"
+                    />
+                    <span className="text-xs text-text-muted">€</span>
+                  </div>
+                ) : (
+                  <span className="text-sm font-medium tabular-nums">{formatCurrency(charge.amount)}</span>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="border-t border-white/[0.06] mt-2 pt-2 flex justify-between text-sm font-medium">
+            <span className="text-text-muted">Total</span>
+            <span className="tabular-nums">{formatCurrency(result.personalACharges)}</span>
+          </div>
+        </Card>
+      )}
+
+      {/* Charges perso B */}
+      {household?.personBName && result.charges.filter((c) => c.payer === 'person_b').length > 0 && (
+        <Card>
+          <h2 className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: household?.personBColor }}>
+            Charges perso {household.personBName}
+          </h2>
+          <div className="space-y-1">
+            {result.charges.filter((c) => c.payer === 'person_b').map((charge) => (
+              <div key={charge.id} className="flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0">
+                <span className="text-sm text-text-secondary truncate flex-1 min-w-0">{charge.name}</span>
+                {charge.type === 'fixed' ? (
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      value={
+                        entry?.variableOverrides?.[charge.id] !== undefined
+                          ? entry.variableOverrides[charge.id]
+                          : charge.originalAmount
+                      }
+                      onChange={(e) =>
+                        updateVariable(currentMonth, charge.id, parseFloat(e.target.value) || 0)
+                      }
+                      className="w-24 text-right bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-brand/50"
+                    />
+                    <span className="text-xs text-text-muted">€</span>
+                  </div>
+                ) : (
+                  <span className="text-sm font-medium tabular-nums">{formatCurrency(charge.amount)}</span>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="border-t border-white/[0.06] mt-2 pt-2 flex justify-between text-sm font-medium">
+            <span className="text-text-muted">Total</span>
+            <span className="tabular-nums">{formatCurrency(result.personalBCharges)}</span>
+          </div>
+        </Card>
+      )}
+
+      {/* Epargne individuelle */}
+      <Card>
+        <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">Epargne individuelle</h2>
+        <div className="space-y-3">
+          <Input
+            label={`Epargne ${household?.personAName || 'Personne A'}`}
+            type="number"
+            value={entry?.savingsA || ''}
+            onChange={(e) => handleIncomeChange('savingsA', e.target.value)}
+            placeholder="0"
+            suffix="€"
+          />
+          {household?.personBName && (
+            <Input
+              label={`Epargne ${household.personBName}`}
+              type="number"
+              value={entry?.savingsB || ''}
+              onChange={(e) => handleIncomeChange('savingsB', e.target.value)}
+              placeholder="0"
+              suffix="€"
+            />
           )}
         </div>
       </Card>
@@ -169,16 +311,16 @@ export default function MonthlyPage() {
             <div className="space-y-1.5 mb-2">
               <div className="flex justify-between text-[10px] text-text-muted">
                 <div className="flex items-center gap-1"><Wallet size={10} /> Revenus</div>
-                <div className="flex items-center gap-1"><TrendingDown size={10} /> Charges</div>
+                <div className="flex items-center gap-1"><TrendingDown size={10} /> Charges + Epargne</div>
               </div>
               <ProgressBar
-                value={result.totalCommon + result.personalACharges + result.personalBCharges}
+                value={result.totalCommon + result.personalACharges + result.personalBCharges + result.savingsA + result.savingsB - result.complementaryIncome}
                 max={result.incomeA + result.incomeB}
                 color={result.resteFoyer >= 1000 ? '#4ADE80' : result.resteFoyer >= 0 ? '#FBBF24' : '#F87171'}
               />
               <div className="flex justify-between text-[10px] text-text-muted tabular-nums">
                 <span>{formatCurrency(result.incomeA + result.incomeB)}</span>
-                <span>{formatCurrency(result.totalCommon + result.personalACharges + result.personalBCharges)}</span>
+                <span>{formatCurrency(result.totalCommon + result.personalACharges + result.personalBCharges + result.savingsA + result.savingsB - result.complementaryIncome)}</span>
               </div>
             </div>
           )}
@@ -198,38 +340,13 @@ export default function MonthlyPage() {
             </div>
           )}
           <div className="border-t border-white/[0.06] pt-3 flex justify-between items-center">
-            <span className="text-text-secondary font-medium">Foyer</span>
+            <span className="text-text-secondary font-medium">Reste total foyer</span>
             <span className={`text-2xl font-bold ${getResteColor(result.resteFoyer)}`}>
               <AnimatedNumber value={result.resteFoyer} format={(v) => formatCurrency(Math.round(v))} />
             </span>
           </div>
         </div>
       </Card>
-
-      {/* Repartition */}
-      {household?.personBName && (
-        <Card>
-          <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">Repartition</h2>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between text-text-muted">
-              <span>Charges communes</span>
-              <span className="tabular-nums">{formatCurrency(result.totalCommon)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span style={{ color: household?.personAColor }}>
-                Part {household.personAName} ({Math.round((result.ratio || 0.5) * 100)}%)
-              </span>
-              <span className="tabular-nums">{formatCurrency(result.shareA)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span style={{ color: household?.personBColor }}>
-                Part {household.personBName} ({Math.round((1 - (result.ratio || 0.5)) * 100)}%)
-              </span>
-              <span className="tabular-nums">{formatCurrency(result.shareB)}</span>
-            </div>
-          </div>
-        </Card>
-      )}
     </div>
   )
 }
