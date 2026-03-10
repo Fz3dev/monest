@@ -167,7 +167,9 @@ export function useSupabaseSync(session) {
 
   const createHousehold = useCallback(async (household) => {
     if (!isSupabaseConfigured() || !session?.user) return null
-    const { data, error } = await supabase
+
+    // Insert household first (no .select() — RLS SELECT requires membership which doesn't exist yet)
+    const { error: insertError } = await supabase
       .from('households')
       .insert({
         id: household.id,
@@ -180,19 +182,20 @@ export function useSupabaseSync(session) {
         split_ratio: household.splitRatio,
         split_mode: household.splitMode,
       })
-      .select()
-      .single()
 
-    if (error) { console.error('Create household error:', error); return null }
+    if (insertError) { console.error('Create household error:', insertError); return null }
 
-    await supabase.from('household_members').insert({
-      household_id: data.id,
+    // Now add user as owner — after this, SELECT RLS will work
+    const { error: memberError } = await supabase.from('household_members').insert({
+      household_id: household.id,
       user_id: session.user.id,
       role: 'owner',
     })
 
-    setHouseholdId(data.id)
-    return data.id
+    if (memberError) { console.error('Create member error:', memberError); return null }
+
+    setHouseholdId(household.id)
+    return household.id
   }, [session])
 
   const syncItem = useCallback(async (table, item) => {

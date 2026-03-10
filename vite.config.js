@@ -31,10 +31,10 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'recharts': ['recharts'],
-          'supabase': ['@supabase/supabase-js'],
-          'motion': ['motion'],
+        manualChunks(id) {
+          if (id.includes('recharts')) return 'recharts'
+          if (id.includes('@supabase/supabase-js')) return 'supabase'
+          if (id.includes('motion')) return 'motion'
         },
       },
     },
