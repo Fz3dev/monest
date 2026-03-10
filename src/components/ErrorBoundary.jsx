@@ -10,6 +10,30 @@ export default class ErrorBoundary extends Component {
     return { hasError: true, error }
   }
 
+  componentDidCatch(error) {
+    // Auto-recover from stale chunk errors
+    const msg = error?.message || ''
+    if (
+      msg.includes('Failed to fetch dynamically imported module') ||
+      msg.includes('Loading chunk') ||
+      msg.includes('Loading CSS chunk') ||
+      msg.includes('ChunkLoadError')
+    ) {
+      if (!sessionStorage.getItem('monest-chunk-retry')) {
+        sessionStorage.setItem('monest-chunk-retry', '1')
+        ;(async () => {
+          try {
+            const regs = await navigator.serviceWorker?.getRegistrations() || []
+            await Promise.all(regs.map(r => r.unregister()))
+            const keys = await caches.keys()
+            await Promise.all(keys.map(k => caches.delete(k)))
+          } catch (e) { /* ignore */ }
+          window.location.reload()
+        })()
+      }
+    }
+  }
+
   render() {
     if (this.state.hasError) {
       return (
@@ -21,7 +45,15 @@ export default class ErrorBoundary extends Component {
               Quelque chose s'est mal passé. Essayez de recharger la page.
             </p>
             <button
-              onClick={() => window.location.reload()}
+              onClick={async () => {
+                try {
+                  const regs = await navigator.serviceWorker?.getRegistrations() || []
+                  await Promise.all(regs.map(r => r.unregister()))
+                  const keys = await caches.keys()
+                  await Promise.all(keys.map(k => caches.delete(k)))
+                } catch (e) { /* ignore */ }
+                window.location.reload()
+              }}
               className="bg-brand hover:bg-brand-dark text-white px-6 py-2.5 rounded-xl font-medium transition-colors"
             >
               Recharger

@@ -9,14 +9,35 @@ import OnboardingWizard from './components/onboarding/OnboardingWizard'
 import AuthPage from './components/auth/AuthPage'
 import { Toaster } from 'sonner'
 
-const DashboardPage = lazy(() => import('./pages/DashboardPage'))
-const MonthlyPage = lazy(() => import('./pages/MonthlyPage'))
-const ChargesPage = lazy(() => import('./pages/ChargesPage'))
-const CalendarPage = lazy(() => import('./pages/CalendarPage'))
-const ImportPage = lazy(() => import('./pages/ImportPage'))
-const SettingsPage = lazy(() => import('./pages/SettingsPage'))
-const SavingsPage = lazy(() => import('./pages/SavingsPage'))
-const ExpensesPage = lazy(() => import('./pages/ExpensesPage'))
+// Lazy import with auto-recovery: if chunk fails (stale cache), nuke SW & reload
+function lazyRetry(importFn) {
+  return lazy(() =>
+    importFn().catch(async () => {
+      if (!sessionStorage.getItem('monest-chunk-retry')) {
+        sessionStorage.setItem('monest-chunk-retry', '1')
+        try {
+          const regs = await navigator.serviceWorker?.getRegistrations() || []
+          await Promise.all(regs.map(r => r.unregister()))
+          const keys = await caches.keys()
+          await Promise.all(keys.map(k => caches.delete(k)))
+        } catch (e) { /* ignore */ }
+        window.location.reload()
+        return new Promise(() => {}) // never resolves — page is reloading
+      }
+      sessionStorage.removeItem('monest-chunk-retry')
+      throw new Error('Erreur de chargement — veuillez recharger la page')
+    })
+  )
+}
+
+const DashboardPage = lazyRetry(() => import('./pages/DashboardPage'))
+const MonthlyPage = lazyRetry(() => import('./pages/MonthlyPage'))
+const ChargesPage = lazyRetry(() => import('./pages/ChargesPage'))
+const CalendarPage = lazyRetry(() => import('./pages/CalendarPage'))
+const ImportPage = lazyRetry(() => import('./pages/ImportPage'))
+const SettingsPage = lazyRetry(() => import('./pages/SettingsPage'))
+const SavingsPage = lazyRetry(() => import('./pages/SavingsPage'))
+const ExpensesPage = lazyRetry(() => import('./pages/ExpensesPage'))
 
 function PageLoader() {
   return (
