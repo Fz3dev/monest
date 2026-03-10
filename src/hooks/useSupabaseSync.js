@@ -241,10 +241,63 @@ export function useSupabaseSync(session) {
     return () => { supabase.removeChannel(channel) }
   }, [householdId])
 
+  const createInvite = useCallback(async () => {
+    if (!isSupabaseConfigured() || !session?.user || !householdId) return null
+    // Generate short readable code
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+    let code = ''
+    for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)]
+
+    const { error } = await supabase.from('household_invites').insert({
+      household_id: householdId,
+      code,
+      created_by: session.user.id,
+    })
+    if (error) { console.error('Create invite error:', error); return null }
+    return code
+  }, [session, householdId])
+
+  const acceptInvite = useCallback(async (code) => {
+    if (!isSupabaseConfigured() || !session?.user) return null
+
+    // Look up invite
+    const { data: invite, error: lookupError } = await supabase
+      .from('household_invites')
+      .select('*')
+      .eq('code', code)
+      .eq('status', 'pending')
+      .single()
+
+    if (lookupError || !invite) return null
+
+    // Check not expired
+    if (new Date(invite.expires_at) < new Date()) return null
+
+    // Add user to household
+    const { error: memberError } = await supabase.from('household_members').insert({
+      household_id: invite.household_id,
+      user_id: session.user.id,
+      role: 'member',
+    })
+    if (memberError) { console.error('Join household error:', memberError); return null }
+
+    // Mark invite as accepted
+    await supabase.from('household_invites')
+      .update({ status: 'accepted', used_by: session.user.id })
+      .eq('id', invite.id)
+
+    setHouseholdId(invite.household_id)
+    // Load shared household data
+    await loadFromSupabase()
+    return invite.household_id
+  }, [session, loadFromSupabase])
+
   return {
     loadFromSupabase,
     saveHousehold,
     createHousehold,
+    createInvite,
+    acceptInvite,
     syncItem,
     deleteItem,
     syncMonthlyEntry,

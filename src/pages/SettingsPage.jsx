@@ -9,14 +9,14 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
-import { Download, Upload, Trash2, User, Database, LogOut, Users, Share2, Copy, Check } from 'lucide-react'
+import { Download, Upload, Trash2, User, Database, LogOut, Users, Share2, Copy, Check, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 const COLORS = [
   '#6C63FF', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#22c55e',
 ]
 
-export default function SettingsPage({ session, saveHousehold }) {
+export default function SettingsPage({ session, saveHousehold, createInvite }) {
   const { household, updateHousehold, resetHousehold } = useHouseholdStore()
   const chargesStore = useChargesStore()
   const monthlyStore = useMonthlyStore()
@@ -95,12 +95,27 @@ export default function SettingsPage({ session, saveHousehold }) {
     }
   }
 
-  const handleCopyInvite = () => {
-    const url = window.location.origin
-    navigator.clipboard.writeText(url)
-    setCopied(true)
-    toast.success('Lien copie !')
-    setTimeout(() => setCopied(false), 2000)
+  const [inviteLoading, setInviteLoading] = useState(false)
+
+  const handleCopyInvite = async () => {
+    if (!createInvite) return
+    setInviteLoading(true)
+    try {
+      const code = await createInvite()
+      if (!code) {
+        toast.error('Erreur lors de la creation de l\'invitation')
+        return
+      }
+      const url = `${window.location.origin}?invite=${code}`
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      toast.success('Lien d\'invitation copie !')
+      setTimeout(() => setCopied(false), 3000)
+    } catch {
+      toast.error('Erreur lors de la copie')
+    } finally {
+      setInviteLoading(false)
+    }
   }
 
   const modelLabels = {
@@ -146,9 +161,9 @@ export default function SettingsPage({ session, saveHousehold }) {
           <p className="text-xs text-text-muted mb-3">
             Partagez ce lien pour que votre partenaire puisse se connecter et acceder au budget partage.
           </p>
-          <Button variant="secondary" size="sm" onClick={handleCopyInvite} className="w-full">
-            {copied ? <Check size={14} className="inline mr-1.5 text-success" /> : <Copy size={14} className="inline mr-1.5" />}
-            {copied ? 'Copie !' : 'Copier le lien'}
+          <Button variant="secondary" size="sm" onClick={handleCopyInvite} disabled={inviteLoading} className="w-full">
+            {inviteLoading ? <Loader2 size={14} className="inline mr-1.5 animate-spin" /> : copied ? <Check size={14} className="inline mr-1.5 text-success" /> : <Copy size={14} className="inline mr-1.5" />}
+            {inviteLoading ? 'Generation...' : copied ? 'Lien copie !' : 'Generer un lien d\'invitation'}
           </Button>
         </Card>
       )}

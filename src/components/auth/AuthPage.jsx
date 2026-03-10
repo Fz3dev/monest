@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Mail, Lock, Eye, EyeOff, Loader2, CheckCircle2, Sparkles } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, Loader2, CheckCircle2, Sparkles, UserPlus } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import Button from '../ui/Button'
 import Input from '../ui/Input'
@@ -16,8 +16,8 @@ function translateError(message) {
   return ERROR_MAP[message] || message
 }
 
-export default function AuthPage() {
-  const [mode, setMode] = useState('login') // 'login' | 'signup'
+export default function AuthPage({ inviteCode }) {
+  const [mode, setMode] = useState(inviteCode ? 'signup' : 'login') // 'login' | 'signup'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -160,6 +160,27 @@ export default function AuthPage() {
             Votre budget, simplifie.
           </motion.p>
         </div>
+
+        {/* Invite banner */}
+        {inviteCode && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Card className="!border-brand/30 !bg-brand/5 mb-4 p-4">
+              <div className="flex items-center gap-3">
+                <UserPlus className="w-5 h-5 text-brand flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-text-primary">Vous avez ete invite(e) !</p>
+                  <p className="text-xs text-text-muted mt-0.5">
+                    Creez un compte ou connectez-vous pour rejoindre le foyer partage.
+                  </p>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
 
         {/* Auth Card */}
         <Card className="p-6">

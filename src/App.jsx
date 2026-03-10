@@ -35,15 +35,34 @@ function NotFound() {
   )
 }
 
+function getInviteCode() {
+  const params = new URLSearchParams(window.location.search)
+  return params.get('invite') || null
+}
+
 function AppContent({ session }) {
   const household = useHouseholdStore((s) => s.household)
-  const { loadFromSupabase, createHousehold, syncItem, deleteItem, syncMonthlyEntry, saveHousehold } = useSupabaseSync(session)
+  const { loadFromSupabase, createHousehold, acceptInvite, syncItem, deleteItem, syncMonthlyEntry, saveHousehold, createInvite } = useSupabaseSync(session)
   const [loading, setLoading] = useState(!!session)
+  const [inviteCode] = useState(getInviteCode)
 
   useEffect(() => {
     if (!session) return
-    loadFromSupabase().finally(() => setLoading(false))
-  }, [session, loadFromSupabase])
+
+    const init = async () => {
+      const hId = await loadFromSupabase()
+
+      // If no household but has invite code, try to join
+      if (!hId && inviteCode) {
+        await acceptInvite(inviteCode)
+        // Clean URL
+        window.history.replaceState({}, '', window.location.pathname)
+      }
+      setLoading(false)
+    }
+
+    init()
+  }, [session, loadFromSupabase, inviteCode, acceptInvite])
 
   if (loading) {
     return (
@@ -78,7 +97,7 @@ function AppContent({ session }) {
               <Route path="/epargne" element={<SavingsPage syncItem={syncItem} deleteItem={deleteItem} />} />
               <Route path="/calendrier" element={<CalendarPage />} />
               <Route path="/import" element={<ImportPage />} />
-              <Route path="/parametres" element={<SettingsPage session={session} saveHousehold={saveHousehold} />} />
+              <Route path="/parametres" element={<SettingsPage session={session} saveHousehold={saveHousehold} createInvite={createInvite} />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
@@ -120,7 +139,7 @@ export default function App() {
   if (isSupabaseConfigured() && !session) {
     return (
       <ErrorBoundary>
-        <AuthPage />
+        <AuthPage inviteCode={getInviteCode()} />
         <Toaster theme="dark" position="top-center" richColors />
       </ErrorBoundary>
     )
