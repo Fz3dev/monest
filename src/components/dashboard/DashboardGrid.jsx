@@ -36,13 +36,28 @@ export default function DashboardGrid({ widgets }) {
   const toggleEditMode = useDashboardLayoutStore((s) => s.toggleEditMode)
   const resetLayouts = useDashboardLayoutStore((s) => s.resetLayouts)
 
-  // Track if we're on mobile
   const [isMobile, setIsMobile] = useState(false)
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
     check()
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
+  }, [])
+
+  // Long press to enter edit mode on mobile
+  const longPressTimer = useRef(null)
+  const handleTouchStart = useCallback(() => {
+    if (isEditMode) return
+    longPressTimer.current = setTimeout(() => {
+      toggleEditMode()
+      if (navigator.vibrate) navigator.vibrate(50)
+    }, 600)
+  }, [isEditMode, toggleEditMode])
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
+    }
   }, [])
 
   const visibleIds = useMemo(() => Object.keys(widgets), [widgets])
@@ -82,13 +97,93 @@ export default function DashboardGrid({ widgets }) {
     [setLayouts, isEditMode]
   )
 
-  // Mobile: simple vertical stack, no grid
-  if (isMobile) {
+  // Mobile: reorder with up/down buttons in edit mode
+  const moveWidget = useCallback((id, direction) => {
+    const smLayout = layouts.sm || DEFAULT_LAYOUTS.sm
+    const sorted = [...smLayout].sort((a, b) => a.y - b.y)
+    const idx = sorted.findIndex((l) => l.i === id)
+    if (idx < 0) return
+    const swapIdx = idx + direction
+    if (swapIdx < 0 || swapIdx >= sorted.length) return
+    // Swap y positions
+    const newLayout = sorted.map((item, i) => {
+      if (i === idx) return { ...item, y: sorted[swapIdx].y }
+      if (i === swapIdx) return { ...item, y: sorted[idx].y }
+      return item
+    })
+    setLayouts({ ...layouts, sm: newLayout })
+  }, [layouts, setLayouts])
+
+  // Mobile normal: simple vertical stack (natural height)
+  // Mobile edit: show reorder buttons
+  if (isMobile && !isEditMode) {
     return (
-      <div className="space-y-4">
+      <div
+        className="space-y-4"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchMove={handleTouchEnd}
+      >
         {mobileOrder.map((id) => (
           <div key={id}>{widgets[id]}</div>
         ))}
+      </div>
+    )
+  }
+
+  if (isMobile && isEditMode) {
+    return (
+      <div className="space-y-3">
+        {mobileOrder.map((id, idx) => (
+          <div key={id} className="ring-1 ring-brand/20 rounded-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-1.5 bg-brand/5">
+              <span className="text-[10px] font-medium text-brand uppercase tracking-wider">
+                {t(`dashboardGrid.widget_${id}`, { defaultValue: id })}
+              </span>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => moveWidget(id, -1)}
+                  disabled={idx === 0}
+                  className="p-1 rounded text-text-muted hover:text-white disabled:opacity-20 transition-colors"
+                  aria-label="Monter"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+                </button>
+                <button
+                  onClick={() => moveWidget(id, 1)}
+                  disabled={idx === mobileOrder.length - 1}
+                  className="p-1 rounded text-text-muted hover:text-white disabled:opacity-20 transition-colors"
+                  aria-label="Descendre"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
+              </div>
+            </div>
+            <div className="pointer-events-none opacity-60 max-h-32 overflow-hidden">
+              {widgets[id]}
+            </div>
+          </div>
+        ))}
+
+        {/* Floating toolbar */}
+        <div className="fixed bottom-24 left-0 right-0 z-50 flex justify-center">
+          <div className="flex gap-3 bg-bg-elevated border border-white/[0.08] rounded-2xl px-5 py-3 shadow-2xl">
+            <button
+              onClick={resetLayouts}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm text-text-muted hover:text-text-primary hover:bg-white/[0.04] transition-colors"
+            >
+              <RotateCcw size={14} />
+              <span>{t('dashboardGrid.resetLayout')}</span>
+            </button>
+            <button
+              onClick={toggleEditMode}
+              className="flex items-center gap-2 px-4 py-1.5 rounded-xl text-sm font-medium bg-brand text-white hover:bg-brand-light transition-colors"
+            >
+              <Check size={14} />
+              <span>{t('dashboardGrid.done')}</span>
+            </button>
+          </div>
+        </div>
       </div>
     )
   }
