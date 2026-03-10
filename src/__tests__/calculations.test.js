@@ -362,6 +362,44 @@ describe('computeMonth', () => {
     expect(result.totalCommon).toBe(0)
   })
 
+  it('deducts negative starting balance from reste a vivre', () => {
+    const charges = [
+      { id: '1', name: 'Loyer', amount: 1000, payer: 'common', frequency: 'monthly', active: true },
+    ]
+    const entry = { incomeA: 3000, incomeB: 2000, startingBalanceA: -200, startingBalanceB: -100 }
+    const result = computeMonth('2026-03', household, charges, [], [], entry)
+
+    expect(result.startingBalanceA).toBe(-200)
+    expect(result.startingBalanceB).toBe(-100)
+    expect(result.resteA).toBe(2300) // 3000 + (-200) - 500
+    expect(result.resteB).toBe(1400) // 2000 + (-100) - 500
+    expect(result.resteFoyer).toBe(3700)
+  })
+
+  it('handles positive starting balance', () => {
+    const charges = [
+      { id: '1', name: 'Loyer', amount: 1000, payer: 'common', frequency: 'monthly', active: true },
+    ]
+    const entry = { incomeA: 3000, incomeB: 2000, startingBalanceA: 500, startingBalanceB: 0 }
+    const result = computeMonth('2026-03', household, charges, [], [], entry)
+
+    expect(result.resteA).toBe(3000) // 3000 + 500 - 500
+    expect(result.resteB).toBe(1500) // 2000 + 0 - 500
+  })
+
+  it('defaults starting balance to 0 when not provided', () => {
+    const charges = [
+      { id: '1', name: 'Loyer', amount: 1000, payer: 'common', frequency: 'monthly', active: true },
+    ]
+    const entry = { incomeA: 3000, incomeB: 2000 }
+    const result = computeMonth('2026-03', household, charges, [], [], entry)
+
+    expect(result.startingBalanceA).toBe(0)
+    expect(result.startingBalanceB).toBe(0)
+    expect(result.resteA).toBe(2500)
+    expect(result.resteB).toBe(1500)
+  })
+
   it('respects bimonthly frequency', () => {
     const charges = [
       { id: '1', name: 'Assurance', amount: 200, payer: 'common', frequency: 'bimonthly', startMonth: 1, active: true },

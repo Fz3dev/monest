@@ -9,7 +9,7 @@ import Card from '../components/ui/Card'
 import Input from '../components/ui/Input'
 import AnimatedNumber from '../components/ui/AnimatedNumber'
 import ProgressBar from '../components/ui/ProgressBar'
-import { ChevronLeft, ChevronRight, Wallet, TrendingDown } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Wallet, TrendingDown, AlertTriangle } from 'lucide-react'
 import { addMonths, subMonths, format } from 'date-fns'
 
 export default function MonthlyPage() {
@@ -112,6 +112,37 @@ export default function MonthlyPage() {
         </div>
       </Card>
 
+      {/* Solde de depart (decouvert) */}
+      <Card>
+        <div className="flex items-center gap-2 mb-3">
+          <AlertTriangle size={12} className="text-warning" />
+          <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Solde avant salaire</h2>
+        </div>
+        <p className="text-[11px] text-text-muted mb-3">
+          Si votre compte est a decouvert avant de recevoir le salaire, entrez le montant negatif (ex: -200).
+        </p>
+        <div className="space-y-3">
+          <Input
+            label={`Solde ${household?.personAName || 'Personne A'}`}
+            type="number"
+            value={entry?.startingBalanceA ?? ''}
+            onChange={(e) => handleIncomeChange('startingBalanceA', e.target.value)}
+            placeholder="0"
+            suffix="€"
+          />
+          {household?.personBName && (
+            <Input
+              label={`Solde ${household.personBName}`}
+              type="number"
+              value={entry?.startingBalanceB ?? ''}
+              onChange={(e) => handleIncomeChange('startingBalanceB', e.target.value)}
+              placeholder="0"
+              suffix="€"
+            />
+          )}
+        </div>
+      </Card>
+
       {/* Charges */}
       <Card>
         <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">Charges du mois</h2>
@@ -184,14 +215,24 @@ export default function MonthlyPage() {
           )}
 
           <div className="flex justify-between items-center">
-            <span className="text-sm" style={{ color: household?.personAColor }}>{household?.personAName}</span>
+            <div>
+              <span className="text-sm" style={{ color: household?.personAColor }}>{household?.personAName}</span>
+              {result.startingBalanceA < 0 && (
+                <span className="text-[10px] text-danger ml-1.5">({formatCurrency(result.startingBalanceA)})</span>
+              )}
+            </div>
             <span className={`text-xl font-bold ${getResteColor(result.resteA)}`}>
               <AnimatedNumber value={result.resteA} format={(v) => formatCurrency(Math.round(v))} />
             </span>
           </div>
           {household?.personBName && (
             <div className="flex justify-between items-center">
-              <span className="text-sm" style={{ color: household?.personBColor }}>{household.personBName}</span>
+              <div>
+                <span className="text-sm" style={{ color: household?.personBColor }}>{household.personBName}</span>
+                {result.startingBalanceB < 0 && (
+                  <span className="text-[10px] text-danger ml-1.5">({formatCurrency(result.startingBalanceB)})</span>
+                )}
+              </div>
               <span className={`text-xl font-bold ${getResteColor(result.resteB)}`}>
                 <AnimatedNumber value={result.resteB} format={(v) => formatCurrency(Math.round(v))} />
               </span>

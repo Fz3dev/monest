@@ -108,6 +108,8 @@ export function useSupabaseSync(session) {
             month: entry.month,
             incomeA: Number(entry.incomeA) || 0,
             incomeB: Number(entry.incomeB) || 0,
+            startingBalanceA: Number(entry.startingBalanceA) || 0,
+            startingBalanceB: Number(entry.startingBalanceB) || 0,
             variableOverrides: entry.variableOverrides || {},
           }
         })
@@ -210,6 +212,8 @@ export function useSupabaseSync(session) {
       month,
       income_a: entry.incomeA || 0,
       income_b: entry.incomeB || 0,
+      starting_balance_a: entry.startingBalanceA || 0,
+      starting_balance_b: entry.startingBalanceB || 0,
       variable_overrides: entry.variableOverrides || {},
     }, { onConflict: 'household_id,month' })
   }, [householdId])

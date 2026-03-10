@@ -52,6 +52,8 @@ export function computeMonth(month, household, fixedCharges, installments, plann
   const entry = monthlyEntry || {}
   const incomeA = entry.incomeA || 0
   const incomeB = entry.incomeB || 0
+  const startingBalanceA = entry.startingBalanceA || 0
+  const startingBalanceB = entry.startingBalanceB || 0
   const variableOverrides = entry.variableOverrides || {}
 
   const chargesDetail = []
@@ -114,12 +116,14 @@ export function computeMonth(month, household, fixedCharges, installments, plann
 
   const shareA = commonCharges * ratio
   const shareB = commonCharges * (1 - ratio)
-  const resteA = incomeA - shareA - personalACharges
-  const resteB = incomeB - shareB - personalBCharges
+  const resteA = incomeA + startingBalanceA - shareA - personalACharges
+  const resteB = incomeB + startingBalanceB - shareB - personalBCharges
 
   return {
     incomeA,
     incomeB,
+    startingBalanceA,
+    startingBalanceB,
     resteA,
     resteB,
     resteFoyer: resteA + resteB,
