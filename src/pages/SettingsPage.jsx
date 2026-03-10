@@ -10,7 +10,8 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
-import { Download, Upload, Trash2, User, Database, LogOut, Users, Share2, Copy, Check, Loader2 } from 'lucide-react'
+import Select from '../components/ui/Select'
+import { Download, Upload, Trash2, User, Database, LogOut, Users, Share2, Copy, Check, Loader2, UserPlus } from 'lucide-react'
 import { toast } from 'sonner'
 
 const COLORS = [
@@ -27,6 +28,14 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
   const [confirmReset, setConfirmReset] = useState(false)
   const [editing, setEditing] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [coupleSetup, setCoupleSetup] = useState(false)
+  const [coupleForm, setCoupleForm] = useState({
+    personBName: '',
+    personBColor: '#ec4899',
+    configModel: 'common_and_personal',
+    splitRatio: 0.5,
+    splitMode: '50/50',
+  })
   const fileInputRef = useRef(null)
 
   const handleExport = () => {
@@ -97,6 +106,20 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
     }
   }
 
+  const handleSwitchToCouple = () => {
+    const updates = {
+      personBName: coupleForm.personBName,
+      personBColor: coupleForm.personBColor,
+      configModel: coupleForm.configModel,
+      splitRatio: coupleForm.splitRatio,
+      splitMode: coupleForm.splitMode,
+      name: `${household.personAName} & ${coupleForm.personBName}`,
+    }
+    handleUpdate(updates)
+    setCoupleSetup(false)
+    toast.success(t('settings.partnerAdded'))
+  }
+
   const [inviteLoading, setInviteLoading] = useState(false)
 
   const handleCopyInvite = async () => {
@@ -145,6 +168,94 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
               <span className="text-text-secondary">{session.user.email}</span>
             </div>
           </div>
+        </Card>
+      )}
+
+      {/* Solo → Couple upgrade */}
+      {household?.configModel === 'solo' && (
+        <Card className="!border-brand/15">
+          <div className="flex items-center gap-2 mb-2">
+            <UserPlus size={14} className="text-brand" />
+            <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">{t('settings.addPartner')}</h2>
+          </div>
+          {!coupleSetup ? (
+            <>
+              <p className="text-xs text-text-muted mb-3">{t('settings.addPartnerDescription')}</p>
+              <Button variant="secondary" size="sm" onClick={() => setCoupleSetup(true)} className="w-full">
+                <UserPlus size={14} className="inline mr-1.5" />
+                {t('settings.switchToCouple')}
+              </Button>
+            </>
+          ) : (
+            <div className="space-y-3 mt-2">
+              <Input
+                label={t('settings.partnerFirstName')}
+                value={coupleForm.personBName}
+                onChange={(e) => setCoupleForm((f) => ({ ...f, personBName: e.target.value }))}
+                placeholder="Ex: Carla"
+                autoFocus
+              />
+              <div>
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">{t('settings.partnerColor')}</label>
+                <div className="flex gap-2">
+                  {COLORS.map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => setCoupleForm((f) => ({ ...f, personBColor: c }))}
+                      className={`w-8 h-8 rounded-full transition-all cursor-pointer ${
+                        coupleForm.personBColor === c ? 'ring-2 ring-white ring-offset-2 ring-offset-bg-primary scale-110' : 'hover:scale-105'
+                      }`}
+                      style={{ backgroundColor: c }}
+                      aria-label={t('settings.colorLabel', { color: c })}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">{t('settings.model')}</label>
+                <div className="space-y-1.5">
+                  {[
+                    { value: 'common_and_personal', label: t('settings.modelLabels.common_and_personal') },
+                    { value: 'full_common', label: t('settings.modelLabels.full_common') },
+                    { value: 'full_personal', label: t('settings.modelLabels.full_personal') },
+                  ].map((m) => (
+                    <button
+                      key={m.value}
+                      onClick={() => setCoupleForm((f) => ({ ...f, configModel: m.value }))}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all cursor-pointer ${
+                        coupleForm.configModel === m.value
+                          ? 'bg-brand/10 text-brand border border-brand/30'
+                          : 'bg-white/[0.04] text-text-secondary border border-transparent hover:border-white/[0.08]'
+                      }`}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                  {t('settings.shareOf', { name: household?.personAName, percent: Math.round(coupleForm.splitRatio * 100) })}
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={coupleForm.splitRatio * 100}
+                  onChange={(e) => setCoupleForm((f) => ({ ...f, splitRatio: parseInt(e.target.value) / 100 }))}
+                  className="w-full accent-brand"
+                />
+                <div className="flex justify-between text-xs text-text-muted mt-1">
+                  <span>{household?.personAName}: {Math.round(coupleForm.splitRatio * 100)}%</span>
+                  <span>{coupleForm.personBName || '...'}: {Math.round((1 - coupleForm.splitRatio) * 100)}%</span>
+                </div>
+              </div>
+              <div className="flex gap-2 pt-1">
+                <Button variant="secondary" size="sm" onClick={() => setCoupleSetup(false)} className="flex-1">{t('common.cancel')}</Button>
+                <Button size="sm" onClick={handleSwitchToCouple} disabled={!coupleForm.personBName.trim()} className="flex-1">{t('common.confirm')}</Button>
+              </div>
+            </div>
+          )}
         </Card>
       )}
 
