@@ -50,7 +50,14 @@ export default function AuthPage({ inviteCode }) {
 
     try {
       if (isSignup) {
-        const { data, error: authError } = await supabase.auth.signUp({ email, password })
+        const redirectTo = inviteCode
+          ? `${window.location.origin}?invite=${inviteCode}`
+          : window.location.origin
+        const { data, error: authError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: redirectTo },
+        })
         if (authError) {
           setError(translateError(authError.message))
         } else if (data?.user && !data.session) {
@@ -80,7 +87,13 @@ export default function AuthPage({ inviteCode }) {
     setMagicLinkLoading(true)
 
     try {
-      const { error: authError } = await supabase.auth.signInWithOtp({ email })
+      const redirectTo = inviteCode
+        ? `${window.location.origin}?invite=${inviteCode}`
+        : window.location.origin
+      const { error: authError } = await supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: redirectTo },
+      })
 
       if (authError) {
         setError(translateError(authError.message))
