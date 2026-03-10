@@ -9,7 +9,7 @@ import Card from '../components/ui/Card'
 import Input from '../components/ui/Input'
 import AnimatedNumber from '../components/ui/AnimatedNumber'
 import ProgressBar from '../components/ui/ProgressBar'
-import { ChevronLeft, ChevronRight, Wallet, TrendingDown, AlertTriangle } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Wallet, TrendingDown, AlertTriangle, CheckCircle2, ArrowUpDown } from 'lucide-react'
 import { addMonths, subMonths, format } from 'date-fns'
 
 export default function MonthlyPage() {
@@ -269,6 +269,79 @@ export default function MonthlyPage() {
               <span className="tabular-nums">{formatCurrency(result.shareB)}</span>
             </div>
           </div>
+        </Card>
+      )}
+
+      {/* Virements effectues + Regularisation */}
+      {household?.personBName && result.totalCommon > 0 && (
+        <Card>
+          <div className="flex items-center gap-2 mb-3">
+            <CheckCircle2 size={12} className="text-success" />
+            <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Virements effectues</h2>
+          </div>
+          <p className="text-[11px] text-text-muted mb-3">
+            Notez ce que chacun a deja vire sur le compte commun ce mois-ci.
+          </p>
+          <div className="space-y-3">
+            <Input
+              label={`Vire par ${household.personAName}`}
+              type="number"
+              value={entry?.transferredA ?? ''}
+              onChange={(e) => handleIncomeChange('transferredA', e.target.value)}
+              placeholder="0"
+              suffix="€"
+            />
+            <Input
+              label={`Vire par ${household.personBName}`}
+              type="number"
+              value={entry?.transferredB ?? ''}
+              onChange={(e) => handleIncomeChange('transferredB', e.target.value)}
+              placeholder="0"
+              suffix="€"
+            />
+          </div>
+
+          {/* Regularisation */}
+          {((entry?.transferredA || 0) > 0 || (entry?.transferredB || 0) > 0) && (() => {
+            const transferredA = entry?.transferredA || 0
+            const transferredB = entry?.transferredB || 0
+            const regulA = Math.round((result.shareA - transferredA) * 100) / 100
+            const regulB = Math.round((result.shareB - transferredB) * 100) / 100
+            const hasRegul = Math.abs(regulA) >= 0.01 || Math.abs(regulB) >= 0.01
+
+            return (
+              <div className="mt-4 pt-3 border-t border-white/[0.06]">
+                <div className="flex items-center gap-2 mb-2">
+                  <ArrowUpDown size={12} className={hasRegul ? 'text-warning' : 'text-success'} />
+                  <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
+                    {hasRegul ? 'Regularisation' : 'A jour'}
+                  </span>
+                </div>
+                {!hasRegul ? (
+                  <p className="text-sm text-success">Les virements correspondent aux parts. Rien a regulariser.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {Math.abs(regulA) >= 0.01 && (
+                      <div className="flex justify-between items-center text-sm">
+                        <span style={{ color: household.personAColor }}>{household.personAName}</span>
+                        <span className={`font-semibold ${regulA > 0 ? 'text-danger' : 'text-success'}`}>
+                          {regulA > 0 ? `doit remettre ${formatCurrency(regulA)}` : `a trop vire de ${formatCurrency(Math.abs(regulA))}`}
+                        </span>
+                      </div>
+                    )}
+                    {Math.abs(regulB) >= 0.01 && (
+                      <div className="flex justify-between items-center text-sm">
+                        <span style={{ color: household.personBColor }}>{household.personBName}</span>
+                        <span className={`font-semibold ${regulB > 0 ? 'text-danger' : 'text-success'}`}>
+                          {regulB > 0 ? `doit remettre ${formatCurrency(regulB)}` : `a trop vire de ${formatCurrency(Math.abs(regulB))}`}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })()}
         </Card>
       )}
     </div>
