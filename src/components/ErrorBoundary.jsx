@@ -33,7 +33,7 @@ export default class ErrorBoundary extends Component {
                   await Promise.all(regs.map(r => r.unregister()))
                   const keys = await caches.keys()
                   await Promise.all(keys.map(k => caches.delete(k)))
-                } catch (e) { /* ignore */ }
+                } catch { /* ignore */ }
                 sessionStorage.removeItem('monest-chunk-retry')
                 window.location.reload()
               }}

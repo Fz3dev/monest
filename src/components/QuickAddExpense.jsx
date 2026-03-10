@@ -77,10 +77,12 @@ export default function QuickAddExpense() {
     return () => document.removeEventListener('keydown', handleKey)
   }, [isOpen])
 
-  const canSubmit = amount && parseFloat(amount) > 0 && category !== null
+  const [submitting, setSubmitting] = useState(false)
+  const canSubmit = amount && parseFloat(amount) > 0 && category !== null && !submitting
 
   const handleSubmit = () => {
     if (!canSubmit) return
+    setSubmitting(true)
 
     const selected = CATEGORIES[category]
     addExpense({
@@ -96,6 +98,7 @@ export default function QuickAddExpense() {
     })
 
     handleClose()
+    setTimeout(() => setSubmitting(false), 200)
   }
 
   const payerOptions = [

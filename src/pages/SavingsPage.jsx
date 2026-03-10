@@ -269,7 +269,15 @@ function GoalForm({ initialValues, onSubmit, onCancel }) {
 
 function ContributeForm({ goal, onSubmit, onCancel }) {
   const [amount, setAmount] = useState('')
+  const [submitting, setSubmitting] = useState(false)
   const remaining = goal.targetAmount - goal.currentAmount
+
+  const handleSubmit = () => {
+    if (submitting) return
+    setSubmitting(true)
+    onSubmit(parseFloat(amount) || 0)
+    setTimeout(() => setSubmitting(false), 200)
+  }
 
   return (
     <div className="space-y-5">
@@ -331,8 +339,8 @@ function ContributeForm({ goal, onSubmit, onCancel }) {
           Annuler
         </Button>
         <Button
-          onClick={() => onSubmit(parseFloat(amount) || 0)}
-          disabled={!amount || parseFloat(amount) <= 0}
+          onClick={handleSubmit}
+          disabled={!amount || parseFloat(amount) <= 0 || submitting}
           className="flex-1"
         >
           Contribuer

@@ -15,17 +15,11 @@ export function setSyncFunctions(syncItem, deleteItem) {
 
 async function withRetry(fn) {
   try {
-    const result = await fn()
-    return result
-  } catch (firstError) {
+    return await fn()
+  } catch {
     // Retry once after 1 second
     await new Promise((r) => setTimeout(r, 1000))
-    try {
-      const result = await fn()
-      return result
-    } catch (retryError) {
-      throw retryError
-    }
+    return await fn()
   }
 }
 
