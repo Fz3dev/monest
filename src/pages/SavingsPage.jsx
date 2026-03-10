@@ -208,8 +208,22 @@ function GoalForm({ initialValues, onSubmit, onCancel }) {
           deadline: '',
         }
   )
+  const [submitting, setSubmitting] = useState(false)
 
   const update = (field, value) => setForm((f) => ({ ...f, [field]: value }))
+
+  const handleSubmit = () => {
+    if (submitting) return
+    setSubmitting(true)
+    onSubmit({
+      name: form.name,
+      targetAmount: parseFloat(form.targetAmount) || 0,
+      icon: form.icon,
+      color: form.color,
+      deadline: form.deadline || null,
+    })
+    setTimeout(() => setSubmitting(false), 200)
+  }
 
   return (
     <div className="space-y-4">
@@ -240,16 +254,8 @@ function GoalForm({ initialValues, onSubmit, onCancel }) {
           Annuler
         </Button>
         <Button
-          onClick={() =>
-            onSubmit({
-              name: form.name,
-              targetAmount: parseFloat(form.targetAmount) || 0,
-              icon: form.icon,
-              color: form.color,
-              deadline: form.deadline || null,
-            })
-          }
-          disabled={!form.name.trim() || !form.targetAmount}
+          onClick={handleSubmit}
+          disabled={!form.name.trim() || !form.targetAmount || submitting}
           className="flex-1"
         >
           {initialValues ? 'Modifier' : 'Creer'}

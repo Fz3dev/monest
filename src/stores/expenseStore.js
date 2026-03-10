@@ -10,7 +10,8 @@ export const useExpenseStore = create(
       expenses: [],
 
       addExpense: (expense) => {
-        const newExpense = { ...expense, id: generateId(), createdAt: new Date().toISOString() }
+        const now = new Date().toISOString()
+        const newExpense = { ...expense, id: generateId(), createdAt: now, updatedAt: now }
         set((state) => ({
           expenses: [newExpense, ...state.expenses],
         }))
@@ -26,7 +27,7 @@ export const useExpenseStore = create(
 
       updateExpense: (id, updates) => {
         set((state) => ({
-          expenses: state.expenses.map((e) => (e.id === id ? { ...e, ...updates } : e)),
+          expenses: state.expenses.map((e) => (e.id === id ? { ...e, ...updates, updatedAt: new Date().toISOString() } : e)),
         }))
         const updated = get().expenses.find((e) => e.id === id)
         if (updated) syncToSupabase('expenses', updated)

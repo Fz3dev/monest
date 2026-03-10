@@ -75,9 +75,17 @@ function ChargeForm({ initialValues, onSubmit, onCancel, household }) {
       paymentDelayMonths: 0,
     }
   )
+  const [submitting, setSubmitting] = useState(false)
   const update = (field, value) => setForm((f) => ({ ...f, [field]: value }))
 
   const showStartMonth = form.frequency !== 'monthly'
+
+  const handleSubmit = () => {
+    if (submitting) return
+    setSubmitting(true)
+    onSubmit({ ...form, amount: parseFloat(form.amount) || 0 })
+    setTimeout(() => setSubmitting(false), 200)
+  }
 
   return (
     <div className="space-y-4">
@@ -100,7 +108,7 @@ function ChargeForm({ initialValues, onSubmit, onCancel, household }) {
       <Input label="Decalage prelevement (mois)" type="number" min="0" value={form.paymentDelayMonths} onChange={(e) => update('paymentDelayMonths', parseInt(e.target.value) || 0)} />
       <div className="flex gap-3 pt-2">
         <Button variant="secondary" onClick={onCancel} className="flex-1">Annuler</Button>
-        <Button onClick={() => onSubmit({ ...form, amount: parseFloat(form.amount) || 0 })} disabled={!form.name.trim() || !form.amount} className="flex-1">
+        <Button onClick={handleSubmit} disabled={!form.name.trim() || !form.amount || submitting} className="flex-1">
           {initialValues ? 'Modifier' : 'Ajouter'}
         </Button>
       </div>
@@ -120,6 +128,7 @@ function InstallmentForm({ initialValues, onSubmit, onCancel, household }) {
       payer: payerOptions[0]?.value || 'common',
     }
   )
+  const [submitting, setSubmitting] = useState(false)
 
   const update = (field, value) => {
     const next = { ...form, [field]: value }
@@ -129,6 +138,18 @@ function InstallmentForm({ initialValues, onSubmit, onCancel, household }) {
       if (total && count) next.installmentAmount = Math.round((total / count) * 100) / 100
     }
     setForm(next)
+  }
+
+  const handleSubmit = () => {
+    if (submitting) return
+    setSubmitting(true)
+    onSubmit({
+      ...form,
+      totalAmount: parseFloat(form.totalAmount) || 0,
+      installmentAmount: parseFloat(form.installmentAmount) || 0,
+      installmentCount: parseInt(form.installmentCount) || 2,
+    })
+    setTimeout(() => setSubmitting(false), 200)
   }
 
   return (
@@ -142,13 +163,8 @@ function InstallmentForm({ initialValues, onSubmit, onCancel, household }) {
       <div className="flex gap-3 pt-2">
         <Button variant="secondary" onClick={onCancel} className="flex-1">Annuler</Button>
         <Button
-          onClick={() => onSubmit({
-            ...form,
-            totalAmount: parseFloat(form.totalAmount) || 0,
-            installmentAmount: parseFloat(form.installmentAmount) || 0,
-            installmentCount: parseInt(form.installmentCount) || 2,
-          })}
-          disabled={!form.name.trim() || !form.totalAmount || !form.firstPaymentDate}
+          onClick={handleSubmit}
+          disabled={!form.name.trim() || !form.totalAmount || !form.firstPaymentDate || submitting}
           className="flex-1"
         >
           {initialValues ? 'Modifier' : 'Ajouter'}
@@ -169,7 +185,15 @@ function PlannedExpenseForm({ initialValues, onSubmit, onCancel, household }) {
       note: '',
     }
   )
+  const [submitting, setSubmitting] = useState(false)
   const update = (field, value) => setForm((f) => ({ ...f, [field]: value }))
+
+  const handleSubmit = () => {
+    if (submitting) return
+    setSubmitting(true)
+    onSubmit({ ...form, estimatedAmount: parseFloat(form.estimatedAmount) || 0 })
+    setTimeout(() => setSubmitting(false), 200)
+  }
 
   return (
     <div className="space-y-4">
@@ -181,8 +205,8 @@ function PlannedExpenseForm({ initialValues, onSubmit, onCancel, household }) {
       <div className="flex gap-3 pt-2">
         <Button variant="secondary" onClick={onCancel} className="flex-1">Annuler</Button>
         <Button
-          onClick={() => onSubmit({ ...form, estimatedAmount: parseFloat(form.estimatedAmount) || 0 })}
-          disabled={!form.name.trim() || !form.estimatedAmount || !form.targetMonth}
+          onClick={handleSubmit}
+          disabled={!form.name.trim() || !form.estimatedAmount || !form.targetMonth || submitting}
           className="flex-1"
         >
           {initialValues ? 'Modifier' : 'Ajouter'}

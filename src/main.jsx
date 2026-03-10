@@ -3,17 +3,6 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 
-// Nuke stale SW + caches — used by auto-recovery and ?reset
-async function nukeAndReload() {
-  try {
-    const regs = await navigator.serviceWorker?.getRegistrations() || []
-    await Promise.all(regs.map(r => r.unregister()))
-    const keys = await caches.keys()
-    await Promise.all(keys.map(k => caches.delete(k)))
-  } catch (e) { /* ignore */ }
-  window.location.reload()
-}
-
 // ?reset in URL → nuke service worker + caches and reload clean
 if (window.location.search.includes('reset')) {
   (async () => {
@@ -27,36 +16,10 @@ if (window.location.search.includes('reset')) {
     window.location.replace(window.location.pathname)
   })()
 } else {
-  // Auto-catch stale chunk errors (Failed to fetch dynamically imported module)
-  // If the SW served old HTML referencing dead chunk hashes, this fires
-  window.addEventListener('error', (e) => {
-    if (e.message?.includes('Failed to fetch dynamically imported module') ||
-        e.message?.includes('Loading chunk') ||
-        e.message?.includes('Loading CSS chunk')) {
-      // Only auto-retry once per session to avoid infinite loop
-      if (!sessionStorage.getItem('monest-chunk-retry')) {
-        sessionStorage.setItem('monest-chunk-retry', '1')
-        nukeAndReload()
-      }
-    }
-  })
-
-  window.addEventListener('unhandledrejection', (e) => {
-    const msg = e.reason?.message || ''
-    if (msg.includes('Failed to fetch dynamically imported module') ||
-        msg.includes('Loading chunk') ||
-        msg.includes('Loading CSS chunk')) {
-      if (!sessionStorage.getItem('monest-chunk-retry')) {
-        sessionStorage.setItem('monest-chunk-retry', '1')
-        nukeAndReload()
-      }
-    }
-  })
-
+  // SW update handling — auto-reload when new SW activates and check for updates
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then((registrations) => {
       registrations.forEach((reg) => {
-        // Auto-reload when new SW activates
         reg.addEventListener('updatefound', () => {
           const newWorker = reg.installing
           if (newWorker) {
@@ -67,7 +30,6 @@ if (window.location.search.includes('reset')) {
             })
           }
         })
-        // Check for update now
         reg.update()
       })
     })
@@ -82,7 +44,7 @@ if (window.location.search.includes('reset')) {
     })
   }
 
-  // Clear retry flag on successful load
+  // Clear chunk retry flag on successful load (set by lazyRetry in App.jsx)
   window.addEventListener('load', () => {
     sessionStorage.removeItem('monest-chunk-retry')
   })

@@ -10,28 +10,10 @@ export default class ErrorBoundary extends Component {
     return { hasError: true, error }
   }
 
-  componentDidCatch(error) {
-    // Auto-recover from stale chunk errors
-    const msg = error?.message || ''
-    if (
-      msg.includes('Failed to fetch dynamically imported module') ||
-      msg.includes('Loading chunk') ||
-      msg.includes('Loading CSS chunk') ||
-      msg.includes('ChunkLoadError')
-    ) {
-      if (!sessionStorage.getItem('monest-chunk-retry')) {
-        sessionStorage.setItem('monest-chunk-retry', '1')
-        ;(async () => {
-          try {
-            const regs = await navigator.serviceWorker?.getRegistrations() || []
-            await Promise.all(regs.map(r => r.unregister()))
-            const keys = await caches.keys()
-            await Promise.all(keys.map(k => caches.delete(k)))
-          } catch (e) { /* ignore */ }
-          window.location.reload()
-        })()
-      }
-    }
+  componentDidCatch(error, errorInfo) {
+    // Log for debugging — chunk errors are handled by lazyRetry() in App.jsx
+    // before they reach ErrorBoundary, so no auto-recovery needed here
+    console.error('ErrorBoundary caught:', error, errorInfo)
   }
 
   render() {
@@ -42,7 +24,7 @@ export default class ErrorBoundary extends Component {
             <div className="text-5xl mb-4">!</div>
             <h1 className="text-xl font-bold text-text-primary mb-2">Oups, une erreur</h1>
             <p className="text-text-secondary text-sm mb-6">
-              Quelque chose s'est mal passé. Essayez de recharger la page.
+              Quelque chose s'est mal passe. Essayez de recharger la page.
             </p>
             <button
               onClick={async () => {
@@ -52,6 +34,7 @@ export default class ErrorBoundary extends Component {
                   const keys = await caches.keys()
                   await Promise.all(keys.map(k => caches.delete(k)))
                 } catch (e) { /* ignore */ }
+                sessionStorage.removeItem('monest-chunk-retry')
                 window.location.reload()
               }}
               className="bg-brand hover:bg-brand-dark text-white px-6 py-2.5 rounded-xl font-medium transition-colors"

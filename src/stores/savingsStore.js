@@ -10,11 +10,13 @@ export const useSavingsStore = create(
       goals: [],
 
       addGoal: (goal) => {
+        const now = new Date().toISOString()
         const newGoal = {
           ...goal,
           id: generateId(),
           currentAmount: goal.currentAmount || 0,
-          createdAt: new Date().toISOString(),
+          createdAt: now,
+          updatedAt: now,
         }
         set((state) => ({ goals: [...state.goals, newGoal] }))
         syncToSupabase('savings_goals', newGoal)
@@ -22,7 +24,7 @@ export const useSavingsStore = create(
 
       updateGoal: (id, updates) => {
         set((state) => ({
-          goals: state.goals.map((g) => (g.id === id ? { ...g, ...updates } : g)),
+          goals: state.goals.map((g) => (g.id === id ? { ...g, ...updates, updatedAt: new Date().toISOString() } : g)),
         }))
         const updated = get().goals.find((g) => g.id === id)
         if (updated) syncToSupabase('savings_goals', updated)
@@ -38,7 +40,7 @@ export const useSavingsStore = create(
       contribute: (id, amount) => {
         set((state) => ({
           goals: state.goals.map((g) =>
-            g.id === id ? { ...g, currentAmount: g.currentAmount + amount } : g
+            g.id === id ? { ...g, currentAmount: g.currentAmount + amount, updatedAt: new Date().toISOString() } : g
           ),
         }))
         const updated = get().goals.find((g) => g.id === id)

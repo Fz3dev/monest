@@ -203,12 +203,15 @@ export function useSupabaseSync(session) {
     if (!isSupabaseConfigured() || !householdId) return
     const data = { ...camelToSnake(item), household_id: householdId }
     delete data.created_at
-    await supabase.from(table).upsert(data, { onConflict: 'id' })
+    data.updated_at = new Date().toISOString()
+    const { error } = await supabase.from(table).upsert(data, { onConflict: 'id' })
+    if (error) throw error
   }, [householdId])
 
   const deleteItem = useCallback(async (table, id) => {
     if (!isSupabaseConfigured()) return
-    await supabase.from(table).delete().eq('id', id)
+    const { error } = await supabase.from(table).delete().eq('id', id)
+    if (error) throw error
   }, [])
 
   const syncMonthlyEntry = useCallback(async (month, entry) => {
@@ -247,6 +250,7 @@ export function useSupabaseSync(session) {
     const tables = [
       'fixed_charges', 'installment_payments', 'planned_expenses',
       'monthly_entries', 'savings_goals', 'expenses', 'households',
+      'category_rules',
     ]
 
     let channel = supabase.channel('household-sync')

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { syncToSupabase, deleteFromSupabase } from '../lib/syncBridge'
+import { syncToSupabase, deleteFromSupabase, syncCategoryRule, deleteCategoryRule } from '../lib/syncBridge'
 
 const generateId = () => crypto.randomUUID()
 
@@ -33,16 +33,20 @@ export const useChargesStore = create(
       plannedExpenses: [],
       categoryRules: {},
 
-      addCategoryRule: (pattern, category) =>
+      addCategoryRule: (pattern, category) => {
         set((state) => ({
           categoryRules: { ...state.categoryRules, [pattern.toUpperCase()]: category },
-        })),
-      removeCategoryRule: (pattern) =>
+        }))
+        syncCategoryRule(pattern, category)
+      },
+      removeCategoryRule: (pattern) => {
         set((state) => {
           const next = { ...state.categoryRules }
           delete next[pattern.toUpperCase()]
           return { categoryRules: next }
-        }),
+        })
+        deleteCategoryRule(pattern)
+      },
       matchCategory: (label) => {
         const rules = get().categoryRules
         const upper = label.toUpperCase()
@@ -53,7 +57,8 @@ export const useChargesStore = create(
       },
 
       addFixedCharge: (charge) => {
-        const newCharge = { ...charge, id: generateId(), active: true }
+        const now = new Date().toISOString()
+        const newCharge = { ...charge, id: generateId(), active: true, createdAt: now, updatedAt: now }
         set((state) => ({
           fixedCharges: [...state.fixedCharges, newCharge],
         }))
@@ -61,7 +66,7 @@ export const useChargesStore = create(
       },
       updateFixedCharge: (id, updates) => {
         set((state) => ({
-          fixedCharges: state.fixedCharges.map((c) => (c.id === id ? { ...c, ...updates } : c)),
+          fixedCharges: state.fixedCharges.map((c) => (c.id === id ? { ...c, ...updates, updatedAt: new Date().toISOString() } : c)),
         }))
         const updated = get().fixedCharges.find((c) => c.id === id)
         if (updated) syncToSupabase('fixed_charges', updated)
@@ -74,14 +79,15 @@ export const useChargesStore = create(
       },
       toggleFixedCharge: (id) => {
         set((state) => ({
-          fixedCharges: state.fixedCharges.map((c) => (c.id === id ? { ...c, active: !c.active } : c)),
+          fixedCharges: state.fixedCharges.map((c) => (c.id === id ? { ...c, active: !c.active, updatedAt: new Date().toISOString() } : c)),
         }))
         const updated = get().fixedCharges.find((c) => c.id === id)
         if (updated) syncToSupabase('fixed_charges', updated)
       },
 
       addInstallment: (payment) => {
-        const newPayment = { ...payment, id: generateId(), createdAt: new Date().toISOString() }
+        const now = new Date().toISOString()
+        const newPayment = { ...payment, id: generateId(), createdAt: now, updatedAt: now }
         set((state) => ({
           installmentPayments: [...state.installmentPayments, newPayment],
         }))
@@ -89,7 +95,7 @@ export const useChargesStore = create(
       },
       updateInstallment: (id, updates) => {
         set((state) => ({
-          installmentPayments: state.installmentPayments.map((p) => (p.id === id ? { ...p, ...updates } : p)),
+          installmentPayments: state.installmentPayments.map((p) => (p.id === id ? { ...p, ...updates, updatedAt: new Date().toISOString() } : p)),
         }))
         const updated = get().installmentPayments.find((p) => p.id === id)
         if (updated) syncToSupabase('installment_payments', updated)
@@ -102,7 +108,8 @@ export const useChargesStore = create(
       },
 
       addPlannedExpense: (expense) => {
-        const newExpense = { ...expense, id: generateId() }
+        const now = new Date().toISOString()
+        const newExpense = { ...expense, id: generateId(), createdAt: now, updatedAt: now }
         set((state) => ({
           plannedExpenses: [...state.plannedExpenses, newExpense],
         }))
@@ -110,7 +117,7 @@ export const useChargesStore = create(
       },
       updatePlannedExpense: (id, updates) => {
         set((state) => ({
-          plannedExpenses: state.plannedExpenses.map((e) => (e.id === id ? { ...e, ...updates } : e)),
+          plannedExpenses: state.plannedExpenses.map((e) => (e.id === id ? { ...e, ...updates, updatedAt: new Date().toISOString() } : e)),
         }))
         const updated = get().plannedExpenses.find((e) => e.id === id)
         if (updated) syncToSupabase('planned_expenses', updated)
