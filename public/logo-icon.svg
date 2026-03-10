@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none">
+  <g stroke="#6C63FF" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">
+    <!-- M/Crown shape -->
+    <polyline points="16,148 50,12 100,88 150,12 184,148"/>
+    <!-- Crossing diagonals -->
+    <line x1="16" y1="148" x2="150" y2="12"/>
+    <line x1="50" y1="12" x2="184" y2="148"/>
+  </g>
+</svg>

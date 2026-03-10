@@ -1,10 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <defs>
-    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#6C63FF"/>
-      <stop offset="100%" stop-color="#4F46E5"/>
-    </linearGradient>
-  </defs>
-  <rect width="100" height="100" rx="22" fill="url(#g)"/>
-  <text x="50" y="68" font-size="52" font-weight="800" text-anchor="middle" fill="white" font-family="system-ui">M</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <g stroke="#6C63FF" stroke-width="13" stroke-linecap="round" stroke-linejoin="round">
+    <!-- M/Crown shape -->
+    <polyline points="20,168 55,36 100,108 145,36 180,168"/>
+    <!-- Crossing diagonals -->
+    <line x1="20" y1="168" x2="145" y2="36"/>
+    <line x1="55" y1="36" x2="180" y2="168"/>
+  </g>
 </svg>

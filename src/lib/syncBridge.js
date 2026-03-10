@@ -5,10 +5,12 @@ import { toast } from 'sonner'
 
 let _syncItem = null
 let _deleteItem = null
+let _syncMonthlyEntry = null
 
-export function setSyncFunctions(syncItem, deleteItem) {
+export function setSyncFunctions(syncItem, deleteItem, syncMonthlyEntry) {
   _syncItem = syncItem
   _deleteItem = deleteItem
+  _syncMonthlyEntry = syncMonthlyEntry || null
 }
 
 // ─── Retry helper ────────────────────────────────────────────────────────────
@@ -103,6 +105,31 @@ export function syncCategoryRule(pattern, category) {
   // Generate a deterministic id from the pattern to allow upsert
   const id = `rule-${pattern.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`
   debouncedSync('category_rules', { id, pattern: pattern.toUpperCase(), category })
+}
+
+// ─── Monthly entries sync (composite key: household_id + month) ──────────────
+
+export function syncMonthlyEntryToSupabase(month, entry) {
+  if (!_syncMonthlyEntry) return
+  const key = `monthly:${month}`
+  _pendingWrites.set(key, { table: '__monthly__', item: { month, entry } })
+
+  const existingTimer = _pendingTimers.get(key)
+  if (existingTimer) clearTimeout(existingTimer)
+
+  const timer = setTimeout(async () => {
+    const pending = _pendingWrites.get(key)
+    _pendingTimers.delete(key)
+    _pendingWrites.delete(key)
+    if (!pending || !_syncMonthlyEntry) return
+    try {
+      await withRetry(() => _syncMonthlyEntry(pending.item.month, pending.item.entry))
+    } catch (err) {
+      console.error('Monthly sync error:', err)
+      toast.error('Erreur de sync — vos modifications pourraient ne pas etre sauvegardees')
+    }
+  }, 300)
+  _pendingTimers.set(key, timer)
 }
 
 export function deleteCategoryRule(pattern) {

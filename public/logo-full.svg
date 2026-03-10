@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 220" fill="none">
+  <!-- Crown icon -->
+  <g stroke="#6C63FF" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="16,138 50,8 100,80 150,8 184,138"/>
+    <line x1="16" y1="138" x2="150" y2="8"/>
+    <line x1="50" y1="8" x2="184" y2="138"/>
+  </g>
+  <!-- Text "Monest" -->
+  <text x="100" y="195" text-anchor="middle" fill="#6C63FF" font-family="'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif" font-size="38" font-weight="300" letter-spacing="4">Monest</text>
+</svg>
