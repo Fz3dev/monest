@@ -230,9 +230,9 @@ export function useSupabaseSync(session) {
   // Activate sync bridge so stores auto-sync to Supabase
   useEffect(() => {
     if (!isSupabaseConfigured() || !householdId) return
-    setSyncFunctions(syncItem, deleteItem)
-    return () => setSyncFunctions(null, null)
-  }, [syncItem, deleteItem, householdId])
+    setSyncFunctions(syncItem, deleteItem, syncMonthlyEntry)
+    return () => setSyncFunctions(null, null, null)
+  }, [syncItem, deleteItem, syncMonthlyEntry, householdId])
 
   // Real-time subscriptions
   useEffect(() => {
