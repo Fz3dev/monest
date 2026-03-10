@@ -10,6 +10,31 @@
   </head>
   <body class="bg-[#0B0B0F] text-[#E8E8ED]">
     <div id="root"></div>
+    <script>
+      // Cache-buster: bump this on breaking deployments to force SW+cache reset
+      (function() {
+        var APP_VERSION = 2;
+        var key = 'monest-app-v';
+        var stored = localStorage.getItem(key);
+        if (stored && Number(stored) < APP_VERSION) {
+          localStorage.setItem(key, APP_VERSION);
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(regs) {
+              regs.forEach(function(r) { r.unregister(); });
+            });
+          }
+          if ('caches' in window) {
+            caches.keys().then(function(keys) {
+              keys.forEach(function(k) { caches.delete(k); });
+            });
+          }
+          // Small delay to let unregister/delete start, then hard reload
+          setTimeout(function() { location.reload(); }, 300);
+        } else if (!stored) {
+          localStorage.setItem(key, APP_VERSION);
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
