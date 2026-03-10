@@ -52,6 +52,9 @@ export function computeMonth(month, household, fixedCharges, installments, plann
   const entry = monthlyEntry || {}
   const incomeA = entry.incomeA || 0
   const incomeB = entry.incomeB || 0
+  const complementaryIncome = entry.complementaryIncome || 0
+  const savingsA = entry.savingsA || 0
+  const savingsB = entry.savingsB || 0
   const variableOverrides = entry.variableOverrides || {}
 
   const chargesDetail = []
@@ -106,24 +109,31 @@ export function computeMonth(month, household, fixedCharges, installments, plann
   const personalACharges = chargesDetail.filter((c) => c.payer === 'person_a').reduce((sum, c) => sum + c.amount, 0)
   const personalBCharges = chargesDetail.filter((c) => c.payer === 'person_b').reduce((sum, c) => sum + c.amount, 0)
 
+  // Montant a partager = charges communes - revenus complementaires (CAF, etc.)
+  const amountToSplit = Math.max(0, commonCharges - complementaryIncome)
+
   // Pro rata: dynamically compute split ratio from actual incomes
   let ratio = household.splitRatio || 0.5
   if (household.configModel !== 'solo' && household.splitMode === 'prorata' && (incomeA + incomeB) > 0) {
     ratio = incomeA / (incomeA + incomeB)
   }
 
-  const shareA = commonCharges * ratio
-  const shareB = commonCharges * (1 - ratio)
-  const resteA = incomeA - shareA - personalACharges
-  const resteB = incomeB - shareB - personalBCharges
+  const shareA = amountToSplit * ratio
+  const shareB = amountToSplit * (1 - ratio)
+  const resteA = incomeA - shareA - personalACharges - savingsA
+  const resteB = incomeB - shareB - personalBCharges - savingsB
 
   return {
     incomeA,
     incomeB,
+    complementaryIncome,
+    savingsA,
+    savingsB,
     resteA,
     resteB,
     resteFoyer: resteA + resteB,
     totalCommon: commonCharges,
+    amountToSplit,
     shareA,
     shareB,
     personalACharges,

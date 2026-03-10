@@ -45,8 +45,31 @@ function SwipeToDelete({ onDelete, children }) {
   )
 }
 
+const CHARGE_TEMPLATES = [
+  { name: 'Pret immobilier', category: 'logement', payer: 'common', icon: '🏠' },
+  { name: 'Loyer', category: 'logement', payer: 'common', icon: '🏠' },
+  { name: 'Electricite', category: 'logement', payer: 'common', icon: '⚡' },
+  { name: 'Eau', category: 'logement', payer: 'common', icon: '💧' },
+  { name: 'Gaz', category: 'logement', payer: 'common', icon: '🔥' },
+  { name: 'Internet', category: 'abonnement', payer: 'common', icon: '📡' },
+  { name: 'Assurance habitation', category: 'assurance', payer: 'common', icon: '🛡️' },
+  { name: 'Assurance auto', category: 'assurance', payer: 'common', icon: '🚗' },
+  { name: 'Mutuelle', category: 'sante', payer: 'common', icon: '🏥' },
+  { name: 'Impot foncier', category: 'impot', payer: 'common', icon: '📋' },
+  { name: 'Impot sur le revenu', category: 'impot', payer: 'common', icon: '📋' },
+  { name: 'Cotisations bancaires', category: 'autre', payer: 'common', icon: '🏦' },
+  { name: 'Cantine', category: 'education', payer: 'common', icon: '🍽️' },
+  { name: 'Creche / Accueil', category: 'education', payer: 'common', icon: '👶' },
+  { name: 'Netflix', category: 'abonnement', payer: 'common', icon: '📺' },
+  { name: 'Disney+', category: 'abonnement', payer: 'common', icon: '📺' },
+  { name: 'Salle de sport', category: 'loisirs', payer: 'common', icon: '💪' },
+  { name: 'Voiture (leasing)', category: 'transport', payer: 'common', icon: '🚗' },
+  { name: 'Telephone', category: 'abonnement', payer: 'common', icon: '📱' },
+]
+
 function ChargeForm({ initialValues, onSubmit, onCancel, household }) {
   const payerOptions = PAYER_OPTIONS(household)
+  const [showTemplates, setShowTemplates] = useState(!initialValues)
   const [form, setForm] = useState(
     initialValues || {
       name: '',
@@ -61,11 +84,41 @@ function ChargeForm({ initialValues, onSubmit, onCancel, household }) {
   )
   const update = (field, value) => setForm((f) => ({ ...f, [field]: value }))
 
+  const applyTemplate = (template) => {
+    setForm((f) => ({
+      ...f,
+      name: template.name,
+      category: template.category,
+      payer: template.payer,
+    }))
+    setShowTemplates(false)
+  }
+
   const showStartMonth = form.frequency !== 'monthly'
 
   return (
     <div className="space-y-4">
-      <Input label="Nom" value={form.name} onChange={(e) => update('name', e.target.value)} placeholder="Ex: Pret maison" />
+      {showTemplates && !initialValues && (
+        <div>
+          <label className="block text-xs font-medium text-text-secondary mb-2">Suggestions</label>
+          <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto">
+            {CHARGE_TEMPLATES.map((t) => (
+              <button
+                key={t.name}
+                onClick={() => applyTemplate(t)}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-xs text-text-secondary hover:border-brand/30 hover:bg-brand/5 transition-all cursor-pointer"
+              >
+                <span>{t.icon}</span>
+                <span>{t.name}</span>
+              </button>
+            ))}
+          </div>
+          <button onClick={() => setShowTemplates(false)} className="text-[10px] text-text-muted mt-2 underline cursor-pointer">
+            Saisie libre
+          </button>
+        </div>
+      )}
+      <Input label="Nom" value={form.name} onChange={(e) => { update('name', e.target.value); if (showTemplates) setShowTemplates(false) }} placeholder="Ex: Pret maison" />
       <Input label="Montant" type="number" value={form.amount} onChange={(e) => update('amount', e.target.value)} placeholder="0" suffix="€" />
       <Select label="Qui paie ?" value={form.payer} onChange={(e) => update('payer', e.target.value)} options={payerOptions} />
       <Select label="Frequence" value={form.frequency} onChange={(e) => update('frequency', e.target.value)} options={FREQUENCIES} />
