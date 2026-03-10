@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Mail, Lock, Eye, EyeOff, Loader2, CheckCircle2, Sparkles, UserPlus } from 'lucide-react'
+import { Mail, Eye, EyeOff, Loader2, CheckCircle2, Sparkles, UserPlus, Inbox } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import Button from '../ui/Button'
 import Input from '../ui/Input'
@@ -10,6 +10,8 @@ const ERROR_MAP = {
   'Invalid login credentials': 'Email ou mot de passe incorrect',
   'User already registered': 'Un compte existe deja avec cet email',
   'Password should be at least 6 characters': 'Le mot de passe doit contenir au moins 6 caracteres',
+  'Email rate limit exceeded': 'Trop de tentatives. Reessayez dans quelques minutes.',
+  'For security purposes, you can only request this after 60 seconds.': 'Veuillez patienter 60 secondes avant de renvoyer.',
 }
 
 function translateError(message) {
@@ -25,6 +27,7 @@ export default function AuthPage({ inviteCode }) {
   const [loading, setLoading] = useState(false)
   const [magicLinkLoading, setMagicLinkLoading] = useState(false)
   const [magicLinkSent, setMagicLinkSent] = useState(false)
+  const [signupSent, setSignupSent] = useState(false)
   const [error, setError] = useState('')
 
   const isSignup = mode === 'signup'
@@ -46,12 +49,19 @@ export default function AuthPage({ inviteCode }) {
     setLoading(true)
 
     try {
-      const { error: authError } = isSignup
-        ? await supabase.auth.signUp({ email, password })
-        : await supabase.auth.signInWithPassword({ email, password })
-
-      if (authError) {
-        setError(translateError(authError.message))
+      if (isSignup) {
+        const { data, error: authError } = await supabase.auth.signUp({ email, password })
+        if (authError) {
+          setError(translateError(authError.message))
+        } else if (data?.user && !data.session) {
+          // Email confirmation required
+          setSignupSent(true)
+        }
+      } else {
+        const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+        if (authError) {
+          setError(translateError(authError.message))
+        }
       }
     } catch {
       setError('Une erreur inattendue est survenue')
@@ -91,7 +101,8 @@ export default function AuthPage({ inviteCode }) {
     setMagicLinkSent(false)
   }
 
-  if (magicLinkSent) {
+  // Confirmation screen (magic link or signup)
+  if (magicLinkSent || signupSent) {
     return (
       <div className="min-h-screen bg-bg-primary flex items-center justify-center px-4">
         <motion.div
@@ -106,20 +117,65 @@ export default function AuthPage({ inviteCode }) {
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
             >
-              <CheckCircle2 className="w-16 h-16 text-success mx-auto mb-4" />
+              {signupSent ? (
+                <div className="w-16 h-16 rounded-full bg-brand/10 flex items-center justify-center mx-auto mb-4">
+                  <Inbox className="w-8 h-8 text-brand" />
+                </div>
+              ) : (
+                <CheckCircle2 className="w-16 h-16 text-success mx-auto mb-4" />
+              )}
             </motion.div>
+
             <h2 className="text-xl font-semibold text-text-primary mb-2">
-              Lien envoye !
+              {signupSent ? 'Verifiez votre email' : 'Lien envoye !'}
             </h2>
-            <p className="text-text-secondary text-sm mb-6">
-              Un lien de connexion a ete envoye a{' '}
-              <span className="text-brand-light font-medium">{email}</span>.
-              Verifiez votre boite de reception.
+
+            <p className="text-text-secondary text-sm mb-4">
+              {signupSent ? (
+                <>
+                  Un email de confirmation a ete envoye a{' '}
+                  <span className="text-brand-light font-medium">{email}</span>.
+                  <br />
+                  Cliquez sur le lien dans l'email pour activer votre compte.
+                </>
+              ) : (
+                <>
+                  Un lien de connexion a ete envoye a{' '}
+                  <span className="text-brand-light font-medium">{email}</span>.
+                  <br />
+                  Verifiez votre boite de reception.
+                </>
+              )}
             </p>
+
+            <div className="bg-white/[0.04] rounded-xl p-3 mb-6">
+              <p className="text-xs text-text-muted">
+                Vous ne trouvez pas l'email ? Verifiez vos <span className="text-text-secondary font-medium">spams</span> ou <span className="text-text-secondary font-medium">courrier indesirable</span>.
+              </p>
+            </div>
+
+            {signupSent && (
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={loading}
+                onClick={async () => {
+                  setLoading(true)
+                  await supabase.auth.resend({ type: 'signup', email })
+                  setLoading(false)
+                  setError('')
+                }}
+                className="w-full mb-3 flex items-center justify-center gap-2"
+              >
+                {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+                Renvoyer l'email
+              </Button>
+            )}
+
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setMagicLinkSent(false)}
+              onClick={() => { setMagicLinkSent(false); setSignupSent(false) }}
               className="w-full"
             >
               Retour
