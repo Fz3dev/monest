@@ -3,22 +3,28 @@ import { motion } from 'motion/react'
 import { useHouseholdStore } from '../stores/householdStore'
 import { useChargesStore } from '../stores/chargesStore'
 import { useMonthlyStore } from '../stores/monthlyStore'
+import { useSavingsStore } from '../stores/savingsStore'
+import { useExpenseStore } from '../stores/expenseStore'
+import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
-import { Download, Upload, Trash2, User, Database, Palette } from 'lucide-react'
+import { Download, Upload, Trash2, User, Database, LogOut, Users, Share2, Copy, Check } from 'lucide-react'
 import { toast } from 'sonner'
 
 const COLORS = [
   '#6C63FF', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#22c55e',
 ]
 
-export default function SettingsPage() {
+export default function SettingsPage({ session, saveHousehold }) {
   const { household, updateHousehold, resetHousehold } = useHouseholdStore()
   const chargesStore = useChargesStore()
   const monthlyStore = useMonthlyStore()
+  const savingsStore = useSavingsStore()
+  const expenseStore = useExpenseStore()
   const [confirmReset, setConfirmReset] = useState(false)
   const [editing, setEditing] = useState(false)
+  const [copied, setCopied] = useState(false)
   const fileInputRef = useRef(null)
 
   const handleExport = () => {
@@ -28,8 +34,10 @@ export default function SettingsPage() {
       installmentPayments: chargesStore.installmentPayments,
       plannedExpenses: chargesStore.plannedExpenses,
       monthlyEntries: monthlyStore.entries,
+      savingsGoals: savingsStore.goals,
+      expenses: expenseStore.expenses,
       exportDate: new Date().toISOString(),
-      version: 1,
+      version: 2,
     }
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
@@ -56,6 +64,8 @@ export default function SettingsPage() {
         })
       }
       if (data.monthlyEntries) useMonthlyStore.setState({ entries: data.monthlyEntries })
+      if (data.savingsGoals) useSavingsStore.setState({ goals: data.savingsGoals })
+      if (data.expenses) useExpenseStore.setState({ expenses: data.expenses })
       toast.success('Donnees restaurees')
     } catch {
       toast.error('Fichier invalide')
@@ -67,6 +77,30 @@ export default function SettingsPage() {
     localStorage.clear()
     resetHousehold()
     window.location.reload()
+  }
+
+  const handleLogout = async () => {
+    if (isSupabaseConfigured()) {
+      await supabase.auth.signOut()
+    }
+    localStorage.clear()
+    resetHousehold()
+    window.location.reload()
+  }
+
+  const handleUpdate = (updates) => {
+    updateHousehold(updates)
+    if (saveHousehold && household) {
+      saveHousehold({ ...household, ...updates })
+    }
+  }
+
+  const handleCopyInvite = () => {
+    const url = window.location.origin
+    navigator.clipboard.writeText(url)
+    setCopied(true)
+    toast.success('Lien copie !')
+    setTimeout(() => setCopied(false), 2000)
   }
 
   const modelLabels = {
@@ -85,6 +119,39 @@ export default function SettingsPage() {
       >
         Reglages
       </motion.h1>
+
+      {/* Account info */}
+      {session && (
+        <Card>
+          <div className="flex items-center gap-2 mb-3">
+            <Users size={14} className="text-brand" />
+            <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Compte</h2>
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-text-muted">Email</span>
+              <span className="text-text-secondary">{session.user.email}</span>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Invite partner */}
+      {session && household?.configModel !== 'solo' && (
+        <Card className="!border-brand/15">
+          <div className="flex items-center gap-2 mb-2">
+            <Share2 size={14} className="text-brand" />
+            <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Inviter {household?.personBName || 'partenaire'}</h2>
+          </div>
+          <p className="text-xs text-text-muted mb-3">
+            Partagez ce lien pour que votre partenaire puisse se connecter et acceder au budget partage.
+          </p>
+          <Button variant="secondary" size="sm" onClick={handleCopyInvite} className="w-full">
+            {copied ? <Check size={14} className="inline mr-1.5 text-success" /> : <Copy size={14} className="inline mr-1.5" />}
+            {copied ? 'Copie !' : 'Copier le lien'}
+          </Button>
+        </Card>
+      )}
 
       {/* Household info */}
       <Card>
@@ -126,7 +193,7 @@ export default function SettingsPage() {
             <Input
               label="Votre prenom"
               value={household?.personAName || ''}
-              onChange={(e) => updateHousehold({ personAName: e.target.value, name: household?.personBName ? `${e.target.value} & ${household.personBName}` : e.target.value })}
+              onChange={(e) => handleUpdate({ personAName: e.target.value, name: household?.personBName ? `${e.target.value} & ${household.personBName}` : e.target.value })}
             />
             <div>
               <label className="block text-xs font-medium text-text-secondary mb-1.5">Votre couleur</label>
@@ -134,7 +201,7 @@ export default function SettingsPage() {
                 {COLORS.map((c) => (
                   <button
                     key={c}
-                    onClick={() => updateHousehold({ personAColor: c })}
+                    onClick={() => handleUpdate({ personAColor: c })}
                     className={`w-8 h-8 rounded-full transition-all cursor-pointer ${
                       household?.personAColor === c ? 'ring-2 ring-white ring-offset-2 ring-offset-bg-primary scale-110' : 'hover:scale-105'
                     }`}
@@ -149,7 +216,7 @@ export default function SettingsPage() {
                 <Input
                   label="Prenom partenaire"
                   value={household?.personBName || ''}
-                  onChange={(e) => updateHousehold({ personBName: e.target.value, name: `${household.personAName} & ${e.target.value}` })}
+                  onChange={(e) => handleUpdate({ personBName: e.target.value, name: `${household.personAName} & ${e.target.value}` })}
                 />
                 <div>
                   <label className="block text-xs font-medium text-text-secondary mb-1.5">Sa couleur</label>
@@ -157,7 +224,7 @@ export default function SettingsPage() {
                     {COLORS.map((c) => (
                       <button
                         key={c}
-                        onClick={() => updateHousehold({ personBColor: c })}
+                        onClick={() => handleUpdate({ personBColor: c })}
                         className={`w-8 h-8 rounded-full transition-all cursor-pointer ${
                           household?.personBColor === c ? 'ring-2 ring-white ring-offset-2 ring-offset-bg-primary scale-110' : 'hover:scale-105'
                         }`}
@@ -176,7 +243,7 @@ export default function SettingsPage() {
                     min="0"
                     max="100"
                     value={(household?.splitRatio || 0.5) * 100}
-                    onChange={(e) => updateHousehold({ splitRatio: parseInt(e.target.value) / 100 })}
+                    onChange={(e) => handleUpdate({ splitRatio: parseInt(e.target.value) / 100 })}
                     className="w-full accent-brand"
                   />
                   <div className="flex justify-between text-xs text-text-muted mt-1">
@@ -210,6 +277,14 @@ export default function SettingsPage() {
             <span>{chargesStore.plannedExpenses.length}</span>
           </div>
           <div className="flex justify-between text-sm">
+            <span className="text-text-muted">Objectifs d'epargne</span>
+            <span>{savingsStore.goals.length}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-text-muted">Depenses rapides</span>
+            <span>{expenseStore.expenses.length}</span>
+          </div>
+          <div className="flex justify-between text-sm">
             <span className="text-text-muted">Mois saisis</span>
             <span>{Object.keys(monthlyStore.entries).length}</span>
           </div>
@@ -228,6 +303,13 @@ export default function SettingsPage() {
           </Button>
         </div>
       </div>
+
+      {/* Logout */}
+      {session && (
+        <Button variant="secondary" onClick={handleLogout} className="w-full">
+          <LogOut size={14} className="inline mr-1.5" /> Se deconnecter
+        </Button>
+      )}
 
       {/* Reset */}
       <div className="pt-4 border-t border-white/[0.06]">

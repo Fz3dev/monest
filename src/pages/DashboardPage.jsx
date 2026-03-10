@@ -1,8 +1,11 @@
 import { useMemo } from 'react'
 import { motion } from 'motion/react'
+import { Link } from 'react-router-dom'
 import { useHouseholdStore } from '../stores/householdStore'
 import { useChargesStore } from '../stores/chargesStore'
 import { useMonthlyStore } from '../stores/monthlyStore'
+import { useSavingsStore } from '../stores/savingsStore'
+import { useExpenseStore } from '../stores/expenseStore'
 import { computeMonth } from '../utils/calculations'
 import { generateInsights } from '../utils/insights'
 import { formatCurrency, formatMonth, getCurrentMonth, formatMonthShort, CATEGORIES } from '../utils/format'
@@ -13,10 +16,9 @@ import { subMonths, format } from 'date-fns'
 import {
   AlertTriangle, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight,
   Wallet, PiggyBank, Lightbulb, ShieldCheck, ShieldAlert,
+  Target, ChevronRight, ShoppingBag,
 } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, Tooltip } from 'recharts'
-
-const PIE_COLORS = ['#6C63FF', '#F87171', '#FBBF24', '#4ADE80', '#818CF8', '#FB923C', '#38BDF8', '#A78BFA', '#F472B6', '#34D399', '#E879F9', '#FCA5A5']
 
 const CATEGORY_COLORS = {
   logement: '#6C63FF',
@@ -52,6 +54,8 @@ export default function DashboardPage() {
   const household = useHouseholdStore((s) => s.household)
   const { fixedCharges, installmentPayments, plannedExpenses } = useChargesStore()
   const entries = useMonthlyStore((s) => s.entries)
+  const savingsGoals = useSavingsStore((s) => s.goals)
+  const expenseStore = useExpenseStore()
 
   const currentMonth = getCurrentMonth()
   const entry = entries[currentMonth] || null
@@ -59,6 +63,12 @@ export default function DashboardPage() {
   const result = useMemo(
     () => computeMonth(currentMonth, household, fixedCharges, installmentPayments, plannedExpenses, entry),
     [currentMonth, household, fixedCharges, installmentPayments, plannedExpenses, entry]
+  )
+
+  // Quick expenses total for current month
+  const monthExpenses = useMemo(
+    () => expenseStore.getTotalByMonth(currentMonth),
+    [expenseStore, currentMonth]
   )
 
   // 6-month trend data
@@ -78,25 +88,6 @@ export default function DashboardPage() {
     return data
   }, [household, fixedCharges, installmentPayments, plannedExpenses, entries])
 
-  // Alerts for next 3 months
-  const alerts = useMemo(() => {
-    const items = []
-    for (let i = 1; i <= 3; i++) {
-      const m = format(subMonths(new Date(), -i), 'yyyy-MM')
-      const futureEntry = entries[m] || null
-      const r = computeMonth(m, household, fixedCharges, installmentPayments, plannedExpenses, futureEntry)
-      const heavyCharges = r.charges.filter((c) => c.type === 'installment' || c.type === 'planned')
-      if (heavyCharges.length > 0) {
-        items.push({
-          month: m,
-          label: formatMonthShort(m),
-          details: heavyCharges.map((c) => `${c.name}: ${formatCurrency(c.amount)}`).join(', '),
-        })
-      }
-    }
-    return items
-  }, [household, fixedCharges, installmentPayments, plannedExpenses, entries])
-
   // Spending insights
   const insights = useMemo(() => {
     return generateInsights(currentMonth, household, fixedCharges, installmentPayments, plannedExpenses, entries)
@@ -107,7 +98,10 @@ export default function DashboardPage() {
   const hasIncome = result.incomeA > 0 || result.incomeB > 0
   const savingsRate = totalIncome > 0 ? Math.round((result.resteFoyer / totalIncome) * 100) : 0
 
-  const getHealthColor = (val) => {
+  // Flex number = reste a vivre - depenses du mois
+  const flexNumber = result.resteFoyer - monthExpenses
+
+  const getFlexColor = (val) => {
     if (val >= 1500) return 'text-success'
     if (val >= 500) return 'text-warning'
     return 'text-danger'
@@ -119,7 +113,7 @@ export default function DashboardPage() {
     return <ArrowDownRight size={14} className="text-danger" />
   }
 
-  // Category breakdown with colors
+  // Category breakdown
   const categoryData = useMemo(() => {
     const cats = {}
     result.charges.forEach((c) => {
@@ -135,6 +129,11 @@ export default function DashboardPage() {
       }))
       .sort((a, b) => b.value - a.value)
   }, [result.charges])
+
+  // Savings summary
+  const totalSaved = savingsGoals.reduce((sum, g) => sum + g.currentAmount, 0)
+  const totalTarget = savingsGoals.reduce((sum, g) => sum + g.targetAmount, 0)
+  const savingsProgress = totalTarget > 0 ? Math.round((totalSaved / totalTarget) * 100) : 0
 
   return (
     <div className="space-y-4">
@@ -157,31 +156,53 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      {/* Hero card */}
+      {/* Hero: Flex Number */}
       <Card className="glass !border-brand/20">
-        <div className="text-center py-2">
-          <div className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest mb-1">Reste a vivre foyer</div>
-          <div className={`text-4xl font-bold tracking-tight ${getHealthColor(result.resteFoyer)}`}>
-            <AnimatedNumber value={result.resteFoyer} format={(v) => formatCurrency(Math.round(v))} />
+        <div className="text-center py-3">
+          <div className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest mb-1">
+            Il vous reste
           </div>
-          <div className="flex items-center justify-center gap-4 mt-3">
-            <div className="flex items-center gap-1.5 text-xs text-text-secondary">
-              <Wallet size={12} className="text-brand" />
-              <span>{formatCurrency(totalIncome)}</span>
+          <div className={`text-5xl font-black tracking-tight ${getFlexColor(flexNumber)}`}>
+            <AnimatedNumber value={flexNumber} format={(v) => formatCurrency(Math.round(v))} />
+          </div>
+          <div className="text-[11px] text-text-muted mt-2">a depenser ce mois</div>
+
+          <div className="flex items-center justify-center gap-5 mt-4">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1 text-xs text-text-muted mb-0.5">
+                <Wallet size={11} className="text-brand" />
+                <span>Revenus</span>
+              </div>
+              <span className="text-sm font-semibold">{formatCurrency(totalIncome)}</span>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-text-secondary">
-              <TrendingDown size={12} className="text-danger" />
-              <span>{formatCurrency(totalCharges)}</span>
+            <div className="w-px h-8 bg-white/[0.08]" />
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1 text-xs text-text-muted mb-0.5">
+                <TrendingDown size={11} className="text-danger" />
+                <span>Charges</span>
+              </div>
+              <span className="text-sm font-semibold">{formatCurrency(totalCharges)}</span>
             </div>
-            {hasIncome && (
-              <div className="flex items-center gap-1.5 text-xs">
-                <PiggyBank size={12} className={savingsRate >= 20 ? 'text-success' : savingsRate >= 10 ? 'text-warning' : 'text-danger'} />
-                <span className={savingsRate >= 20 ? 'text-success' : savingsRate >= 10 ? 'text-warning' : 'text-danger'}>
-                  {savingsRate}%
+            <div className="w-px h-8 bg-white/[0.08]" />
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1 text-xs text-text-muted mb-0.5">
+                <ShoppingBag size={11} className="text-warning" />
+                <span>Depense</span>
+              </div>
+              <span className="text-sm font-semibold">{formatCurrency(monthExpenses)}</span>
+            </div>
+          </div>
+
+          {hasIncome && (
+            <div className="mt-4 pt-3 border-t border-white/[0.06]">
+              <div className="flex items-center justify-center gap-2">
+                <PiggyBank size={14} className={savingsRate >= 20 ? 'text-success' : savingsRate >= 10 ? 'text-warning' : 'text-danger'} />
+                <span className={`text-sm font-semibold ${savingsRate >= 20 ? 'text-success' : savingsRate >= 10 ? 'text-warning' : 'text-danger'}`}>
+                  {savingsRate}% d'epargne
                 </span>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </Card>
 
@@ -210,6 +231,42 @@ export default function DashboardPage() {
           </Card>
         )}
       </div>
+
+      {/* Savings Goals Quick View */}
+      {savingsGoals.length > 0 && (
+        <Link to="/epargne">
+          <Card className="hover:border-brand/20 transition-colors cursor-pointer">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Target size={14} className="text-brand" />
+                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Objectifs</span>
+              </div>
+              <ChevronRight size={14} className="text-text-muted" />
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <div className="flex justify-between text-sm mb-1.5">
+                  <span className="text-text-secondary">{formatCurrency(totalSaved)}</span>
+                  <span className="text-text-muted">{formatCurrency(totalTarget)}</span>
+                </div>
+                <ProgressBar value={totalSaved} max={totalTarget} color="#6C63FF" />
+              </div>
+              <span className="text-lg font-bold text-brand">{savingsProgress}%</span>
+            </div>
+            <div className="flex gap-2 mt-3 overflow-x-auto">
+              {savingsGoals.slice(0, 4).map((goal) => (
+                <div key={goal.id} className="flex items-center gap-1.5 bg-white/[0.04] rounded-lg px-2.5 py-1.5 flex-shrink-0">
+                  <span className="text-sm">{goal.icon || '💰'}</span>
+                  <span className="text-[11px] text-text-secondary">{goal.name}</span>
+                  <span className="text-[10px] text-text-muted">
+                    {Math.round((goal.currentAmount / goal.targetAmount) * 100)}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </Link>
+      )}
 
       {/* Insights */}
       {insights.length > 0 && (
@@ -265,24 +322,7 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      {/* Alerts */}
-      {alerts.length > 0 && (
-        <Card className="!border-warning/15">
-          <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle size={14} className="text-warning" />
-            <span className="text-[10px] font-bold text-warning uppercase tracking-widest">Mois charges</span>
-          </div>
-          <div className="space-y-1.5">
-            {alerts.map((a) => (
-              <div key={a.month} className="text-sm text-text-secondary">
-                <span className="font-medium text-text-primary">{a.label}</span> — {a.details}
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {/* Category breakdown with progress bars */}
+      {/* Category breakdown */}
       {result.charges.length > 0 && (
         <Card>
           <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">
@@ -353,6 +393,28 @@ export default function DashboardPage() {
           </div>
         </Card>
       )}
+
+      {/* Quick links */}
+      <div className="grid grid-cols-2 gap-3">
+        <Link to="/mensuel">
+          <Card className="hover:border-brand/20 transition-colors cursor-pointer">
+            <div className="flex items-center gap-2">
+              <Wallet size={16} className="text-brand" />
+              <span className="text-sm font-medium">Mensuel</span>
+            </div>
+            <p className="text-[11px] text-text-muted mt-1">Saisir revenus</p>
+          </Card>
+        </Link>
+        <Link to="/calendrier">
+          <Card className="hover:border-brand/20 transition-colors cursor-pointer">
+            <div className="flex items-center gap-2">
+              <Target size={16} className="text-brand" />
+              <span className="text-sm font-medium">Calendrier</span>
+            </div>
+            <p className="text-[11px] text-text-muted mt-1">Previsions 12 mois</p>
+          </Card>
+        </Link>
+      </div>
     </div>
   )
 }

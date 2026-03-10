@@ -13,7 +13,7 @@ export default defineConfig({
       manifest: {
         name: 'Monest — Budget intelligent',
         short_name: 'Monest',
-        description: 'Mon reste a vivre, simplifie.',
+        description: 'Gerez votre budget familial simplement.',
         theme_color: '#0B0B0F',
         background_color: '#0B0B0F',
         display: 'standalone',
@@ -28,4 +28,15 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'recharts': ['recharts'],
+          'supabase': ['@supabase/supabase-js'],
+          'motion': ['motion'],
+        },
+      },
+    },
+  },
 })

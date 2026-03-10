@@ -20,7 +20,7 @@ const COLORS = [
   { value: '#22c55e', label: 'Vert' },
 ]
 
-export default function OnboardingWizard() {
+export default function OnboardingWizard({ onComplete }) {
   const setHousehold = useHouseholdStore((s) => s.setHousehold)
   const [step, setStep] = useState(1)
   const [form, setForm] = useState({
@@ -35,8 +35,8 @@ export default function OnboardingWizard() {
 
   const update = (field, value) => setForm((f) => ({ ...f, [field]: value }))
 
-  const handleFinish = () => {
-    setHousehold({
+  const handleFinish = async () => {
+    const household = {
       id: crypto.randomUUID(),
       name: form.personBName ? `${form.personAName} & ${form.personBName}` : form.personAName,
       personAName: form.personAName,
@@ -46,7 +46,9 @@ export default function OnboardingWizard() {
       configModel: form.configModel,
       splitRatio: form.splitRatio,
       splitMode: form.splitMode,
-    })
+    }
+    setHousehold(household)
+    if (onComplete) await onComplete(household)
   }
 
   return (
