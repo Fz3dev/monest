@@ -442,12 +442,7 @@ export default function DashboardPage() {
               <div className="flex items-center gap-2 min-w-0">
                 <div
                   className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{
-                    backgroundColor:
-                      charge.payer === 'person_a' ? household?.personAColor
-                      : charge.payer === 'person_b' ? household?.personBColor
-                      : '#6C63FF',
-                  }}
+                  style={{ backgroundColor: getCategoryColor(charge.category || 'autre') }}
                 />
                 <span className="text-text-secondary truncate">{charge.name}</span>
                 {charge.type === 'installment' && (
