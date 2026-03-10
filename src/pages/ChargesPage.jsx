@@ -13,36 +13,42 @@ import Modal from '../components/ui/Modal'
 import { Plus, Trash2, ToggleLeft, ToggleRight, Edit3 } from 'lucide-react'
 import { toast } from 'sonner'
 
-function SwipeableCard({ onDelete, children }) {
+function SwipeableCard({ actions = [], children }) {
   const x = useMotionValue(0)
-  const deleteOpacity = useTransform(x, [-120, -40, 0], [1, 0.5, 0])
-  const iconScale = useTransform(x, [-120, -40, 0], [1.1, 0.8, 0.5])
+  const totalWidth = actions.length * 70
 
   const handleDragEnd = (_, info) => {
-    if (info.offset.x < -100) {
-      animate(x, -400, { duration: 0.2 })
-      setTimeout(onDelete, 200)
+    if (info.offset.x < -totalWidth * 0.5) {
+      animate(x, -totalWidth, { type: 'spring', stiffness: 500, damping: 40 })
     } else {
       animate(x, 0, { type: 'spring', stiffness: 500, damping: 40 })
     }
   }
 
+  const close = () => animate(x, 0, { type: 'spring', stiffness: 500, damping: 40 })
+
   return (
     <div className="relative overflow-hidden rounded-2xl">
-      <motion.div
-        className="absolute inset-0 bg-danger flex items-center justify-end pr-6 lg:hidden"
-        style={{ opacity: deleteOpacity }}
-      >
-        <motion.div style={{ scale: iconScale }}>
-          <Trash2 size={18} className="text-white" />
-        </motion.div>
-      </motion.div>
+      {/* Action buttons behind — mobile only */}
+      <div className="absolute inset-y-0 right-0 flex lg:hidden">
+        {actions.map((action, i) => (
+          <button
+            key={i}
+            onClick={() => { close(); setTimeout(action.onClick, 150) }}
+            className="w-[70px] flex items-center justify-center transition-colors active:brightness-90"
+            style={{ backgroundColor: action.color }}
+            aria-label={action.label}
+          >
+            <action.icon size={18} className="text-white" />
+          </button>
+        ))}
+      </div>
       <motion.div
         style={{ x }}
         drag="x"
         dragDirectionLock
-        dragConstraints={{ left: -120, right: 0 }}
-        dragElastic={0.1}
+        dragConstraints={{ left: -totalWidth, right: 0 }}
+        dragElastic={0.08}
         onDragEnd={handleDragEnd}
         className="relative z-10 lg:!transform-none"
       >
@@ -326,7 +332,26 @@ export default function ChargesPage() {
             {fixedCharges.map((charge) => (
               <SwipeableCard
                 key={charge.id}
-                onDelete={() => handleDelete('fixed', charge.id, charge.name)}
+                actions={[
+                  {
+                    icon: charge.active ? ToggleRight : ToggleLeft,
+                    color: charge.active ? '#4ADE80' : '#48484A',
+                    label: charge.active ? t('charges.deactivate') : t('charges.activate'),
+                    onClick: () => toggleFixedCharge(charge.id),
+                  },
+                  {
+                    icon: Edit3,
+                    color: '#6C63FF',
+                    label: t('common.edit'),
+                    onClick: () => setModal({ type: 'fixed', editId: charge.id }),
+                  },
+                  {
+                    icon: Trash2,
+                    color: '#F87171',
+                    label: t('common.delete'),
+                    onClick: () => handleDelete('fixed', charge.id, charge.name),
+                  },
+                ]}
               >
                 <Card className={`${!charge.active ? 'opacity-40' : ''}`} animate={false}>
                   <div className="flex items-center gap-3">
@@ -371,10 +396,6 @@ export default function ChargesPage() {
                         <Trash2 size={14} />
                       </button>
                     </div>
-                    {/* Mobile: toggle only */}
-                    <button onClick={() => toggleFixedCharge(charge.id)} className="text-text-muted hover:text-white p-2 lg:hidden" aria-label={charge.active ? t('charges.deactivate') : t('charges.activate')}>
-                      {charge.active ? <ToggleRight size={24} className="text-success" /> : <ToggleLeft size={24} />}
-                    </button>
                   </div>
                 </Card>
               </SwipeableCard>
@@ -390,7 +411,20 @@ export default function ChargesPage() {
             {installmentPayments.map((payment) => (
               <SwipeableCard
                 key={payment.id}
-                onDelete={() => handleDelete('installment', payment.id, payment.name)}
+                actions={[
+                  {
+                    icon: Edit3,
+                    color: '#6C63FF',
+                    label: t('common.edit'),
+                    onClick: () => setModal({ type: 'installment', editId: payment.id }),
+                  },
+                  {
+                    icon: Trash2,
+                    color: '#F87171',
+                    label: t('common.delete'),
+                    onClick: () => handleDelete('installment', payment.id, payment.name),
+                  },
+                ]}
               >
                 <Card animate={false}>
                   <div className="flex items-center gap-3">
@@ -438,7 +472,20 @@ export default function ChargesPage() {
             {plannedExpenses.map((expense) => (
               <SwipeableCard
                 key={expense.id}
-                onDelete={() => handleDelete('planned', expense.id, expense.name)}
+                actions={[
+                  {
+                    icon: Edit3,
+                    color: '#6C63FF',
+                    label: t('common.edit'),
+                    onClick: () => setModal({ type: 'planned', editId: expense.id }),
+                  },
+                  {
+                    icon: Trash2,
+                    color: '#F87171',
+                    label: t('common.delete'),
+                    onClick: () => handleDelete('planned', expense.id, expense.name),
+                  },
+                ]}
               >
                 <Card animate={false}>
                   <div className="flex items-center gap-3">

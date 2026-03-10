@@ -15,14 +15,14 @@ export function EditModeButton() {
   return (
     <button
       onClick={toggleEditMode}
-      className={`p-2 rounded-xl transition-colors ${
+      className={`p-2.5 rounded-xl transition-colors ${
         isEditMode
-          ? 'bg-brand/10 text-brand'
-          : 'text-text-muted hover:text-text-primary hover:bg-white/[0.04]'
+          ? 'bg-brand/15 text-brand'
+          : 'bg-white/[0.06] text-text-secondary active:bg-white/[0.1]'
       }`}
       aria-label={t('dashboardGrid.editLayout')}
     >
-      {isEditMode ? <Check size={18} strokeWidth={2} /> : <LayoutGrid size={18} strokeWidth={1.8} />}
+      {isEditMode ? <Check size={20} strokeWidth={2} /> : <LayoutGrid size={20} strokeWidth={1.8} />}
     </button>
   )
 }
