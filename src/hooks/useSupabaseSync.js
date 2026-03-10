@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
+import { setSyncFunctions } from '../lib/syncBridge'
 import { useHouseholdStore } from '../stores/householdStore'
 import { useChargesStore } from '../stores/chargesStore'
 import { useMonthlyStore } from '../stores/monthlyStore'
@@ -225,24 +226,45 @@ export function useSupabaseSync(session) {
     }, { onConflict: 'household_id,month' })
   }, [householdId])
 
+  // Activate sync bridge so stores auto-sync to Supabase
+  useEffect(() => {
+    if (!isSupabaseConfigured() || !householdId) return
+    setSyncFunctions(syncItem, deleteItem)
+    return () => setSyncFunctions(null, null)
+  }, [syncItem, deleteItem, householdId])
+
   // Real-time subscriptions
   useEffect(() => {
     if (!isSupabaseConfigured() || !householdId) return
 
-    const channel = supabase
-      .channel('household-sync')
-      .on('postgres_changes', {
+    // Debounce reloads — multiple rapid changes (e.g. batch import) only trigger one reload
+    let timer = null
+    const debouncedReload = () => {
+      clearTimeout(timer)
+      timer = setTimeout(() => loadFromSupabase(), 500)
+    }
+
+    const tables = [
+      'fixed_charges', 'installment_payments', 'planned_expenses',
+      'monthly_entries', 'savings_goals', 'expenses', 'households',
+    ]
+
+    let channel = supabase.channel('household-sync')
+    tables.forEach((table) => {
+      channel = channel.on('postgres_changes', {
         event: '*',
         schema: 'public',
+        table,
         filter: `household_id=eq.${householdId}`,
-      }, () => {
-        // Reload data on remote change
-        loadFromSupabase()
-      })
-      .subscribe()
+      }, debouncedReload)
+    })
+    channel.subscribe()
 
-    return () => { supabase.removeChannel(channel) }
-  }, [householdId])
+    return () => {
+      clearTimeout(timer)
+      supabase.removeChannel(channel)
+    }
+  }, [householdId, loadFromSupabase])
 
   const createInvite = useCallback(async () => {
     if (!isSupabaseConfigured() || !session?.user || !householdId) return null

@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { syncToSupabase, deleteFromSupabase } from '../lib/syncBridge'
 
 const generateId = () => crypto.randomUUID()
 
@@ -51,51 +52,75 @@ export const useChargesStore = create(
         return guessCategory(upper)
       },
 
-      addFixedCharge: (charge) =>
+      addFixedCharge: (charge) => {
+        const newCharge = { ...charge, id: generateId(), active: true }
         set((state) => ({
-          fixedCharges: [...state.fixedCharges, { ...charge, id: generateId(), active: true }],
-        })),
-      updateFixedCharge: (id, updates) =>
+          fixedCharges: [...state.fixedCharges, newCharge],
+        }))
+        syncToSupabase('fixed_charges', newCharge)
+      },
+      updateFixedCharge: (id, updates) => {
         set((state) => ({
           fixedCharges: state.fixedCharges.map((c) => (c.id === id ? { ...c, ...updates } : c)),
-        })),
-      removeFixedCharge: (id) =>
+        }))
+        const updated = get().fixedCharges.find((c) => c.id === id)
+        if (updated) syncToSupabase('fixed_charges', updated)
+      },
+      removeFixedCharge: (id) => {
         set((state) => ({
           fixedCharges: state.fixedCharges.filter((c) => c.id !== id),
-        })),
-      toggleFixedCharge: (id) =>
+        }))
+        deleteFromSupabase('fixed_charges', id)
+      },
+      toggleFixedCharge: (id) => {
         set((state) => ({
           fixedCharges: state.fixedCharges.map((c) => (c.id === id ? { ...c, active: !c.active } : c)),
-        })),
+        }))
+        const updated = get().fixedCharges.find((c) => c.id === id)
+        if (updated) syncToSupabase('fixed_charges', updated)
+      },
 
-      addInstallment: (payment) =>
+      addInstallment: (payment) => {
+        const newPayment = { ...payment, id: generateId(), createdAt: new Date().toISOString() }
         set((state) => ({
-          installmentPayments: [
-            ...state.installmentPayments,
-            { ...payment, id: generateId(), createdAt: new Date().toISOString() },
-          ],
-        })),
-      updateInstallment: (id, updates) =>
+          installmentPayments: [...state.installmentPayments, newPayment],
+        }))
+        syncToSupabase('installment_payments', newPayment)
+      },
+      updateInstallment: (id, updates) => {
         set((state) => ({
           installmentPayments: state.installmentPayments.map((p) => (p.id === id ? { ...p, ...updates } : p)),
-        })),
-      removeInstallment: (id) =>
+        }))
+        const updated = get().installmentPayments.find((p) => p.id === id)
+        if (updated) syncToSupabase('installment_payments', updated)
+      },
+      removeInstallment: (id) => {
         set((state) => ({
           installmentPayments: state.installmentPayments.filter((p) => p.id !== id),
-        })),
+        }))
+        deleteFromSupabase('installment_payments', id)
+      },
 
-      addPlannedExpense: (expense) =>
+      addPlannedExpense: (expense) => {
+        const newExpense = { ...expense, id: generateId() }
         set((state) => ({
-          plannedExpenses: [...state.plannedExpenses, { ...expense, id: generateId() }],
-        })),
-      updatePlannedExpense: (id, updates) =>
+          plannedExpenses: [...state.plannedExpenses, newExpense],
+        }))
+        syncToSupabase('planned_expenses', newExpense)
+      },
+      updatePlannedExpense: (id, updates) => {
         set((state) => ({
           plannedExpenses: state.plannedExpenses.map((e) => (e.id === id ? { ...e, ...updates } : e)),
-        })),
-      removePlannedExpense: (id) =>
+        }))
+        const updated = get().plannedExpenses.find((e) => e.id === id)
+        if (updated) syncToSupabase('planned_expenses', updated)
+      },
+      removePlannedExpense: (id) => {
         set((state) => ({
           plannedExpenses: state.plannedExpenses.filter((e) => e.id !== id),
-        })),
+        }))
+        deleteFromSupabase('planned_expenses', id)
+      },
     }),
     { name: 'monest-charges', version: 1 }
   )

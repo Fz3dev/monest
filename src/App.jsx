@@ -74,7 +74,7 @@ function clearInviteCode() {
 
 function AppContent({ session }) {
   const household = useHouseholdStore((s) => s.household)
-  const { loadFromSupabase, createHousehold, acceptInvite, syncItem, deleteItem, syncMonthlyEntry, saveHousehold, createInvite } = useSupabaseSync(session)
+  const { loadFromSupabase, createHousehold, acceptInvite, syncMonthlyEntry, saveHousehold, createInvite } = useSupabaseSync(session)
   const [loading, setLoading] = useState(!!session)
   const [inviteCode] = useState(getInviteCode)
 
@@ -124,9 +124,9 @@ function AppContent({ session }) {
             <Routes>
               <Route path="/" element={<DashboardPage />} />
               <Route path="/mensuel" element={<MonthlyPage syncMonthlyEntry={syncMonthlyEntry} />} />
-              <Route path="/charges" element={<ChargesPage syncItem={syncItem} deleteItem={deleteItem} />} />
+              <Route path="/charges" element={<ChargesPage />} />
               <Route path="/depenses" element={<ExpensesPage />} />
-              <Route path="/epargne" element={<SavingsPage syncItem={syncItem} deleteItem={deleteItem} />} />
+              <Route path="/epargne" element={<SavingsPage />} />
               <Route path="/calendrier" element={<CalendarPage />} />
               <Route path="/import" element={<ImportPage />} />
               <Route path="/parametres" element={<SettingsPage session={session} saveHousehold={saveHousehold} createInvite={createInvite} />} />

@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { syncToSupabase, deleteFromSupabase } from '../lib/syncBridge'
 
 const generateId = () => crypto.randomUUID()
 
@@ -8,23 +9,28 @@ export const useExpenseStore = create(
     (set, get) => ({
       expenses: [],
 
-      addExpense: (expense) =>
+      addExpense: (expense) => {
+        const newExpense = { ...expense, id: generateId(), createdAt: new Date().toISOString() }
         set((state) => ({
-          expenses: [
-            { ...expense, id: generateId(), createdAt: new Date().toISOString() },
-            ...state.expenses,
-          ],
-        })),
+          expenses: [newExpense, ...state.expenses],
+        }))
+        syncToSupabase('expenses', newExpense)
+      },
 
-      removeExpense: (id) =>
+      removeExpense: (id) => {
         set((state) => ({
           expenses: state.expenses.filter((e) => e.id !== id),
-        })),
+        }))
+        deleteFromSupabase('expenses', id)
+      },
 
-      updateExpense: (id, updates) =>
+      updateExpense: (id, updates) => {
         set((state) => ({
           expenses: state.expenses.map((e) => (e.id === id ? { ...e, ...updates } : e)),
-        })),
+        }))
+        const updated = get().expenses.find((e) => e.id === id)
+        if (updated) syncToSupabase('expenses', updated)
+      },
 
       getExpensesByMonth: (month) =>
         get().expenses.filter((e) => e.date?.startsWith(month)),
