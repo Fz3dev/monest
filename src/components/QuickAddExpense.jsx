@@ -114,7 +114,7 @@ export default function QuickAddExpense() {
       {/* FAB */}
       <motion.button
         onClick={handleOpen}
-        className="fixed bottom-24 right-4 z-30 w-14 h-14 rounded-full bg-brand text-white shadow-lg shadow-brand/30 flex items-center justify-center cursor-pointer"
+        className="fixed bottom-24 right-4 lg:bottom-8 lg:right-8 z-30 w-14 h-14 rounded-full bg-brand text-white shadow-lg shadow-brand/30 flex items-center justify-center cursor-pointer"
         whileTap={{ scale: 0.85 }}
         whileHover={{ scale: 1.05 }}
         animate={{

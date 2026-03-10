@@ -87,61 +87,62 @@ export default function MonthlyPage() {
         </button>
       </div>
 
-      {/* Revenus */}
-      <Card>
-        <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">Revenus</h2>
-        <div className="space-y-3">
-          <Input
-            label={`Salaire ${household?.personAName || 'Personne A'}`}
-            type="number"
-            value={entry?.incomeA || ''}
-            onChange={(e) => handleIncomeChange('incomeA', e.target.value)}
-            placeholder="0"
-            suffix="€"
-          />
-          {household?.personBName && (
+      {/* Revenus + Solde — side by side on desktop */}
+      <div className="lg:grid lg:grid-cols-2 lg:gap-4 space-y-4 lg:space-y-0">
+        <Card>
+          <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">Revenus</h2>
+          <div className="space-y-3">
             <Input
-              label={`Salaire ${household.personBName}`}
+              label={`Salaire ${household?.personAName || 'Personne A'}`}
               type="number"
-              value={entry?.incomeB || ''}
-              onChange={(e) => handleIncomeChange('incomeB', e.target.value)}
+              value={entry?.incomeA || ''}
+              onChange={(e) => handleIncomeChange('incomeA', e.target.value)}
               placeholder="0"
               suffix="€"
             />
-          )}
-        </div>
-      </Card>
+            {household?.personBName && (
+              <Input
+                label={`Salaire ${household.personBName}`}
+                type="number"
+                value={entry?.incomeB || ''}
+                onChange={(e) => handleIncomeChange('incomeB', e.target.value)}
+                placeholder="0"
+                suffix="€"
+              />
+            )}
+          </div>
+        </Card>
 
-      {/* Solde de depart (decouvert) */}
-      <Card>
-        <div className="flex items-center gap-2 mb-3">
-          <AlertTriangle size={12} className="text-warning" />
-          <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Solde avant salaire</h2>
-        </div>
-        <p className="text-[11px] text-text-muted mb-3">
-          Si votre compte est a decouvert avant de recevoir le salaire, entrez le montant negatif (ex: -200).
-        </p>
-        <div className="space-y-3">
-          <Input
-            label={`Solde ${household?.personAName || 'Personne A'}`}
-            type="number"
-            value={entry?.startingBalanceA ?? ''}
-            onChange={(e) => handleIncomeChange('startingBalanceA', e.target.value)}
-            placeholder="0"
-            suffix="€"
-          />
-          {household?.personBName && (
+        <Card>
+          <div className="flex items-center gap-2 mb-3">
+            <AlertTriangle size={12} className="text-warning" />
+            <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Solde avant salaire</h2>
+          </div>
+          <p className="text-[11px] text-text-muted mb-3">
+            Si votre compte est a decouvert avant de recevoir le salaire, entrez le montant negatif (ex: -200).
+          </p>
+          <div className="space-y-3">
             <Input
-              label={`Solde ${household.personBName}`}
+              label={`Solde ${household?.personAName || 'Personne A'}`}
               type="number"
-              value={entry?.startingBalanceB ?? ''}
-              onChange={(e) => handleIncomeChange('startingBalanceB', e.target.value)}
+              value={entry?.startingBalanceA ?? ''}
+              onChange={(e) => handleIncomeChange('startingBalanceA', e.target.value)}
               placeholder="0"
               suffix="€"
             />
-          )}
-        </div>
-      </Card>
+            {household?.personBName && (
+              <Input
+                label={`Solde ${household.personBName}`}
+                type="number"
+                value={entry?.startingBalanceB ?? ''}
+                onChange={(e) => handleIncomeChange('startingBalanceB', e.target.value)}
+                placeholder="0"
+                suffix="€"
+              />
+            )}
+          </div>
+        </Card>
+      </div>
 
       {/* Charges */}
       <Card>
@@ -191,7 +192,8 @@ export default function MonthlyPage() {
         </div>
       </Card>
 
-      {/* Reste a vivre */}
+      {/* Reste a vivre + Repartition — side by side on desktop */}
+      <div className="lg:grid lg:grid-cols-2 lg:gap-4 space-y-4 lg:space-y-0">
       <Card className="glass !border-brand/20">
         <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">Reste a vivre</h2>
         <div className="space-y-3">
@@ -248,7 +250,7 @@ export default function MonthlyPage() {
       </Card>
 
       {/* Repartition */}
-      {household?.personBName && (
+      {household?.personBName ? (
         <Card>
           <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">Repartition</h2>
           <div className="space-y-2 text-sm">
@@ -270,7 +272,8 @@ export default function MonthlyPage() {
             </div>
           </div>
         </Card>
-      )}
+      ) : <div className="hidden lg:block" />}
+      </div>
 
       {/* Virements effectues + Regularisation */}
       {household?.personBName && result.totalCommon > 0 && (

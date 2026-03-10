@@ -128,13 +128,15 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
   return (
     <div className="space-y-4">
       <motion.h1
-        className="text-2xl font-bold"
+        className="text-2xl font-bold lg:text-3xl"
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
       >
         Reglages
       </motion.h1>
 
+      <div className="lg:grid lg:grid-cols-2 lg:gap-5 space-y-4 lg:space-y-0">
+      <div className="space-y-4">
       {/* Account info */}
       {session && (
         <Card>
@@ -168,6 +170,8 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
         </Card>
       )}
 
+      </div>
+      <div className="space-y-4">
       {/* Household info */}
       <Card>
         <div className="flex items-center justify-between mb-3">
@@ -306,8 +310,11 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
         </div>
       </Card>
 
+      </div>
+      </div>
+
       {/* Export / Import */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Button variant="secondary" onClick={handleExport} className="w-full">
           <Download size={14} className="inline mr-1.5" /> Exporter
         </Button>

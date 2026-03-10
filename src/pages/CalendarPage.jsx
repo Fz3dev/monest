@@ -87,7 +87,7 @@ export default function CalendarPage() {
         Calendrier previsionnel
       </motion.h1>
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-4 gap-2 lg:grid-cols-6 lg:gap-3">
         {months.map((m, i) => {
           const cfg = statusConfig[m.status]
           // Spending intensity: darker = more charges relative to max
