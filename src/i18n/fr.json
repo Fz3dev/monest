@@ -249,6 +249,11 @@
     "resetApp": "R\u00e9initialiser l'application",
     "resetWarning": "Toutes vos donn\u00e9es seront supprim\u00e9es. Irr\u00e9versible.",
     "colorLabel": "Couleur {{color}}",
+    "categories": "Cat\u00e9gories",
+    "newCategoryPlaceholder": "Nouvelle cat\u00e9gorie...",
+    "categoryAdded": "Cat\u00e9gorie ajout\u00e9e",
+    "resetCategories": "R\u00e9initialiser les cat\u00e9gories",
+    "categoriesReset": "Cat\u00e9gories r\u00e9initialis\u00e9es",
     "modelLabels": {
       "common_and_personal": "Commun + Perso",
       "full_common": "Tout commun",
@@ -376,9 +381,10 @@
     "noNotifications": "Aucune notification"
   },
   "insights": {
-    "excellentSavings": "Excellent ! Vous \u00e9pargnez {{rate}}% de vos revenus ce mois.",
-    "goodSavings": "Bon rythme d'\u00e9pargne : {{rate}}% de vos revenus pr\u00e9serv\u00e9s.",
-    "lowSavings": "Taux d'\u00e9pargne faible ({{rate}}%). Objectif recommand\u00e9 : 20%.",
+    "lowChargesRate": "Vos charges ne repr\u00e9sentent que {{rate}}% de vos revenus. Confortable !",
+    "okChargesRate": "Vos charges repr\u00e9sentent {{rate}}% de vos revenus. Bon \u00e9quilibre.",
+    "highChargesRate": "Vos charges repr\u00e9sentent {{rate}}% de vos revenus. Attention au reste \u00e0 vivre.",
+    "veryHighChargesRate": "Vos charges repr\u00e9sentent {{rate}}% de vos revenus. Situation tendue.",
     "deficit": "D\u00e9ficit de {{amount}} ce mois. Revenus insuffisants.",
     "chargesUp": "Charges en hausse de {{percent}}% par rapport au mois dernier (+{{amount}}).",
     "chargesDown": "Charges r\u00e9duites de {{percent}}% par rapport au mois dernier ({{amount}} \u00e9conomies).",

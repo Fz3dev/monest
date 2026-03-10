@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
 import { useHouseholdStore } from '../stores/householdStore'
+import { useCategoriesStore, DEFAULT_CATEGORIES } from '../stores/categoriesStore'
 import { useChargesStore } from '../stores/chargesStore'
 import { useMonthlyStore } from '../stores/monthlyStore'
 import { useSavingsStore } from '../stores/savingsStore'
@@ -11,7 +12,7 @@ import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Select from '../components/ui/Select'
-import { Download, Upload, Trash2, User, Database, LogOut, Users, Share2, Copy, Check, Loader2, UserPlus } from 'lucide-react'
+import { Download, Upload, Trash2, User, Database, LogOut, Users, Share2, Copy, Check, Loader2, UserPlus, Tag, Plus, X, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 
 const COLORS = [
@@ -21,6 +22,7 @@ const COLORS = [
 export default function SettingsPage({ session, saveHousehold, createInvite }) {
   const { t } = useTranslation()
   const { household, updateHousehold, resetHousehold } = useHouseholdStore()
+  const { categories, updateCategoryColor, addCategory, removeCategory, resetCategories } = useCategoriesStore()
   const chargesStore = useChargesStore()
   const monthlyStore = useMonthlyStore()
   const savingsStore = useSavingsStore()
@@ -28,6 +30,8 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
   const [confirmReset, setConfirmReset] = useState(false)
   const [editing, setEditing] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState('')
+  const [newCategoryColor, setNewCategoryColor] = useState('#94A3B8')
   const [coupleSetup, setCoupleSetup] = useState(false)
   const [coupleForm, setCoupleForm] = useState({
     personBName: '',
@@ -430,6 +434,87 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
             <Upload size={14} className="inline mr-1.5" /> {t('settings.restore')}
           </Button>
         </div>
+      </div>
+
+      {/* Categories */}
+      <div>
+        <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">
+          <Tag size={12} className="inline mr-1.5" /> {t('settings.categories')}
+        </h2>
+        <Card>
+          <div className="space-y-3">
+            {Object.entries(categories).map(([key, cat]) => {
+              const isDefault = key in DEFAULT_CATEGORIES
+              const label = t(`categories.${key}`, { defaultValue: key.charAt(0).toUpperCase() + key.slice(1) })
+              return (
+                <div key={key} className="flex items-center gap-3">
+                  <label className="relative cursor-pointer">
+                    <input
+                      type="color"
+                      value={cat.color}
+                      onChange={(e) => updateCategoryColor(key, e.target.value)}
+                      className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                    />
+                    <div className="w-6 h-6 rounded-full border-2 border-white/10" style={{ backgroundColor: cat.color }} />
+                  </label>
+                  <span className="flex-1 text-sm">{label}</span>
+                  {!isDefault && (
+                    <button
+                      onClick={() => removeCategory(key)}
+                      className="p-1 text-text-muted hover:text-danger transition-colors"
+                      aria-label={t('common.delete')}
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+
+            {/* Add custom category */}
+            <div className="flex items-center gap-2 pt-2 border-t border-white/[0.06]">
+              <label className="relative cursor-pointer">
+                <input
+                  type="color"
+                  value={newCategoryColor}
+                  onChange={(e) => setNewCategoryColor(e.target.value)}
+                  className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                />
+                <div className="w-6 h-6 rounded-full border-2 border-dashed border-white/20" style={{ backgroundColor: newCategoryColor }} />
+              </label>
+              <input
+                type="text"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                placeholder={t('settings.newCategoryPlaceholder')}
+                className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1.5 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-brand/50"
+              />
+              <button
+                onClick={() => {
+                  const key = newCategoryName.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '_')
+                  if (key && !categories[key]) {
+                    addCategory(key, newCategoryColor)
+                    setNewCategoryName('')
+                    setNewCategoryColor('#94A3B8')
+                    toast.success(t('settings.categoryAdded'))
+                  }
+                }}
+                disabled={!newCategoryName.trim()}
+                className="p-1.5 rounded-lg bg-brand/10 text-brand disabled:opacity-30 transition-colors"
+                aria-label={t('common.add')}
+              >
+                <Plus size={14} />
+              </button>
+            </div>
+
+            <button
+              onClick={() => { resetCategories(); toast.success(t('settings.categoriesReset')) }}
+              className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text-secondary transition-colors"
+            >
+              <RotateCcw size={12} /> {t('settings.resetCategories')}
+            </button>
+          </div>
+        </Card>
       </div>
 
       {/* Logout */}

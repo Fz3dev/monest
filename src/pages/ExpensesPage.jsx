@@ -13,36 +13,6 @@ import { addMonths, subMonths, format, isToday, isYesterday, parseISO } from 'da
 import { fr } from 'date-fns/locale'
 import { toast } from 'sonner'
 
-const CATEGORY_EMOJIS = {
-  alimentation: '\u{1F6D2}',
-  loisirs: '\u{1F3AE}',
-  transport: '\u26FD',
-  sante: '\u{1F3E5}',
-  enfants: '\u{1F476}',
-  logement: '\u{1F3E0}',
-  abonnement: '\u{1F4F1}',
-  autre: '\u{1F381}',
-  restaurant: '\u{1F37D}\uFE0F',
-  education: '\u{1F393}',
-  credit: '\u{1F4B3}',
-  assurance: '\u{1F6E1}\uFE0F',
-  impot: '\u{1F4CB}',
-}
-
-const CATEGORY_COLORS = {
-  logement: '#6C63FF',
-  assurance: '#818CF8',
-  credit: '#F87171',
-  abonnement: '#38BDF8',
-  impot: '#FBBF24',
-  transport: '#FB923C',
-  alimentation: '#4ADE80',
-  sante: '#F472B6',
-  education: '#A78BFA',
-  loisirs: '#34D399',
-  enfants: '#E879F9',
-  autre: '#94A3B8',
-}
 
 function SwipeToDelete({ onDelete, children, t }) {
   const x = useMotionValue(0)
@@ -107,6 +77,8 @@ export default function ExpensesPage() {
   const expenses = useExpenseStore((s) => s.expenses)
   const removeExpense = useExpenseStore((s) => s.removeExpense)
   const getTotalByMonth = useExpenseStore((s) => s.getTotalByMonth)
+  const getCategoryColor = useCategoriesStore((s) => s.getCategoryColor)
+  const getCategoryEmoji = useCategoriesStore((s) => s.getCategoryEmoji)
 
   const [currentMonth, setCurrentMonth] = useState(getCurrentMonth())
   const [activeCategory, setActiveCategory] = useState(null)
@@ -267,11 +239,11 @@ export default function ExpensesPage() {
               }`}
               style={
                 activeCategory === category
-                  ? { backgroundColor: CATEGORY_COLORS[category] || '#94A3B8' }
+                  ? { backgroundColor: getCategoryColor(category) }
                   : undefined
               }
             >
-              <span>{CATEGORY_EMOJIS[category] || '\u{1F381}'}</span>
+              <span>{getCategoryEmoji(category)}</span>
               <span>{formatCurrency(Math.round(total))}</span>
             </button>
           ))}
@@ -355,10 +327,10 @@ export default function ExpensesPage() {
                               <div
                                 className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
                                 style={{
-                                  backgroundColor: `${CATEGORY_COLORS[expense.category] || '#94A3B8'}15`,
+                                  backgroundColor: `${getCategoryColor(expense.category)}15`,
                                 }}
                               >
-                                {CATEGORY_EMOJIS[expense.category] || '\u{1F381}'}
+                                {getCategoryEmoji(expense.category)}
                               </div>
 
                               {/* Name + category */}

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'motion/react'
 import { useHouseholdStore } from '../stores/householdStore'
 import { useChargesStore } from '../stores/chargesStore'
+import { useCategoriesStore } from '../stores/categoriesStore'
 import { formatCurrency, PAYER_OPTIONS, getTranslatedCategories, getTranslatedFrequencies, getCategoryLabel, getFrequencyLabel } from '../utils/format'
 import { syncToSupabase } from '../lib/syncBridge'
 import Card from '../components/ui/Card'
@@ -218,6 +219,7 @@ function PlannedExpenseForm({ initialValues, onSubmit, onCancel, household, t })
 export default function ChargesPage() {
   const { t } = useTranslation()
   const household = useHouseholdStore((s) => s.household)
+  const getCategoryColor = useCategoriesStore((s) => s.getCategoryColor)
   const {
     fixedCharges, installmentPayments, plannedExpenses,
     addFixedCharge, updateFixedCharge, removeFixedCharge, toggleFixedCharge,
@@ -354,10 +356,13 @@ export default function ChargesPage() {
                       onClick={() => setModal({ type: 'fixed', editId: charge.id })}
                     >
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getPayerColor(charge.payer) }} />
+                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getCategoryColor(charge.category || 'autre') }} />
                         <span className="font-medium text-sm truncate">{charge.name}</span>
                         {charge.category && charge.category !== 'autre' && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/[0.06] text-text-muted flex-shrink-0">
+                          <span
+                            className="text-[9px] px-1.5 py-0.5 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: `${getCategoryColor(charge.category)}20`, color: getCategoryColor(charge.category) }}
+                          >
                             {getCategoryLabel(charge.category)}
                           </span>
                         )}

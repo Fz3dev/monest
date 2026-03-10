@@ -19,25 +19,31 @@ export function generateInsights(currentMonth, household, fixedCharges, installm
   const totalCharges = result.totalCommon + result.personalACharges + result.personalBCharges
   const prevTotalCharges = prevResult.totalCommon + prevResult.personalACharges + prevResult.personalBCharges
 
-  // Savings rate insight
+  // Charges ratio insight
   if (totalIncome > 0) {
-    const savingsRate = Math.round((result.resteFoyer / totalIncome) * 100)
-    if (savingsRate >= 30) {
+    const chargesRate = Math.round((totalCharges / totalIncome) * 100)
+    if (chargesRate <= 30) {
       insights.push({
         type: 'positive',
-        message: i18n.t('insights.excellentSavings', { rate: savingsRate }),
+        message: i18n.t('insights.lowChargesRate', { rate: chargesRate }),
       })
-    } else if (savingsRate >= 15) {
+    } else if (chargesRate <= 50) {
       insights.push({
         type: 'positive',
-        message: i18n.t('insights.goodSavings', { rate: savingsRate }),
+        message: i18n.t('insights.okChargesRate', { rate: chargesRate }),
       })
-    } else if (savingsRate >= 0) {
+    } else if (chargesRate <= 70) {
       insights.push({
         type: 'warning',
-        message: i18n.t('insights.lowSavings', { rate: savingsRate }),
+        message: i18n.t('insights.highChargesRate', { rate: chargesRate }),
       })
     } else {
+      insights.push({
+        type: 'danger',
+        message: i18n.t('insights.veryHighChargesRate', { rate: chargesRate }),
+      })
+    }
+    if (result.resteFoyer < 0) {
       insights.push({
         type: 'danger',
         message: i18n.t('insights.deficit', { amount: formatCurrency(Math.abs(result.resteFoyer)) }),

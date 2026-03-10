@@ -1,4 +1,5 @@
 import i18n from '../i18n'
+import { useCategoriesStore } from '../stores/categoriesStore'
 
 const currencyFormatter = new Intl.NumberFormat('fr-FR', {
   style: 'currency',
@@ -53,12 +54,24 @@ export const CATEGORIES = [
 // Helper to get translated label for a category
 export function getCategoryLabel(value) {
   const cat = CATEGORIES.find((c) => c.value === value)
-  return cat ? i18n.t(cat.labelKey) : value
+  if (cat) return i18n.t(cat.labelKey)
+  // Custom category: capitalize
+  return value.charAt(0).toUpperCase() + value.slice(1).replace(/_/g, ' ')
 }
 
 // Returns CATEGORIES with translated labels (for Select components)
+// Includes custom categories from store if available
 export function getTranslatedCategories(t) {
-  return CATEGORIES.map((c) => ({ value: c.value, label: t(c.labelKey) }))
+  const base = CATEGORIES.map((c) => ({ value: c.value, label: t(c.labelKey) }))
+  // Add custom categories from store
+  const storeCategories = useCategoriesStore.getState().categories
+  const defaultKeys = new Set(CATEGORIES.map((c) => c.value))
+  for (const key of Object.keys(storeCategories)) {
+    if (!defaultKeys.has(key)) {
+      base.push({ value: key, label: key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ') })
+    }
+  }
+  return base
 }
 
 export const FREQUENCIES = [
