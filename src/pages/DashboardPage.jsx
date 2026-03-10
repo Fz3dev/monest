@@ -468,13 +468,16 @@ export default function DashboardPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <motion.h1
-          className="text-2xl font-bold lg:text-3xl"
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
-        >
-          {formatMonth(currentMonth)}
-        </motion.h1>
+        <div className="flex items-center gap-2.5">
+          <img src="/logo-icon.svg" alt="Monest" className="w-7 h-7 lg:hidden" />
+          <motion.h1
+            className="text-2xl font-bold lg:text-3xl"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            {formatMonth(currentMonth)}
+          </motion.h1>
+        </div>
         <EditModeButton />
       </div>
 
