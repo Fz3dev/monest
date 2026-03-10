@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useMemo, useRef, useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Responsive, useContainerWidth } from 'react-grid-layout'
 import { motion, AnimatePresence } from 'motion/react'
@@ -36,30 +36,32 @@ export default function DashboardGrid({ widgets }) {
   const toggleEditMode = useDashboardLayoutStore((s) => s.toggleEditMode)
   const resetLayouts = useDashboardLayoutStore((s) => s.resetLayouts)
 
-  // Long press to enter edit mode on mobile
-  const longPressTimer = useRef(null)
-  const handleTouchStart = useCallback(() => {
-    if (isEditMode) return
-    longPressTimer.current = setTimeout(() => {
-      toggleEditMode()
-      if (navigator.vibrate) navigator.vibrate(50)
-    }, 600)
-  }, [isEditMode, toggleEditMode])
-  const handleTouchEnd = useCallback(() => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current)
-      longPressTimer.current = null
-    }
+  // Track if we're on mobile
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
   }, [])
 
   const visibleIds = useMemo(() => Object.keys(widgets), [widgets])
+
+  // Sort mobile widgets by sm layout y position
+  const mobileOrder = useMemo(() => {
+    const smLayout = layouts.sm || DEFAULT_LAYOUTS.sm
+    return [...visibleIds].sort((a, b) => {
+      const ay = smLayout.find((l) => l.i === a)?.y ?? 999
+      const by = smLayout.find((l) => l.i === b)?.y ?? 999
+      return ay - by
+    })
+  }, [visibleIds, layouts.sm])
 
   const filteredLayouts = useMemo(() => {
     const filtered = {}
     for (const [bp, items] of Object.entries(layouts)) {
       filtered[bp] = items.filter((item) => visibleIds.includes(item.i))
     }
-    // Add missing widgets with defaults
     for (const [bp, items] of Object.entries(filtered)) {
       const existing = new Set(items.map((item) => item.i))
       const defaults = DEFAULT_LAYOUTS[bp] || []
@@ -80,19 +82,26 @@ export default function DashboardGrid({ widgets }) {
     [setLayouts, isEditMode]
   )
 
+  // Mobile: simple vertical stack, no grid
+  if (isMobile) {
+    return (
+      <div className="space-y-4">
+        {mobileOrder.map((id) => (
+          <div key={id}>{widgets[id]}</div>
+        ))}
+      </div>
+    )
+  }
+
+  // Tablet/Desktop: react-grid-layout
   return (
-    <div
-      ref={containerRef}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onTouchMove={handleTouchEnd}
-    >
+    <div ref={containerRef}>
       {mounted && (
         <Responsive
           width={width}
           layouts={filteredLayouts}
-          breakpoints={{ lg: 1024, md: 768, sm: 0 }}
-          cols={{ lg: 3, md: 2, sm: 1 }}
+          breakpoints={{ lg: 1024, md: 0 }}
+          cols={{ lg: 3, md: 2 }}
           rowHeight={50}
           dragConfig={{ enabled: isEditMode, handle: '.widget-drag-handle' }}
           resizeConfig={{ enabled: false }}
