@@ -447,7 +447,6 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
         <Card>
           <div className="space-y-3">
             {Object.entries(categories).map(([key, cat]) => {
-              const isDefault = key in DEFAULT_CATEGORIES
               const label = t(`categories.${key}`, { defaultValue: key.charAt(0).toUpperCase() + key.slice(1) })
               return (
                 <div key={key} className="flex items-center gap-3">
@@ -461,15 +460,13 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
                     <div className="w-6 h-6 rounded-full border-2 border-white/10" style={{ backgroundColor: cat.color }} />
                   </label>
                   <span className="flex-1 text-sm">{label}</span>
-                  {!isDefault && (
-                    <button
-                      onClick={() => removeCategory(key)}
-                      className="p-1 text-text-muted hover:text-danger transition-colors"
-                      aria-label={t('common.delete')}
-                    >
-                      <X size={14} />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => removeCategory(key)}
+                    className="p-1 text-text-muted hover:text-danger transition-colors"
+                    aria-label={t('common.delete')}
+                  >
+                    <X size={14} />
+                  </button>
                 </div>
               )
             })}
