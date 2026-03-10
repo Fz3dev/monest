@@ -27,7 +27,7 @@ export default class ErrorBoundary extends Component {
             await Promise.all(regs.map(r => r.unregister()))
             const keys = await caches.keys()
             await Promise.all(keys.map(k => caches.delete(k)))
-          } catch (e) { /* ignore */ }
+          } catch { /* ignore */ }
           window.location.reload()
         })()
       }
@@ -51,7 +51,7 @@ export default class ErrorBoundary extends Component {
                   await Promise.all(regs.map(r => r.unregister()))
                   const keys = await caches.keys()
                   await Promise.all(keys.map(k => caches.delete(k)))
-                } catch (e) { /* ignore */ }
+                } catch { /* ignore */ }
                 window.location.reload()
               }}
               className="bg-brand hover:bg-brand-dark text-white px-6 py-2.5 rounded-xl font-medium transition-colors"

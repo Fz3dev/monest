@@ -9,7 +9,8 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
-import { Download, Upload, Trash2, User, Database, LogOut, Users, Share2, Copy, Check, Loader2 } from 'lucide-react'
+import { useThemeStore } from '../stores/themeStore'
+import { Download, Upload, Trash2, User, Database, LogOut, Users, Share2, Copy, Check, Loader2, Sun, Moon } from 'lucide-react'
 import { toast } from 'sonner'
 
 const COLORS = [
@@ -22,6 +23,7 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
   const monthlyStore = useMonthlyStore()
   const savingsStore = useSavingsStore()
   const expenseStore = useExpenseStore()
+  const { theme, toggleTheme } = useThemeStore()
   const [confirmReset, setConfirmReset] = useState(false)
   const [editing, setEditing] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -47,6 +49,29 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
     a.click()
     URL.revokeObjectURL(url)
     toast.success('Backup exporte')
+  }
+
+  const handleExportCSV = () => {
+    const rows = [['Date', 'Categorie', 'Note', 'Montant', 'Paye par']]
+    const expenses = expenseStore.expenses
+    expenses.forEach((e) => {
+      rows.push([
+        e.date || '',
+        e.category || '',
+        (e.note || '').replace(/"/g, '""'),
+        String(e.amount || 0),
+        e.payer || '',
+      ])
+    })
+    const csv = rows.map((r) => r.map((c) => `"${c}"`).join(',')).join('\n')
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `monest-depenses-${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success(`${expenses.length} depenses exportees en CSV`)
   }
 
   const handleImport = async (e) => {
@@ -272,6 +297,30 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
         )}
       </Card>
 
+      {/* Theme toggle */}
+      <Card>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {theme === 'dark' ? <Moon size={14} className="text-brand" /> : <Sun size={14} className="text-brand" />}
+            <span className="text-sm font-medium">
+              {theme === 'dark' ? 'Mode sombre' : 'Mode clair'}
+            </span>
+          </div>
+          <button
+            onClick={toggleTheme}
+            className="relative w-12 h-7 rounded-full transition-colors cursor-pointer"
+            style={{ backgroundColor: theme === 'dark' ? '#6C63FF' : '#AEAEB2' }}
+            aria-label="Changer le theme"
+          >
+            <motion.div
+              className="absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-md"
+              animate={{ left: theme === 'dark' ? '1.5rem' : '0.125rem' }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+            />
+          </button>
+        </div>
+      </Card>
+
       {/* Stats */}
       <Card>
         <div className="flex items-center gap-2 mb-3">
@@ -318,6 +367,12 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
           </Button>
         </div>
       </div>
+
+      {expenseStore.expenses.length > 0 && (
+        <Button variant="secondary" onClick={handleExportCSV} className="w-full">
+          <Download size={14} className="inline mr-1.5" /> Exporter depenses (CSV)
+        </Button>
+      )}
 
       {/* Logout */}
       {session && (

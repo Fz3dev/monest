@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { useHouseholdStore } from './stores/householdStore'
+import { useThemeStore } from './stores/themeStore'
 import { supabase, isSupabaseConfigured } from './lib/supabase'
 import { useSupabaseSync } from './hooks/useSupabaseSync'
 import AppShell from './components/layout/AppShell'
@@ -20,7 +21,7 @@ function lazyRetry(importFn) {
           await Promise.all(regs.map(r => r.unregister()))
           const keys = await caches.keys()
           await Promise.all(keys.map(k => caches.delete(k)))
-        } catch (e) { /* ignore */ }
+        } catch { /* ignore */ }
         window.location.reload()
         return new Promise(() => {}) // never resolves — page is reloading
       }
@@ -74,7 +75,8 @@ function clearInviteCode() {
 
 function AppContent({ session }) {
   const household = useHouseholdStore((s) => s.household)
-  const { loadFromSupabase, createHousehold, acceptInvite, syncMonthlyEntry, saveHousehold, createInvite } = useSupabaseSync(session)
+  const theme = useThemeStore((s) => s.theme)
+  const { loadFromSupabase, createHousehold, acceptInvite, saveHousehold, createInvite } = useSupabaseSync(session)
   const [loading, setLoading] = useState(!!session)
   const [inviteCode] = useState(getInviteCode)
 
@@ -111,7 +113,7 @@ function AppContent({ session }) {
     return (
       <ErrorBoundary>
         <OnboardingWizard onComplete={createHousehold} />
-        <Toaster theme="dark" position="top-center" richColors />
+        <Toaster theme={theme} position="top-center" richColors />
       </ErrorBoundary>
     )
   }
@@ -123,7 +125,7 @@ function AppContent({ session }) {
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<DashboardPage />} />
-              <Route path="/mensuel" element={<MonthlyPage syncMonthlyEntry={syncMonthlyEntry} />} />
+              <Route path="/mensuel" element={<MonthlyPage />} />
               <Route path="/charges" element={<ChargesPage />} />
               <Route path="/depenses" element={<ExpensesPage />} />
               <Route path="/epargne" element={<SavingsPage />} />
@@ -134,7 +136,7 @@ function AppContent({ session }) {
             </Routes>
           </Suspense>
         </AppShell>
-        <Toaster theme="dark" position="top-center" richColors />
+        <Toaster theme={theme} position="top-center" richColors />
       </BrowserRouter>
     </ErrorBoundary>
   )
@@ -143,6 +145,11 @@ function AppContent({ session }) {
 export default function App() {
   const [session, setSession] = useState(null)
   const [authLoading, setAuthLoading] = useState(isSupabaseConfigured())
+  const theme = useThemeStore((s) => s.theme)
+
+  useEffect(() => {
+    document.body.setAttribute('data-theme', theme)
+  }, [theme])
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return
@@ -172,7 +179,7 @@ export default function App() {
     return (
       <ErrorBoundary>
         <AuthPage inviteCode={getInviteCode()} />
-        <Toaster theme="dark" position="top-center" richColors />
+        <Toaster theme={theme} position="top-center" richColors />
       </ErrorBoundary>
     )
   }

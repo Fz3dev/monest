@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { format } from 'date-fns'
+import { syncMonthlyEntryToSupabase } from '../lib/syncBridge'
 
 export const useMonthlyStore = create(
   persist(
@@ -12,15 +13,18 @@ export const useMonthlyStore = create(
         return get().entries[key] || null
       },
 
-      setEntry: (month, data) =>
+      setEntry: (month, data) => {
         set((state) => ({
           entries: {
             ...state.entries,
             [month]: { ...state.entries[month], ...data, month },
           },
-        })),
+        }))
+        const updated = get().entries[month]
+        if (updated) syncMonthlyEntryToSupabase(month, updated)
+      },
 
-      updateVariable: (month, chargeId, amount) =>
+      updateVariable: (month, chargeId, amount) => {
         set((state) => {
           const entry = state.entries[month] || { month }
           const overrides = entry.variableOverrides || {}
@@ -33,7 +37,10 @@ export const useMonthlyStore = create(
               },
             },
           }
-        }),
+        })
+        const updated = get().entries[month]
+        if (updated) syncMonthlyEntryToSupabase(month, updated)
+      },
     }),
     { name: 'monest-monthly', version: 1 }
   )
