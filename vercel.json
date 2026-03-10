@@ -2,7 +2,17 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "headers": [
+    {
+      "source": "/reset.html",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" },
+        { "key": "Service-Worker-Allowed", "value": "/" }
+      ]
+    }
+  ],
   "rewrites": [
+    { "source": "/reset.html", "destination": "/reset.html" },
     { "source": "/(.*)", "destination": "/" }
   ]
 }
