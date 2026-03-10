@@ -117,9 +117,15 @@ export default function MonthlyPage() {
           <div className="flex items-center gap-2 mb-3">
             <AlertTriangle size={12} className="text-warning" />
             <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Solde avant salaire</h2>
+            <div className="relative group ml-auto">
+              <span className="text-text-muted text-[10px] cursor-help border border-white/10 rounded-full w-4 h-4 flex items-center justify-center hover:text-text-secondary transition-colors">?</span>
+              <div className="absolute right-0 top-6 w-56 p-2.5 rounded-xl bg-bg-elevated border border-white/10 text-[11px] text-text-muted shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-20">
+                Si votre compte est a decouvert avant de recevoir le salaire, entrez le montant negatif (ex: -200).
+              </div>
+            </div>
           </div>
-          <p className="text-[11px] text-text-muted mb-3">
-            Si votre compte est a decouvert avant de recevoir le salaire, entrez le montant negatif (ex: -200).
+          <p className="text-[11px] text-text-muted mb-3 lg:hidden">
+            Si votre compte est a decouvert avant le salaire, entrez un montant negatif.
           </p>
           <div className="space-y-3">
             <Input
