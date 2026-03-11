@@ -9,6 +9,7 @@ import OnboardingWizard from './components/onboarding/OnboardingWizard'
 import AuthPage from './components/auth/AuthPage'
 import ResetPasswordPage from './components/auth/ResetPasswordPage'
 import { Toaster, toast } from 'sonner'
+import { Analytics } from '@vercel/analytics/react'
 
 // Lazy import with auto-recovery: if chunk fails (stale cache), nuke SW & reload
 function lazyRetry(importFn) {
@@ -124,6 +125,7 @@ function AppContent({ session }) {
       <ErrorBoundary>
         <OnboardingWizard onComplete={createHousehold} />
         <Toaster theme="dark" position="top-center" richColors />
+        <Analytics />
       </ErrorBoundary>
     )
   }
@@ -148,6 +150,7 @@ function AppContent({ session }) {
         </AppShell>
         <Toaster theme="dark" position="top-center" richColors />
       </BrowserRouter>
+      <Analytics />
     </ErrorBoundary>
   )
 }
@@ -189,6 +192,7 @@ export default function App() {
       <ErrorBoundary>
         <ResetPasswordPage onComplete={() => setPasswordRecovery(false)} />
         <Toaster theme="dark" position="top-center" richColors />
+        <Analytics />
       </ErrorBoundary>
     )
   }
@@ -199,6 +203,7 @@ export default function App() {
       <ErrorBoundary>
         <AuthPage inviteCode={getInviteCode()} />
         <Toaster theme="dark" position="top-center" richColors />
+        <Analytics />
       </ErrorBoundary>
     )
   }
