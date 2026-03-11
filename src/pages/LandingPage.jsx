@@ -3,7 +3,7 @@ import { motion } from 'motion/react'
 import {
   ArrowRight, Shield, Smartphone, Users, PiggyBank, BarChart3, Zap,
   Lock, Eye, EyeOff, TrendingUp, Wallet, ChevronRight, Star,
-  CreditCard, ShoppingBag, Globe,
+  CreditCard, ShoppingBag, Globe, Home, Receipt, Settings,
 } from 'lucide-react'
 
 // ─── Bilingual content ───────────────────────────────────────────────────────
@@ -65,7 +65,7 @@ const CONTENT = {
       titleGradient: 'Point final.',
       subtitle: 'Monest est conçu avec la vie privée au cœur. Aucune connexion bancaire, aucun tracking, aucune revente de données. Vos informations financières ne quittent jamais votre contrôle.',
       items: [
-        'Chiffrement de bout en bout avec Supabase',
+        'Chiffrement de bout en bout',
         'Nous ne vendons ni ne partageons vos données',
         'Aucune information bancaire requise',
         'Conforme RGPD — hébergé en Europe',
@@ -82,20 +82,23 @@ const CONTENT = {
     },
     footer: { rights: 'Tous droits réservés.' },
     mockup: {
-      remaining: 'Reste à dépenser',
+      remaining: 'Reste à vivre',
       spent: 'dépensé',
       budget: 'budget',
       savings: 'Épargne',
       charges: 'Charges',
-      today: 'Aujourd\'hui',
-      expenses: [
-        { emoji: '🛒', name: 'Courses', amount: '47,20' },
-        { emoji: '⛽', name: 'Essence', amount: '62,00' },
-        { emoji: '🍽️', name: 'Restaurant', amount: '34,50' },
+      categories: 'Répartition',
+      categoryItems: [
+        { label: 'Logement', pct: 35, color: '#6C63FF' },
+        { label: 'Alimentation', pct: 22, color: '#4ADE80' },
+        { label: 'Transport', pct: 15, color: '#FB923C' },
+        { label: 'Abonnements', pct: 12, color: '#38BDF8' },
+        { label: 'Loisirs', pct: 10, color: '#34D399' },
+        { label: 'Autre', pct: 6, color: '#94A3B8' },
       ],
       nav: ['Accueil', 'Dépenses', 'Charges', 'Épargne', 'Réglages'],
     },
-    langSwitch: { label: 'English', path: '/en' },
+    langSwitch: { label: 'EN', path: '/en' },
   },
   en: {
     nav: { features: 'Features', login: 'Log in', cta: 'Get started' },
@@ -153,7 +156,7 @@ const CONTENT = {
       titleGradient: 'Period.',
       subtitle: 'We built Monest with privacy at its core. No bank connection, no tracking, no data selling. Your financial information never leaves your control.',
       items: [
-        'End-to-end encryption with Supabase',
+        'End-to-end encryption',
         'We never sell or share your data',
         'No bank credentials required',
         'GDPR compliant — EU hosted',
@@ -170,20 +173,23 @@ const CONTENT = {
     },
     footer: { rights: 'All rights reserved.' },
     mockup: {
-      remaining: 'Remaining to spend',
+      remaining: 'Remaining budget',
       spent: 'spent',
       budget: 'budget',
       savings: 'Savings',
       charges: 'Charges',
-      today: 'Today',
-      expenses: [
-        { emoji: '🛒', name: 'Groceries', amount: '47.20' },
-        { emoji: '⛽', name: 'Fuel', amount: '62.00' },
-        { emoji: '🍽️', name: 'Restaurant', amount: '34.50' },
+      categories: 'Breakdown',
+      categoryItems: [
+        { label: 'Housing', pct: 35, color: '#6C63FF' },
+        { label: 'Food', pct: 22, color: '#4ADE80' },
+        { label: 'Transport', pct: 15, color: '#FB923C' },
+        { label: 'Subscriptions', pct: 12, color: '#38BDF8' },
+        { label: 'Leisure', pct: 10, color: '#34D399' },
+        { label: 'Other', pct: 6, color: '#94A3B8' },
       ],
       nav: ['Home', 'Expenses', 'Charges', 'Savings', 'Settings'],
     },
-    langSwitch: { label: 'Français', path: '/' },
+    langSwitch: { label: 'FR', path: '/' },
   },
 }
 
@@ -199,6 +205,42 @@ const stagger = {
 }
 
 // ─── Fake Dashboard Mockup ───────────────────────────────────────────────────
+
+const NAV_ICONS = [Home, Receipt, CreditCard, PiggyBank, Settings]
+
+function PieChart({ items, size = 100 }) {
+  const r = size / 2 - 4
+  const cx = size / 2
+  const cy = size / 2
+  let cumulative = 0
+  const paths = items.map((item) => {
+    const start = cumulative
+    cumulative += item.pct / 100
+    const startAngle = start * 2 * Math.PI - Math.PI / 2
+    const endAngle = cumulative * 2 * Math.PI - Math.PI / 2
+    const largeArc = item.pct > 50 ? 1 : 0
+    const x1 = cx + r * Math.cos(startAngle)
+    const y1 = cy + r * Math.sin(startAngle)
+    const x2 = cx + r * Math.cos(endAngle)
+    const y2 = cy + r * Math.sin(endAngle)
+    return (
+      <path
+        key={item.label}
+        d={`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`}
+        fill={item.color}
+        opacity={0.85}
+        stroke="#0B0B0F"
+        strokeWidth={1.5}
+      />
+    )
+  })
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      {paths}
+      <circle cx={cx} cy={cy} r={r * 0.45} fill="#0B0B0F" />
+    </svg>
+  )
+}
 
 function DashboardMockup({ t }) {
   const m = t.mockup
@@ -220,10 +262,12 @@ function DashboardMockup({ t }) {
           <div className="px-5 pt-2 pb-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded bg-brand/20" />
+                <img src="/logo-crown-sm.webp" alt="" className="w-5 h-5" />
                 <span className="text-xs font-bold text-text-primary">Monest</span>
               </div>
-              <div className="w-6 h-6 rounded-full bg-white/[0.06]" />
+              <div className="w-6 h-6 rounded-full bg-brand/20 flex items-center justify-center">
+                <span className="text-[8px] font-bold text-brand">F</span>
+              </div>
             </div>
           </div>
           {/* Remaining budget */}
@@ -266,27 +310,40 @@ function DashboardMockup({ t }) {
               <span className="text-sm font-bold text-text-primary">€793</span>
             </div>
           </div>
-          {/* Recent expenses */}
+          {/* Category pie chart */}
           <div className="px-4 pb-4">
-            <p className="text-[10px] font-semibold text-text-secondary mb-2">{m.today}</p>
-            {m.expenses.map((item) => (
-              <div key={item.name} className="flex items-center gap-3 py-2 border-b border-white/[0.04] last:border-0">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm bg-white/[0.04]">
-                  {item.emoji}
-                </div>
-                <span className="flex-1 text-xs text-text-primary">{item.name}</span>
-                <span className="text-xs font-medium text-danger">-€{item.amount}</span>
+            <p className="text-[10px] font-semibold text-text-secondary mb-3">{m.categories}</p>
+            <div className="flex items-center gap-4">
+              <motion.div
+                initial={{ scale: 0, rotate: -90 }}
+                whileInView={{ scale: 1, rotate: 0 }}
+                transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
+                viewport={{ once: true }}
+              >
+                <PieChart items={m.categoryItems} size={90} />
+              </motion.div>
+              <div className="flex-1 grid grid-cols-2 gap-x-3 gap-y-1.5">
+                {m.categoryItems.map((cat) => (
+                  <div key={cat.label} className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
+                    <span className="text-[8px] text-text-muted truncate">{cat.label}</span>
+                    <span className="text-[8px] font-medium text-text-secondary ml-auto">{cat.pct}%</span>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
           {/* Bottom nav */}
           <div className="border-t border-white/[0.06] px-4 py-2.5 flex justify-around">
-            {m.nav.map((label, i) => (
-              <div key={label} className="flex flex-col items-center gap-0.5">
-                <div className={`w-4 h-4 rounded ${i === 0 ? 'bg-brand/30' : 'bg-white/[0.06]'}`} />
-                <span className={`text-[7px] ${i === 0 ? 'text-brand' : 'text-text-muted'}`}>{label}</span>
-              </div>
-            ))}
+            {m.nav.map((label, i) => {
+              const Icon = NAV_ICONS[i]
+              return (
+                <div key={label} className="flex flex-col items-center gap-0.5">
+                  <Icon size={14} className={i === 0 ? 'text-brand' : 'text-text-muted/50'} />
+                  <span className={`text-[7px] ${i === 0 ? 'text-brand' : 'text-text-muted'}`}>{label}</span>
+                </div>
+              )
+            })}
           </div>
         </div>
       </div>
@@ -328,7 +385,8 @@ export default function LandingPage({ lang = 'fr' }) {
             <a href="#features" className="hidden sm:block px-3 py-2 text-sm text-text-muted hover:text-white transition-colors">
               {t.nav.features}
             </a>
-            <Link to={t.langSwitch.path} className="px-3 py-2 text-sm text-text-muted hover:text-white transition-colors">
+            <Link to={t.langSwitch.path} className="flex items-center gap-1.5 px-3 py-2 text-sm text-text-muted hover:text-white transition-colors">
+              <Globe size={14} />
               {t.langSwitch.label}
             </Link>
             <Link to="/login" className="hidden sm:block px-4 py-2 text-sm font-medium text-text-secondary hover:text-white transition-colors">
@@ -572,8 +630,8 @@ export default function LandingPage({ lang = 'fr' }) {
             <span className="text-sm text-text-muted">© {new Date().getFullYear()} Monest. {t.footer.rights}</span>
           </div>
           <div className="flex items-center gap-6">
-            <a href="https://github.com/Fz3dev/monest" target="_blank" rel="noopener noreferrer" className="text-sm text-text-muted hover:text-text-secondary transition-colors">
-              GitHub
+            <a href="mailto:limlahi.fawsy3@gmail.com" className="text-sm text-text-muted hover:text-text-secondary transition-colors">
+              Contact
             </a>
             <Link to="/login" className="text-sm text-text-muted hover:text-text-secondary transition-colors">
               {t.nav.login}

@@ -27,7 +27,27 @@ export default defineConfig({
         icons: [
           { src: '/pwa-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/pwa-512.png', sizes: '512x512', type: 'image/png' },
-          { src: '/pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: '/pwa-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
+        shortcuts: [
+          {
+            name: 'Ajouter une depense',
+            short_name: 'Depense',
+            url: '/depenses',
+            icons: [{ src: '/pwa-192.png', sizes: '192x192', type: 'image/png' }],
+          },
+          {
+            name: 'Tableau de bord',
+            short_name: 'Dashboard',
+            url: '/dashboard',
+            icons: [{ src: '/pwa-192.png', sizes: '192x192', type: 'image/png' }],
+          },
+          {
+            name: 'Mon epargne',
+            short_name: 'Epargne',
+            url: '/epargne',
+            icons: [{ src: '/pwa-192.png', sizes: '192x192', type: 'image/png' }],
+          },
         ],
       },
       workbox: {

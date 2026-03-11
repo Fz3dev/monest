@@ -50,6 +50,24 @@ src/
 - Color tokens defined in `@theme` block of index.css
 - Supabase env vars: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
 
+## Design & Branding
+- Logo: couronne violette (crown) — PAS un "M" texte
+  - `public/logo-crown-sm.png` / `.webp` — logo couronne petit (utilisé dans mockup landing page)
+  - `public/logo-crown.png` — logo couronne grande taille
+  - `public/logo-full.png` / `.svg` — logo complet (couronne + texte "Monest")
+  - `public/logo-icon.svg` — icône seule
+  - `public/favicon.svg` — SVG de la couronne (traits violets, fond transparent)
+- Favicons/PWA icons: générés via `scripts/generate-favicon.py` — couronne sur fond sombre (#0B0B0F)
+  - `favicon.png` (32x32), `apple-touch-icon.png` (180), `pwa-192.png`, `pwa-512.png`
+- OG image: générée via `scripts/generate-og-image.py` (1200x630)
+- Couleurs principales:
+  - Brand violet: #6C63FF `(108, 99, 255)`
+  - Background: #0B0B0F `(11, 11, 15)`
+  - Card: #16161E `(22, 22, 30)`
+  - Vert (épargne): #4ADE80
+- Wording: "reste à vivre" (PAS "reste à dépenser"), "en solo ou en couple" (PAS "familial")
+- GitHub repo privé — ne PAS afficher de lien GitHub public
+
 ## Deployment
 - Vercel: https://monest.vercel.app
 - GitHub: Fz3dev/monest
