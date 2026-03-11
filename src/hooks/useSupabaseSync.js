@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { setSyncFunctions, setUserInfo, flushOfflineQueue } from '../lib/syncBridge'
+import { syncPushSubscription } from '../lib/pushSubscription'
 import { useHouseholdStore } from '../stores/householdStore'
 import { useChargesStore } from '../stores/chargesStore'
 import { useMonthlyStore } from '../stores/monthlyStore'
@@ -158,6 +159,9 @@ export function useSupabaseSync(session) {
 
       // Load user-specific dashboard layout
       await useDashboardLayoutStore.getState().loadFromDB(session.user.id, hId)
+
+      // Sync push subscription (non-blocking)
+      syncPushSubscription(session.user.id).catch(() => {})
 
       return hId
     } catch (err) {

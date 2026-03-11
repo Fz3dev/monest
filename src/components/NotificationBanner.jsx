@@ -8,6 +8,8 @@ import {
   requestPermission,
   registerPeriodicSync,
 } from '../utils/notifications'
+import { isPushSupported, subscribeToPush } from '../lib/pushSubscription'
+import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { toast } from 'sonner'
 
 export default function NotificationBanner() {
@@ -29,6 +31,13 @@ export default function NotificationBanner() {
       if (granted) {
         toast.success(t('notifications.enabled'))
         await registerPeriodicSync()
+        // Subscribe to Web Push if supported
+        if (isPushSupported() && isSupabaseConfigured()) {
+          const { data: { session } } = await supabase.auth.getSession()
+          if (session?.user) {
+            subscribeToPush(session.user.id).catch(() => {})
+          }
+        }
       } else {
         toast.error(t('notifications.permissionDenied'))
       }

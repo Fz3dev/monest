@@ -21,6 +21,7 @@ import {
   requestPermission,
   registerPeriodicSync,
 } from '../utils/notifications'
+import { isPushSupported, subscribeToPush, unsubscribeFromPush } from '../lib/pushSubscription'
 
 const COLORS = [
   '#6C63FF', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#22c55e',
@@ -57,6 +58,10 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
       disableNotifications()
       setNotificationsOn(false)
       toast.success(t('notifications.disabled'))
+      // Unsubscribe from push
+      if (isPushSupported() && session?.user) {
+        unsubscribeFromPush(session.user.id).catch(() => {})
+      }
     } else {
       if (!isNotificationSupported()) return
       if (Notification.permission === 'denied') {
@@ -68,6 +73,10 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
         setNotificationsOn(true)
         toast.success(t('notifications.enabled'))
         await registerPeriodicSync()
+        // Subscribe to push
+        if (isPushSupported() && session?.user) {
+          subscribeToPush(session.user.id).catch(() => {})
+        }
       } else {
         toast.error(t('notifications.permissionDenied'))
       }

@@ -8,6 +8,9 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'favicon.png', 'apple-touch-icon.png', 'logo-crown.png'],
       manifest: {
@@ -59,13 +62,9 @@ export default defineConfig({
           },
         ],
       },
-      workbox: {
+      injectManifest: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         globIgnores: ['reset.html', 'robots.txt', 'sitemap.xml'],
-        skipWaiting: true,
-        clientsClaim: true,
-        cleanupOutdatedCaches: true,
-        navigateFallbackDenylist: [/^\/reset\.html$/, /^\/.well-known\//],
       },
     }),
   ],

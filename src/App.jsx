@@ -36,6 +36,8 @@ function lazyRetry(importFn) {
 }
 
 const LandingPage = lazyRetry(() => import('./pages/LandingPage'))
+const PrivacyPage = lazyRetry(() => import('./pages/PrivacyPage'))
+const TermsPage = lazyRetry(() => import('./pages/TermsPage'))
 const DashboardPage = lazyRetry(() => import('./pages/DashboardPage'))
 const MonthlyPage = lazyRetry(() => import('./pages/MonthlyPage'))
 const ChargesPage = lazyRetry(() => import('./pages/ChargesPage'))
@@ -217,6 +219,8 @@ export default function App() {
             <Route path="/en" element={
               session ? <Navigate to="/dashboard" replace /> : <LandingPage lang="en" />
             } />
+            <Route path="/confidentialite" element={<PrivacyPage />} />
+            <Route path="/conditions" element={<TermsPage />} />
             <Route path="/login" element={
               passwordRecovery && session
                 ? <ResetPasswordPage onComplete={() => setPasswordRecovery(false)} />

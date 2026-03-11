@@ -41,6 +41,14 @@ export async function createNotification({
     }))
 
     await supabase.from('notifications').insert(rows)
+
+    // Trigger Web Push for recipients (non-blocking, best-effort)
+    const recipientIds = recipients.map((m) => m.user_id)
+    supabase.functions
+      .invoke('send-push', {
+        body: { user_ids: recipientIds, title, body, url: '/dashboard' },
+      })
+      .catch(() => {}) // Push is non-critical
   } catch (err) {
     // Notifications are non-critical — never break the app
     console.error('Notification creation error:', err)

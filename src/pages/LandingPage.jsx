@@ -80,7 +80,7 @@ const CONTENT = {
       button: 'Commencer — c\'est gratuit',
       stars: 'Adopté par les budgeteurs',
     },
-    footer: { rights: 'Tous droits réservés.' },
+    footer: { rights: 'Tous droits réservés.', privacy: 'Confidentialité', terms: 'Conditions' },
     mockup: {
       remaining: 'Reste à vivre',
       spent: 'dépensé',
@@ -171,7 +171,7 @@ const CONTENT = {
       button: 'Get started — it\'s free',
       stars: 'Loved by budgeters',
     },
-    footer: { rights: 'All rights reserved.' },
+    footer: { rights: 'All rights reserved.', privacy: 'Privacy', terms: 'Terms' },
     mockup: {
       remaining: 'Remaining budget',
       spent: 'spent',
@@ -633,6 +633,12 @@ export default function LandingPage({ lang = 'fr' }) {
             <a href="mailto:limlahi.fawsy3@gmail.com" className="text-sm text-text-muted hover:text-text-secondary transition-colors">
               Contact
             </a>
+            <Link to="/confidentialite" className="text-sm text-text-muted hover:text-text-secondary transition-colors">
+              {t.footer.privacy}
+            </Link>
+            <Link to="/conditions" className="text-sm text-text-muted hover:text-text-secondary transition-colors">
+              {t.footer.terms}
+            </Link>
             <Link to="/login" className="text-sm text-text-muted hover:text-text-secondary transition-colors">
               {t.nav.login}
             </Link>
