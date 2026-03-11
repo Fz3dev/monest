@@ -207,6 +207,18 @@ export default function App() {
     )
   }
 
+  // Password recovery mode: show reset form regardless of current route
+  if (passwordRecovery && session) {
+    return (
+      <ErrorBoundary>
+        <BrowserRouter>
+          <ResetPasswordPage onComplete={() => setPasswordRecovery(false)} />
+          <Toaster theme="dark" position="top-center" richColors />
+        </BrowserRouter>
+      </ErrorBoundary>
+    )
+  }
+
   return (
     <ErrorBoundary>
       <BrowserRouter>
@@ -222,11 +234,9 @@ export default function App() {
             <Route path="/confidentialite" element={<PrivacyPage />} />
             <Route path="/conditions" element={<TermsPage />} />
             <Route path="/login" element={
-              passwordRecovery && session
-                ? <ResetPasswordPage onComplete={() => setPasswordRecovery(false)} />
-                : session
-                  ? <Navigate to="/dashboard" replace />
-                  : <AuthPage inviteCode={getInviteCode()} />
+              session
+                ? <Navigate to="/dashboard" replace />
+                : <AuthPage inviteCode={getInviteCode()} />
             } />
             <Route path="/signup" element={
               session

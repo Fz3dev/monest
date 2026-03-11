@@ -14,9 +14,18 @@ function useErrorTranslation() {
     'User already registered': t('auth.errors.userExists'),
     'Password should be at least 6 characters': t('auth.errors.passwordTooShort'),
     'Email rate limit exceeded': t('auth.errors.rateLimited'),
+    'Rate limit exceeded': t('auth.errors.rateLimited'),
+    'Request rate limit reached': t('auth.errors.rateLimited'),
+    'over_request_rate_limit': t('auth.errors.rateLimited'),
+    'over_email_send_rate_limit': t('auth.errors.rateLimited'),
     'For security purposes, you can only request this after 60 seconds.': t('auth.errors.waitBeforeResend'),
   }
-  return (message) => ERROR_MAP[message] || message
+  return (message) => {
+    if (ERROR_MAP[message]) return ERROR_MAP[message]
+    // Catch-all for any rate limit message
+    if (message && message.toLowerCase().includes('rate limit')) return t('auth.errors.rateLimited')
+    return message
+  }
 }
 
 export default function AuthPage({ inviteCode, defaultMode }) {
