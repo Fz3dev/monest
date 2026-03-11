@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink } from 'react-router-dom'
-import { Home, Receipt, CreditCard, PiggyBank, Calendar, Settings, ShoppingBag, Bell, Check, CreditCard as ChargeIcon, Wallet, Trash2, UserPlus, TrendingUp, WifiOff, Loader2, CheckCircle2 } from 'lucide-react'
+import { Home, Receipt, CreditCard, PiggyBank, Calendar, Settings, ShoppingBag, Bell, Check, CreditCard as ChargeIcon, Wallet, Trash2, UserPlus, TrendingUp, WifiOff } from 'lucide-react'
+import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { useNotificationStore } from '../../stores/notificationStore'
@@ -129,27 +130,35 @@ function NotificationBell() {
   )
 }
 
-function OfflineBanner() {
+function OfflineToasts() {
   const { t } = useTranslation()
-  const [isOffline, setIsOffline] = useState(!navigator.onLine)
-  const [syncStatus, setSyncStatus] = useState(null) // null | 'syncing' | 'synced'
 
   useEffect(() => {
+    let offlineToastId = null
+
     const handleOffline = () => {
-      setIsOffline(true)
-      setSyncStatus(null)
+      offlineToastId = toast(t('offline.banner'), {
+        description: t('offline.syncPending'),
+        duration: Infinity,
+        icon: <WifiOff size={16} />,
+      })
     }
+
     const handleOnline = async () => {
-      setIsOffline(false)
-      setSyncStatus('syncing')
+      if (offlineToastId) {
+        toast.dismiss(offlineToastId)
+        offlineToastId = null
+      }
+      const syncId = toast.loading(t('offline.syncing'))
       try {
         const count = await flushOfflineQueue()
-        setSyncStatus(count > 0 ? 'synced' : null)
+        toast.dismiss(syncId)
+        if (count > 0) {
+          toast.success(t('offline.synced'))
+        }
       } catch {
-        setSyncStatus(null)
+        toast.dismiss(syncId)
       }
-      // Auto-dismiss after 2s
-      setTimeout(() => setSyncStatus(null), 2000)
     }
 
     window.addEventListener('offline', handleOffline)
@@ -158,38 +167,9 @@ function OfflineBanner() {
       window.removeEventListener('offline', handleOffline)
       window.removeEventListener('online', handleOnline)
     }
-  }, [])
+  }, [t])
 
-  if (!isOffline && !syncStatus) return null
-
-  return (
-    <div className={`fixed top-0 left-0 right-0 z-[60] flex items-center justify-center gap-2 px-4 py-2 text-xs font-medium transition-colors ${
-      isOffline
-        ? 'bg-amber-500/15 text-amber-400 border-b border-amber-500/20'
-        : syncStatus === 'syncing'
-          ? 'bg-blue-500/15 text-blue-400 border-b border-blue-500/20'
-          : 'bg-green-500/15 text-green-400 border-b border-green-500/20'
-    }`}>
-      {isOffline && (
-        <>
-          <WifiOff size={14} strokeWidth={2} />
-          <span>{t('offline.banner')} — {t('offline.syncPending')}</span>
-        </>
-      )}
-      {!isOffline && syncStatus === 'syncing' && (
-        <>
-          <Loader2 size={14} strokeWidth={2} className="animate-spin" />
-          <span>{t('offline.syncing')}</span>
-        </>
-      )}
-      {!isOffline && syncStatus === 'synced' && (
-        <>
-          <CheckCircle2 size={14} strokeWidth={2} />
-          <span>{t('offline.synced')}</span>
-        </>
-      )}
-    </div>
-  )
+  return null
 }
 
 export default function AppShell({ children, memberCount = 0 }) {
@@ -211,7 +191,7 @@ export default function AppShell({ children, memberCount = 0 }) {
 
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary safe-area-top">
-      <OfflineBanner />
+      <OfflineToasts />
       <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-56 lg:flex-col lg:border-r lg:border-white/[0.06] lg:bg-bg-primary z-40">
         <div className="flex items-center gap-2.5 px-5 h-16 border-b border-white/[0.06]">
           <img src="/logo-crown.png" alt="Monest" className="w-7 h-7" />
