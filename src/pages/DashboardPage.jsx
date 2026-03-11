@@ -43,10 +43,12 @@ const CustomTooltip = memo(function CustomTooltip({ active, payload, label }) {
 export default function DashboardPage() {
   const { t } = useTranslation()
   const household = useHouseholdStore((s) => s.household)
-  const { fixedCharges, installmentPayments, plannedExpenses } = useChargesStore()
+  const fixedCharges = useChargesStore((s) => s.fixedCharges)
+  const installmentPayments = useChargesStore((s) => s.installmentPayments)
+  const plannedExpenses = useChargesStore((s) => s.plannedExpenses)
   const entries = useMonthlyStore((s) => s.entries)
   const savingsGoals = useSavingsStore((s) => s.goals)
-  const expenseStore = useExpenseStore()
+  const expenses = useExpenseStore((s) => s.expenses)
   const getCategoryColor = useCategoriesStore((s) => s.getCategoryColor)
 
   const currentMonth = getCurrentMonth()
@@ -58,8 +60,8 @@ export default function DashboardPage() {
   )
 
   const monthExpenses = useMemo(
-    () => expenseStore.getTotalByMonth(currentMonth),
-    [expenseStore, currentMonth]
+    () => expenses.filter((e) => e.date?.startsWith(currentMonth)).reduce((sum, e) => sum + e.amount, 0),
+    [expenses, currentMonth]
   )
 
   const trendData = useMemo(() => {

@@ -1,15 +1,16 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'motion/react'
+import { motion, AnimatePresence } from 'motion/react'
 import { useSavingsStore } from '../stores/savingsStore'
 import { formatCurrency } from '../utils/format'
+import SwipeToDelete from '../components/ui/SwipeToDelete'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Modal from '../components/ui/Modal'
 import ProgressBar from '../components/ui/ProgressBar'
 import AnimatedNumber from '../components/ui/AnimatedNumber'
-import { Plus, Trash2, Edit3, Target, Sparkles, Calendar, TrendingUp } from 'lucide-react'
+import { Plus, Edit3, Target, Sparkles, Calendar, TrendingUp } from 'lucide-react'
 import { toast } from 'sonner'
 
 // --- Constants ---
@@ -72,30 +73,6 @@ function CircularProgress({ percentage, size = 160, strokeWidth = 10 }) {
 
 // --- Swipe To Delete ---
 
-function SwipeToDelete({ onDelete, children }) {
-  const x = useMotionValue(0)
-  const bgOpacity = useTransform(x, [-120, -60, 0], [1, 0.5, 0])
-
-  const handleDragEnd = (_, info) => {
-    if (info.offset.x < -100) {
-      animate(x, -300, { duration: 0.2 })
-      setTimeout(onDelete, 200)
-    } else {
-      animate(x, 0, { type: 'spring', stiffness: 300, damping: 30 })
-    }
-  }
-
-  return (
-    <div className="relative overflow-hidden rounded-2xl">
-      <motion.div className="absolute inset-0 bg-danger/20 flex items-center justify-end pr-6" style={{ opacity: bgOpacity }}>
-        <Trash2 size={18} className="text-danger" />
-      </motion.div>
-      <motion.div style={{ x }} drag="x" dragConstraints={{ left: -120, right: 0 }} dragElastic={0.1} onDragEnd={handleDragEnd}>
-        {children}
-      </motion.div>
-    </div>
-  )
-}
 
 // --- Emoji Selector ---
 
@@ -327,12 +304,16 @@ function EmptyState({ onAdd, t }) {
 
 export default function SavingsPage() {
   const { t } = useTranslation()
-  const { goals, addGoal, updateGoal, removeGoal, contribute, getTotalSaved, getTotalTarget } = useSavingsStore()
+  const goals = useSavingsStore((s) => s.goals)
+  const addGoal = useSavingsStore((s) => s.addGoal)
+  const updateGoal = useSavingsStore((s) => s.updateGoal)
+  const removeGoal = useSavingsStore((s) => s.removeGoal)
+  const contribute = useSavingsStore((s) => s.contribute)
 
   const [modal, setModal] = useState(null)
 
-  const totalSaved = getTotalSaved()
-  const totalTarget = getTotalTarget()
+  const totalSaved = useMemo(() => goals.reduce((s, g) => s + g.saved, 0), [goals])
+  const totalTarget = useMemo(() => goals.reduce((s, g) => s + g.target, 0), [goals])
   const overallPct = totalTarget > 0 ? (totalSaved / totalTarget) * 100 : 0
 
   const handleAddGoal = useCallback((data) => {

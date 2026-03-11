@@ -14,7 +14,9 @@ import { CheckCircle2, AlertTriangle, XCircle, ChevronDown } from 'lucide-react'
 export default function CalendarPage() {
   const { t } = useTranslation()
   const household = useHouseholdStore((s) => s.household)
-  const { fixedCharges, installmentPayments, plannedExpenses } = useChargesStore()
+  const fixedCharges = useChargesStore((s) => s.fixedCharges)
+  const installmentPayments = useChargesStore((s) => s.installmentPayments)
+  const plannedExpenses = useChargesStore((s) => s.plannedExpenses)
   const entries = useMonthlyStore((s) => s.entries)
   const [selectedMonth, setSelectedMonth] = useState(null)
 

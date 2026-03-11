@@ -30,10 +30,12 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
   const { t } = useTranslation()
   const { household, updateHousehold, resetHousehold } = useHouseholdStore()
   const { categories, updateCategoryColor, addCategory, removeCategory, resetCategories } = useCategoriesStore()
-  const chargesStore = useChargesStore()
-  const monthlyStore = useMonthlyStore()
-  const savingsStore = useSavingsStore()
-  const expenseStore = useExpenseStore()
+  const fixedCharges = useChargesStore((s) => s.fixedCharges)
+  const installmentPayments = useChargesStore((s) => s.installmentPayments)
+  const plannedExpenses = useChargesStore((s) => s.plannedExpenses)
+  const monthlyEntries = useMonthlyStore((s) => s.entries)
+  const savingsGoals = useSavingsStore((s) => s.goals)
+  const settingsExpenses = useExpenseStore((s) => s.expenses)
   const [confirmReset, setConfirmReset] = useState(false)
   const [editing, setEditing] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -75,12 +77,12 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
   const handleExport = () => {
     const data = {
       household,
-      fixedCharges: chargesStore.fixedCharges,
-      installmentPayments: chargesStore.installmentPayments,
-      plannedExpenses: chargesStore.plannedExpenses,
-      monthlyEntries: monthlyStore.entries,
-      savingsGoals: savingsStore.goals,
-      expenses: expenseStore.expenses,
+      fixedCharges: fixedCharges,
+      installmentPayments: installmentPayments,
+      plannedExpenses: plannedExpenses,
+      monthlyEntries: monthlyEntries,
+      savingsGoals: savingsGoals,
+      expenses: settingsExpenses,
       exportDate: new Date().toISOString(),
       version: 2,
     }
@@ -444,27 +446,27 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-text-muted">{t('settings.fixedCharges')}</span>
-            <span>{chargesStore.fixedCharges.length}</span>
+            <span>{fixedCharges.length}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-text-muted">{t('settings.installmentPayments')}</span>
-            <span>{chargesStore.installmentPayments.length}</span>
+            <span>{installmentPayments.length}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-text-muted">{t('settings.plannedExpenses')}</span>
-            <span>{chargesStore.plannedExpenses.length}</span>
+            <span>{plannedExpenses.length}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-text-muted">{t('settings.savingsGoals')}</span>
-            <span>{savingsStore.goals.length}</span>
+            <span>{savingsGoals.length}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-text-muted">{t('settings.quickExpenses')}</span>
-            <span>{expenseStore.expenses.length}</span>
+            <span>{settingsExpenses.length}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-text-muted">{t('settings.monthsEntered')}</span>
-            <span>{Object.keys(monthlyStore.entries).length}</span>
+            <span>{Object.keys(monthlyEntries).length}</span>
           </div>
         </div>
       </Card>

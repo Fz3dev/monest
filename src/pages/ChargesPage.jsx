@@ -243,12 +243,19 @@ export default function ChargesPage() {
   const { t } = useTranslation()
   const household = useHouseholdStore((s) => s.household)
   const getCategoryColor = useCategoriesStore((s) => s.getCategoryColor)
-  const {
-    fixedCharges, installmentPayments, plannedExpenses,
-    addFixedCharge, updateFixedCharge, removeFixedCharge, toggleFixedCharge,
-    addInstallment, updateInstallment, removeInstallment,
-    addPlannedExpense, updatePlannedExpense, removePlannedExpense,
-  } = useChargesStore()
+  const fixedCharges = useChargesStore((s) => s.fixedCharges)
+  const installmentPayments = useChargesStore((s) => s.installmentPayments)
+  const plannedExpenses = useChargesStore((s) => s.plannedExpenses)
+  const addFixedCharge = useChargesStore((s) => s.addFixedCharge)
+  const updateFixedCharge = useChargesStore((s) => s.updateFixedCharge)
+  const removeFixedCharge = useChargesStore((s) => s.removeFixedCharge)
+  const toggleFixedCharge = useChargesStore((s) => s.toggleFixedCharge)
+  const addInstallment = useChargesStore((s) => s.addInstallment)
+  const updateInstallment = useChargesStore((s) => s.updateInstallment)
+  const removeInstallment = useChargesStore((s) => s.removeInstallment)
+  const addPlannedExpense = useChargesStore((s) => s.addPlannedExpense)
+  const updatePlannedExpense = useChargesStore((s) => s.updatePlannedExpense)
+  const removePlannedExpense = useChargesStore((s) => s.removePlannedExpense)
 
   const [modal, setModal] = useState(null)
   const [tab, setTab] = useState('fixed')

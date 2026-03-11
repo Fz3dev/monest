@@ -421,10 +421,11 @@ export function useSupabaseSync(session) {
 
   const createInvite = useCallback(async () => {
     if (!isSupabaseConfigured() || !session?.user || !householdId) return null
-    // Generate short readable code
+    // Generate short readable code (crypto-secure)
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+    const bytes = crypto.getRandomValues(new Uint8Array(8))
     let code = ''
-    for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)]
+    for (let i = 0; i < 8; i++) code += chars[bytes[i] % chars.length]
 
     const { error } = await supabase.from('household_invites').insert({
       household_id: householdId,

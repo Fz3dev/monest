@@ -16,7 +16,9 @@ import { addMonths, subMonths, format } from 'date-fns'
 export default function MonthlyPage() {
   const { t } = useTranslation()
   const household = useHouseholdStore((s) => s.household)
-  const { fixedCharges, installmentPayments, plannedExpenses } = useChargesStore()
+  const fixedCharges = useChargesStore((s) => s.fixedCharges)
+  const installmentPayments = useChargesStore((s) => s.installmentPayments)
+  const plannedExpenses = useChargesStore((s) => s.plannedExpenses)
   const entries = useMonthlyStore((s) => s.entries)
   const setEntry = useMonthlyStore((s) => s.setEntry)
   const updateVariable = useMonthlyStore((s) => s.updateVariable)

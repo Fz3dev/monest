@@ -91,6 +91,7 @@ function AppContent({ session }) {
   const { loadFromSupabase, createHousehold, acceptInvite, syncMonthlyEntry, saveHousehold, createInvite, memberCount } = useSupabaseSync(session)
   const [loading, setLoading] = useState(!!session)
   const [inviteCode] = useState(getInviteCode)
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (!session) return
@@ -119,19 +120,7 @@ function AppContent({ session }) {
     init()
   }, [session, loadFromSupabase, inviteCode, acceptInvite])
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-bg-primary flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-brand/30 border-t-brand rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-text-secondary text-sm">Chargement...</p>
-        </div>
-      </div>
-    )
-  }
-
   // Handle share target (PWA: receive shared text with amount)
-  const navigate = useNavigate()
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('share') === 'true') {
@@ -146,6 +135,17 @@ function AppContent({ session }) {
       window.history.replaceState({}, '', '/depenses')
     }
   }, [navigate])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-bg-primary flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-brand/30 border-t-brand rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-text-secondary text-sm">Chargement...</p>
+        </div>
+      </div>
+    )
+  }
 
   if (!household) {
     return (
