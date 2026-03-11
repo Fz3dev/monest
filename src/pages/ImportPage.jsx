@@ -3,10 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
 import { useChargesStore } from '../stores/chargesStore'
 import { parseCSV, detectColumns, detectRecurring } from '../utils/csvParser'
+import { parsePDF } from '../utils/pdfParser'
 import { formatCurrency, getTranslatedCategories } from '../utils/format'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
-import { Upload, Check, X, Loader2, FileText, Tag } from 'lucide-react'
+import { Upload, Check, X, Loader2, FileText, Tag, HelpCircle, Shield, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function ImportPage() {
@@ -22,6 +23,9 @@ export default function ImportPage() {
   const [error, setError] = useState(null)
   const [stats, setStats] = useState(null)
   const [categoryOverrides, setCategoryOverrides] = useState({})
+  const [nameOverrides, setNameOverrides] = useState({})
+  const [amountOverrides, setAmountOverrides] = useState({})
+  const [editing, setEditing] = useState(null)
 
   const handleFileSelect = async (e) => {
     const file = e.target.files?.[0]
@@ -41,7 +45,9 @@ export default function ImportPage() {
     setCategoryOverrides({})
 
     try {
-      const result = await parseCSV(file)
+      const isPDF = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf'
+      const result = isPDF ? await parsePDF(file) : await parseCSV(file)
+
       if (!result.data || result.data.length === 0) throw new Error(t('import.emptyFile'))
 
       const headers = result.meta.fields || Object.keys(result.data[0])
@@ -63,7 +69,11 @@ export default function ImportPage() {
       setStatus('detected')
       toast.success(t('import.recurringDetected', { count: enriched.length }))
     } catch (err) {
-      setError(err.message)
+      if (err.message === 'NO_TRANSACTIONS') {
+        setError(t('import.noTransactionsInPDF'))
+      } else {
+        setError(err.message)
+      }
       setStatus('error')
       toast.error(t('import.parseError'))
     }
@@ -79,12 +89,17 @@ export default function ImportPage() {
     setCategoryOverrides((prev) => ({ ...prev, [name]: category }))
   }
 
+  const getName = (s) => nameOverrides[s.suggestedName] ?? s.suggestedName
+  const getAmount = (s) => amountOverrides[s.suggestedName] ?? s.avgAmount
+
   const handleAdd = (suggestion) => {
     const category = getCategory(suggestion)
+    const name = getName(suggestion)
+    const amount = getAmount(suggestion)
 
     addFixedCharge({
-      name: suggestion.suggestedName,
-      amount: suggestion.avgAmount,
+      name,
+      amount,
       payer: 'common',
       frequency: suggestion.frequency,
       dayOfMonth: 1,
@@ -92,10 +107,11 @@ export default function ImportPage() {
       paymentDelayMonths: 0,
     })
 
-    addCategoryRule(suggestion.suggestedName, category)
+    addCategoryRule(name, category)
 
     setAdded((prev) => new Set([...prev, suggestion.suggestedName]))
-    toast.success(t('import.added', { name: suggestion.suggestedName }))
+    setEditing(null)
+    toast.success(t('import.added', { name }))
   }
 
   const handleDismiss = (name) => {
@@ -117,17 +133,19 @@ export default function ImportPage() {
       </motion.h1>
 
       <Card>
-        <div className="text-center py-4">
+        <div className="text-center py-5">
           <div className="w-16 h-16 bg-brand/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <FileText size={28} className="text-brand" />
           </div>
-          <p className="text-text-secondary text-sm mb-1">
-            {t('import.uploadDescription')}
+          <h2 className="text-base font-semibold mb-1">{t('import.uploadDescription')}</h2>
+          <p className="text-text-muted text-xs mb-1 max-w-xs mx-auto">
+            {t('import.uploadSubtitle')}
           </p>
-          <p className="text-text-muted text-xs mb-4">
-            {t('import.localProcessing')}
-          </p>
-          <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileSelect} className="hidden" />
+          <div className="flex items-center justify-center gap-1.5 text-text-muted text-[11px] mb-5">
+            <Shield size={12} />
+            <span>{t('import.localProcessing')}</span>
+          </div>
+          <input ref={fileInputRef} type="file" accept=".csv,.pdf" onChange={handleFileSelect} className="hidden" />
           <Button onClick={() => fileInputRef.current?.click()} size="lg">
             <Upload size={16} className="inline mr-2" />
             {t('import.chooseFile')}
@@ -187,35 +205,82 @@ export default function ImportPage() {
                   transition={{ delay: i * 0.05 }}
                 >
                   <Card>
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <span className="font-medium text-sm">{s.suggestedName}</span>
-                        <div className="text-xs text-text-muted mt-0.5">
-                          ~{formatCurrency(s.avgAmount, true)}/mois — {s.occurrences}x
-                          {s.isStable && <span className="text-success ml-1">{t('import.stable')}</span>}
+                    {editing === s.suggestedName ? (
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-[11px] text-text-muted mb-1 block">{t('import.editName')}</label>
+                          <input
+                            type="text"
+                            value={getName(s)}
+                            onChange={(e) => setNameOverrides((p) => ({ ...p, [s.suggestedName]: e.target.value }))}
+                            className="w-full text-sm bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 text-base text-text-primary"
+                          />
                         </div>
-                        <div className="flex items-center gap-2 mt-2">
+                        <div>
+                          <label className="text-[11px] text-text-muted mb-1 block">{t('import.editAmount')}</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={getAmount(s)}
+                            onChange={(e) => setAmountOverrides((p) => ({ ...p, [s.suggestedName]: parseFloat(e.target.value) || 0 }))}
+                            className="w-full text-sm bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 text-base text-text-primary"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
                           <Tag size={10} className="text-text-muted flex-shrink-0" />
                           <select
                             value={getCategory(s)}
                             onChange={(e) => handleCategoryChange(s.suggestedName, e.target.value)}
-                            className="text-[11px] bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1 text-text-secondary"
+                            className="text-xs bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1.5 text-base text-text-secondary"
                           >
                             {categories.map((c) => (
                               <option key={c.value} value={c.value}>{c.label}</option>
                             ))}
                           </select>
                         </div>
+                        <div className="flex gap-2 pt-1">
+                          <Button size="sm" onClick={() => handleAdd(s)}>
+                            <Check size={12} className="mr-1" /> {t('common.add')}
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setEditing(null)}>
+                            {t('common.cancel')}
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex gap-1.5 flex-shrink-0">
-                        <Button size="sm" onClick={() => handleAdd(s)}>
-                          <Check size={12} className="mr-1" /> {t('common.add')}
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => handleDismiss(s.suggestedName)}>
-                          <X size={12} />
-                        </Button>
+                    ) : (
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <span className="font-medium text-sm">{getName(s)}</span>
+                          <div className="text-xs text-text-muted mt-0.5">
+                            {formatCurrency(getAmount(s), true)}/mois — {s.occurrences}x
+                            {s.isStable && <span className="text-success ml-1">{t('import.stable')}</span>}
+                          </div>
+                          <div className="flex items-center gap-2 mt-2">
+                            <Tag size={10} className="text-text-muted flex-shrink-0" />
+                            <select
+                              value={getCategory(s)}
+                              onChange={(e) => handleCategoryChange(s.suggestedName, e.target.value)}
+                              className="text-[11px] bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1 text-text-secondary"
+                            >
+                              {categories.map((c) => (
+                                <option key={c.value} value={c.value}>{c.label}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                        <div className="flex gap-1.5 flex-shrink-0">
+                          <Button size="sm" variant="ghost" onClick={() => setEditing(s.suggestedName)} aria-label={t('common.edit')}>
+                            <Pencil size={12} />
+                          </Button>
+                          <Button size="sm" onClick={() => handleAdd(s)}>
+                            <Check size={12} className="mr-1" /> {t('common.add')}
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => handleDismiss(s.suggestedName)}>
+                            <X size={12} />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </Card>
                 </motion.div>
               ))}
@@ -225,13 +290,34 @@ export default function ImportPage() {
       )}
 
       <Card>
-        <h3 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">{t('import.supportedFormats')}</h3>
-        <ul className="text-xs text-text-muted space-y-1">
-          <li>{t('import.boursobank')}</li>
-          <li>{t('import.autoDetect')}</li>
-          <li>{t('import.requiredColumns')}</li>
-          <li>{t('import.autoCategorize')}</li>
+        <div className="flex items-center gap-2 mb-3">
+          <HelpCircle size={14} className="text-brand" />
+          <h3 className="text-xs font-semibold text-text-primary">{t('import.howToTitle')}</h3>
+        </div>
+        <ol className="text-xs text-text-muted space-y-2">
+          {t('import.howToSteps', { returnObjects: true }).map((step, i) => (
+            <li key={i} className="flex gap-2">
+              <span className="text-brand font-bold flex-shrink-0">{i + 1}.</span>
+              <span>{step}</span>
+            </li>
+          ))}
+        </ol>
+      </Card>
+
+      <Card>
+        <div className="flex items-center gap-2 mb-3">
+          <FileText size={14} className="text-brand" />
+          <h3 className="text-xs font-semibold text-text-primary">{t('import.howItWorksTitle')}</h3>
+        </div>
+        <ul className="text-xs text-text-muted space-y-2">
+          {t('import.howItWorksSteps', { returnObjects: true }).map((step, i) => (
+            <li key={i} className="flex gap-2">
+              <span className="text-brand flex-shrink-0">•</span>
+              <span>{step}</span>
+            </li>
+          ))}
         </ul>
+        <p className="text-[11px] text-text-muted mt-3 opacity-60">{t('import.howItWorksFormats')}</p>
       </Card>
     </div>
   )

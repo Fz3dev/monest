@@ -158,65 +158,90 @@ export default function MonthlyPage() {
         </Card>
       </div>
 
-      {/* Charges */}
+      {/* Charges grouped by category */}
       <Card>
         <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">{t('monthly.monthCharges')}</h2>
-        <div className="space-y-1">
-          {result.charges.map((charge) => (
-            <div key={charge.id} className={`flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0 ${charge.isDisabledThisMonth ? 'opacity-40' : ''}`}>
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <div
-                  className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: getCategoryColor(charge.category) }}
-                />
-                <span className="text-sm text-text-secondary truncate">{charge.name}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                {charge.type === 'fixed' && !charge.isDisabledThisMonth && (
-                  <div className="flex items-center gap-1">
-                    <input
-                      type="number"
-                      value={String(
-                        entry?.variableOverrides?.[charge.id] !== undefined
-                          ? entry.variableOverrides[charge.id]
-                          : charge.originalAmount
-                      )}
-                      onChange={(e) =>
-                        updateVariable(currentMonth, charge.id, parseFloat(e.target.value) || 0)
-                      }
-                      className="w-24 text-right bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1 text-base text-text-primary focus:outline-none focus:ring-1 focus:ring-brand/50"
-                    />
-                    <span className="text-xs text-text-muted">€</span>
+        {result.charges.length === 0 ? (
+          <p className="text-sm text-text-muted text-center py-6">
+            {t('monthly.noCharges')}
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {(() => {
+              // Group charges by category
+              const groups = {}
+              for (const charge of result.charges) {
+                const cat = charge.category || 'autre'
+                if (!groups[cat]) groups[cat] = []
+                groups[cat].push(charge)
+              }
+              // Sort groups by total amount (descending)
+              const sorted = Object.entries(groups).sort(([, a], [, b]) => {
+                const totalA = a.reduce((s, c) => s + (c.isDisabledThisMonth ? 0 : c.amount), 0)
+                const totalB = b.reduce((s, c) => s + (c.isDisabledThisMonth ? 0 : c.amount), 0)
+                return totalB - totalA
+              })
+              return sorted.map(([cat, charges]) => {
+                const catTotal = charges.reduce((s, c) => s + (c.isDisabledThisMonth ? 0 : c.amount), 0)
+                return (
+                  <div key={cat}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: getCategoryColor(cat) }} />
+                        <span className="text-[11px] font-semibold text-text-muted">{t(`categories.${cat}`)}</span>
+                      </div>
+                      <span className="text-[11px] text-text-muted tabular-nums">{formatCurrency(catTotal)}</span>
+                    </div>
+                    <div>
+                      {charges.map((charge) => (
+                        <div key={charge.id} className={`flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0 ${charge.isDisabledThisMonth ? 'opacity-40' : ''}`}>
+                          <span className="text-sm text-text-secondary truncate flex-1 min-w-0 pl-3.5">{charge.name}</span>
+                          <div className="flex items-center gap-1.5">
+                            {charge.type === 'fixed' && !charge.isDisabledThisMonth && (
+                              <div className="flex items-center gap-1">
+                                <input
+                                  type="number"
+                                  value={String(
+                                    entry?.variableOverrides?.[charge.id] !== undefined
+                                      ? entry.variableOverrides[charge.id]
+                                      : charge.originalAmount
+                                  )}
+                                  onChange={(e) =>
+                                    updateVariable(currentMonth, charge.id, parseFloat(e.target.value) || 0)
+                                  }
+                                  className="w-24 text-right bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1 text-base text-text-primary focus:outline-none focus:ring-1 focus:ring-brand/50"
+                                />
+                                <span className="text-xs text-text-muted">€</span>
+                              </div>
+                            )}
+                            {charge.type !== 'fixed' && (
+                              <span className="text-sm font-medium tabular-nums">{formatCurrency(charge.amount)}</span>
+                            )}
+                            {charge.isDisabledThisMonth && charge.type === 'fixed' && (
+                              <span className="text-xs text-text-muted italic">{t('monthly.disabled')}</span>
+                            )}
+                            {charge.type === 'fixed' && (
+                              <button
+                                onClick={() => toggleChargeForMonth(currentMonth, charge.id)}
+                                className="p-0.5 text-text-muted flex-shrink-0"
+                                aria-label={charge.isDisabledThisMonth ? t('monthly.enableCharge') : t('monthly.disableCharge')}
+                              >
+                                {charge.isDisabledThisMonth
+                                  ? <ToggleLeft size={18} />
+                                  : <ToggleRight size={18} className="text-success" />
+                                }
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                )}
-                {charge.type !== 'fixed' && (
-                  <span className="text-sm font-medium tabular-nums">{formatCurrency(charge.amount)}</span>
-                )}
-                {charge.isDisabledThisMonth && charge.type === 'fixed' && (
-                  <span className="text-xs text-text-muted italic">{t('monthly.disabled')}</span>
-                )}
-                {charge.type === 'fixed' && (
-                  <button
-                    onClick={() => toggleChargeForMonth(currentMonth, charge.id)}
-                    className="p-0.5 text-text-muted flex-shrink-0"
-                    aria-label={charge.isDisabledThisMonth ? t('monthly.enableCharge') : t('monthly.disableCharge')}
-                  >
-                    {charge.isDisabledThisMonth
-                      ? <ToggleLeft size={18} />
-                      : <ToggleRight size={18} className="text-success" />
-                    }
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-
-          {result.charges.length === 0 && (
-            <p className="text-sm text-text-muted text-center py-6">
-              {t('monthly.noCharges')}
-            </p>
-          )}
-        </div>
+                )
+              })
+            })()}
+          </div>
+        )}
       </Card>
 
       {/* Reste a vivre + Repartition — side by side on desktop */}

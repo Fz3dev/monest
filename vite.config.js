@@ -80,6 +80,7 @@ export default defineConfig({
           if (id.includes('node_modules/recharts')) return 'recharts'
           if (id.includes('node_modules/@supabase/supabase-js')) return 'supabase'
           if (id.includes('node_modules/motion')) return 'motion'
+          if (id.includes('node_modules/pdfjs-dist')) return 'pdfjs'
         },
       },
     },
