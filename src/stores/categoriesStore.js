@@ -13,6 +13,7 @@ export const DEFAULT_CATEGORIES = {
   education: { color: '#A78BFA', emoji: '\u{1F393}' },
   loisirs: { color: '#34D399', emoji: '\u{1F3AE}' },
   enfants: { color: '#E879F9', emoji: '\u{1F476}' },
+  banque: { color: '#64748B', emoji: '\u{1F3E6}' },
   autre: { color: '#94A3B8', emoji: '\u{1F381}' },
 }
 
