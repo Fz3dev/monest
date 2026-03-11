@@ -122,7 +122,7 @@ export default function AuthPage({ inviteCode, defaultMode }) {
     setForgotLoading(true)
     try {
       const { error: authError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}`,
+        redirectTo: `${window.location.origin}/login`,
       })
       if (authError) {
         setError(translateError(authError.message))
