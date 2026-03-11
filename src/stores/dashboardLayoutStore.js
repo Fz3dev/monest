@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { supabase, isSupabaseConfigured } from '../lib/supabase'
 
 export const ALL_WIDGETS = ['hero', 'persons', 'quickLinks', 'savings', 'insights', 'categories', 'trend', 'chargesDetail']
 
@@ -36,14 +37,68 @@ export const DEFAULT_LAYOUTS = {
   ],
 }
 
+// Debounce timer for saving layout to Supabase
+let _saveTimer = null
+
 export const useDashboardLayoutStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       layouts: DEFAULT_LAYOUTS,
       isEditMode: false,
       setLayouts: (layouts) => set({ layouts }),
       toggleEditMode: () => set((s) => ({ isEditMode: !s.isEditMode })),
       resetLayouts: () => set({ layouts: DEFAULT_LAYOUTS }),
+
+      // Save layout to Supabase (debounced externally)
+      saveToDB: async (userId, householdId) => {
+        if (!isSupabaseConfigured() || !userId || !householdId) return
+        const { layouts } = get()
+        try {
+          await supabase.from('user_preferences').upsert(
+            {
+              user_id: userId,
+              household_id: householdId,
+              dashboard_layout: layouts,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'user_id,household_id' }
+          )
+        } catch (err) {
+          console.error('Failed to save dashboard layout:', err)
+        }
+      },
+
+      // Load layout from Supabase and merge with localStorage
+      loadFromDB: async (userId, householdId) => {
+        if (!isSupabaseConfigured() || !userId || !householdId) return
+        try {
+          const { data } = await supabase
+            .from('user_preferences')
+            .select('dashboard_layout, updated_at')
+            .eq('user_id', userId)
+            .eq('household_id', householdId)
+            .single()
+
+          if (data?.dashboard_layout && Object.keys(data.dashboard_layout).length > 0) {
+            // Use DB layout — it's the cross-device source of truth
+            set({ layouts: data.dashboard_layout })
+          }
+        } catch (err) {
+          // No row found is fine — first time user, keep localStorage layout
+          if (err?.code !== 'PGRST116') {
+            console.error('Failed to load dashboard layout:', err)
+          }
+        }
+      },
+
+      // Schedule a debounced save to Supabase
+      scheduleSaveToDB: (userId, householdId) => {
+        if (_saveTimer) clearTimeout(_saveTimer)
+        _saveTimer = setTimeout(() => {
+          _saveTimer = null
+          get().saveToDB(userId, householdId)
+        }, 1000)
+      },
     }),
     { name: 'monest-dashboard-layout', version: 2 }
   )

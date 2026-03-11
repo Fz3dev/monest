@@ -1,22 +1,26 @@
 import i18n from '../i18n'
 import { useCategoriesStore } from '../stores/categoriesStore'
+import { useHouseholdStore, DEFAULT_CURRENCY } from '../stores/householdStore'
 
-const currencyFormatter = new Intl.NumberFormat('fr-FR', {
-  style: 'currency',
-  currency: 'EUR',
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
-})
+// Cache formatters by currency code to avoid creating them on every call
+const formatterCache = {}
 
-const currencyFormatterDecimals = new Intl.NumberFormat('fr-FR', {
-  style: 'currency',
-  currency: 'EUR',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
+function getFormatter(currency, decimals) {
+  const key = `${currency}-${decimals ? 'd' : 'n'}`
+  if (!formatterCache[key]) {
+    formatterCache[key] = new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: decimals ? 2 : 0,
+      maximumFractionDigits: decimals ? 2 : 0,
+    })
+  }
+  return formatterCache[key]
+}
 
-export function formatCurrency(amount, decimals = false) {
-  return decimals ? currencyFormatterDecimals.format(amount) : currencyFormatter.format(amount)
+export function formatCurrency(amount, decimals = false, currency) {
+  const code = currency || useHouseholdStore.getState().household?.currency || DEFAULT_CURRENCY
+  return getFormatter(code, decimals).format(amount)
 }
 
 export function formatMonth(monthStr) {

@@ -7,6 +7,7 @@ import { useMonthlyStore } from '../stores/monthlyStore'
 import { useSavingsStore } from '../stores/savingsStore'
 import { useExpenseStore } from '../stores/expenseStore'
 import { useNotificationStore } from '../stores/notificationStore'
+import { useDashboardLayoutStore } from '../stores/dashboardLayoutStore'
 import { toast } from 'sonner'
 
 function camelToSnake(obj) {
@@ -89,6 +90,7 @@ export function useSupabaseSync(session) {
             configModel: h.configModel,
             splitRatio: Number(h.splitRatio),
             splitMode: h.splitMode,
+            currency: h.currency || 'EUR',
           },
         })
       }
@@ -154,6 +156,9 @@ export function useSupabaseSync(session) {
         useChargesStore.setState({ categoryRules })
       }
 
+      // Load user-specific dashboard layout
+      await useDashboardLayoutStore.getState().loadFromDB(session.user.id, hId)
+
       return hId
     } catch (err) {
       console.error('Supabase sync error:', err)
@@ -173,6 +178,7 @@ export function useSupabaseSync(session) {
       config_model: household.configModel,
       split_ratio: household.splitRatio,
       split_mode: household.splitMode,
+      currency: household.currency || 'EUR',
     }
     await supabase.from('households').update(data).eq('id', householdId)
   }, [session, householdId])
@@ -193,6 +199,7 @@ export function useSupabaseSync(session) {
         config_model: household.configModel,
         split_ratio: household.splitRatio,
         split_mode: household.splitMode,
+        currency: household.currency || 'EUR',
       })
 
     if (insertError) { console.error('Create household error:', insertError); return null }
@@ -257,6 +264,23 @@ export function useSupabaseSync(session) {
       setUserInfo(null, null, null)
     }
   }, [syncItem, deleteItem, syncMonthlyEntry, householdId, session])
+
+  // Sync dashboard layout changes to Supabase (debounced)
+  useEffect(() => {
+    if (!isSupabaseConfigured() || !householdId || !session?.user) return
+
+    let prevLayouts = JSON.stringify(useDashboardLayoutStore.getState().layouts)
+
+    const unsub = useDashboardLayoutStore.subscribe((state) => {
+      const next = JSON.stringify(state.layouts)
+      if (next !== prevLayouts) {
+        prevLayouts = next
+        state.scheduleSaveToDB(session.user.id, householdId)
+      }
+    })
+
+    return () => unsub()
+  }, [householdId, session])
 
   // Real-time subscriptions
   useEffect(() => {

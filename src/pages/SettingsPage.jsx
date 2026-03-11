@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
-import { useHouseholdStore } from '../stores/householdStore'
+import { useHouseholdStore, SUPPORTED_CURRENCIES, DEFAULT_CURRENCY } from '../stores/householdStore'
 import { useCategoriesStore, DEFAULT_CATEGORIES } from '../stores/categoriesStore'
 import { useChargesStore } from '../stores/chargesStore'
 import { useMonthlyStore } from '../stores/monthlyStore'
@@ -319,6 +319,10 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
                 </span>
               </div>
             )}
+            <div className="flex justify-between text-sm">
+              <span className="text-text-muted">{t('settings.currency')}</span>
+              <span>{SUPPORTED_CURRENCIES.find((c) => c.value === (household?.currency || DEFAULT_CURRENCY))?.label || household?.currency || DEFAULT_CURRENCY}</span>
+            </div>
           </div>
         ) : (
           <div className="space-y-3">
@@ -385,6 +389,13 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
                 </div>
               </>
             )}
+            <Select
+              label={t('settings.currency')}
+              options={SUPPORTED_CURRENCIES}
+              value={household?.currency || DEFAULT_CURRENCY}
+              onChange={(e) => handleUpdate({ currency: e.target.value })}
+            />
+            <p className="text-xs text-text-muted -mt-1">{t('settings.currencyHint')}</p>
           </div>
         )}
       </Card>

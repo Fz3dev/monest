@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
 import { Link } from 'react-router-dom'
@@ -116,6 +116,8 @@ export default function DashboardPage() {
       }))
       .sort((a, b) => b.value - a.value)
   }, [result.charges])
+
+  const [selectedChargeId, setSelectedChargeId] = useState(null)
 
   const totalSaved = savingsGoals.reduce((sum, g) => sum + g.currentAmount, 0)
   const totalTarget = savingsGoals.reduce((sum, g) => sum + g.targetAmount, 0)
@@ -444,23 +446,43 @@ export default function DashboardPage() {
         <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">
           {t('dashboard.chargesDetail')}
         </div>
-        <div className="space-y-2">
+        <div className="space-y-1">
           {result.charges.map((charge) => (
-            <div key={charge.id} className="flex justify-between items-center text-sm">
-              <div className="flex items-center gap-2 min-w-0">
-                <div
-                  className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: getCategoryColor(charge.category || 'autre') }}
-                />
-                <span className="text-text-secondary truncate">{charge.name}</span>
-                {charge.type === 'installment' && (
-                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-brand/10 text-brand flex-shrink-0">{t('dashboard.installmentBadge')}</span>
-                )}
-                {charge.type === 'planned' && (
-                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-warning/10 text-warning flex-shrink-0">{t('dashboard.plannedBadge')}</span>
-                )}
+            <div
+              key={charge.id}
+              className="cursor-pointer rounded-lg px-1.5 py-1.5 -mx-1.5 transition-colors hover:bg-white/[0.04]"
+              onClick={() => setSelectedChargeId(selectedChargeId === charge.id ? null : charge.id)}
+            >
+              <div className="flex justify-between items-center text-sm">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: getCategoryColor(charge.category || 'autre') }}
+                  />
+                  <span className="text-text-secondary truncate">{charge.name}</span>
+                  {charge.type === 'installment' && (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-brand/10 text-brand flex-shrink-0">{t('dashboard.installmentBadge')}</span>
+                  )}
+                  {charge.type === 'planned' && (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-warning/10 text-warning flex-shrink-0">{t('dashboard.plannedBadge')}</span>
+                  )}
+                </div>
+                <span className="font-medium tabular-nums ml-2">{formatCurrency(charge.amount)}</span>
               </div>
-              <span className="font-medium tabular-nums ml-2">{formatCurrency(charge.amount)}</span>
+              {selectedChargeId === charge.id && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex items-center gap-1 mt-1 ml-4"
+                >
+                  <ArrowUpRight size={12} className="text-brand" />
+                  <span className="text-xs text-brand">
+                    {t('dashboard.whatIf', { amount: formatCurrency(flexNumber + charge.amount) })}
+                  </span>
+                </motion.div>
+              )}
             </div>
           ))}
         </div>

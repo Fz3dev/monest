@@ -84,7 +84,8 @@
     "remainingToLive": "Reste \u00e0 vivre",
     "chargesDetail": "D\u00e9tail des charges",
     "installmentBadge": "\u00e9ch.",
-    "plannedBadge": "pr\u00e9vu"
+    "plannedBadge": "pr\u00e9vu",
+    "whatIf": "Sans cette charge : {{amount}}"
   },
   "charges": {
     "title": "Charges",
@@ -256,6 +257,8 @@
     "categoryAdded": "Cat\u00e9gorie ajout\u00e9e",
     "resetCategories": "R\u00e9initialiser les cat\u00e9gories",
     "categoriesReset": "Cat\u00e9gories r\u00e9initialis\u00e9es",
+    "currency": "Devise",
+    "currencyHint": "La devise utilis\u00e9e dans toute l'application",
     "modelLabels": {
       "common_and_personal": "Commun + Perso",
       "full_common": "Tout commun",
