@@ -129,6 +129,11 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
       await supabase.auth.signOut()
     }
     localStorage.clear()
+    // Clear IndexedDB to prevent stale data from previous user
+    try {
+      const dbs = await indexedDB.databases()
+      dbs.forEach(db => indexedDB.deleteDatabase(db.name))
+    } catch {}
     resetHousehold()
     window.location.reload()
   }

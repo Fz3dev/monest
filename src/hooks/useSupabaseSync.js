@@ -380,7 +380,8 @@ export function useSupabaseSync(session) {
   const acceptInvite = useCallback(async (code) => {
     if (!isSupabaseConfigured() || !session?.user) return { error: 'not_configured' }
 
-    // Validate code format (8 chars alphanumeric)
+    // Normalize and validate code format (8 chars alphanumeric)
+    code = code.trim().toUpperCase()
     if (!code || !/^[A-Z2-9]{8}$/.test(code)) return { error: 'invalid_code' }
 
     // Look up invite

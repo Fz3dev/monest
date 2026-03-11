@@ -67,6 +67,7 @@ function parseAmount(str) {
 }
 
 function stddev(values) {
+  if (values.length === 0) return 0
   const avg = values.reduce((a, b) => a + b, 0) / values.length
   const squareDiffs = values.map((v) => Math.pow(v - avg, 2))
   return Math.sqrt(squareDiffs.reduce((a, b) => a + b, 0) / values.length)
@@ -138,7 +139,7 @@ export function detectRecurring(data, columns) {
     .filter(([, txs]) => txs.length >= 2)
     .map(([key, txs]) => {
       const amounts = txs.map((t) => t.amount)
-      const avg = amounts.reduce((a, b) => a + b, 0) / amounts.length
+      const avg = amounts.length > 0 ? amounts.reduce((a, b) => a + b, 0) / amounts.length : 0
       const sd = stddev(amounts)
       const frequency = detectFrequency(txs.map((t) => t.date))
 
@@ -148,7 +149,7 @@ export function detectRecurring(data, columns) {
         avgAmount: Math.round(avg * 100) / 100,
         frequency,
         occurrences: txs.length,
-        isStable: amounts.length === 1 || sd / avg < 0.1,
+        isStable: amounts.length === 1 || (avg > 0 && sd / avg < 0.1),
         dates: txs.map((t) => t.date).sort(),
       }
     })

@@ -59,7 +59,7 @@ export function computeMonth(month, household, fixedCharges, installments, plann
   const chargesDetail = []
 
   // Fixed charges active this month
-  const activeCharges = fixedCharges.filter((c) => {
+  const activeCharges = (fixedCharges || []).filter((c) => {
     const effectiveMonth = c.paymentDelayMonths ? getEffectiveMonth(c, month) : month
     return isDueThisMonth(c, effectiveMonth)
   })
@@ -79,7 +79,7 @@ export function computeMonth(month, household, fixedCharges, installments, plann
   })
 
   // Installments due this month
-  installments.filter((i) => isInstallmentDue(i, month)).forEach((i) => {
+  ;(installments || []).filter((i) => isInstallmentDue(i, month)).forEach((i) => {
     const num = getInstallmentNumber(i, month)
     chargesDetail.push({
       id: i.id,
@@ -93,7 +93,7 @@ export function computeMonth(month, household, fixedCharges, installments, plann
   })
 
   // Planned expenses for this month
-  plannedExpenses.filter((e) => e.targetMonth === month).forEach((e) => {
+  ;(plannedExpenses || []).filter((e) => e.targetMonth === month).forEach((e) => {
     chargesDetail.push({
       id: e.id,
       name: e.name,
