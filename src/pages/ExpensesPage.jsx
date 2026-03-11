@@ -7,8 +7,9 @@ import { useCategoriesStore } from '../stores/categoriesStore'
 import { formatCurrency, getCurrentMonth, formatMonth, getCategoryLabel } from '../utils/format'
 import { syncToSupabase } from '../lib/syncBridge'
 import Card from '../components/ui/Card'
+import Modal from '../components/ui/Modal'
 import AnimatedNumber from '../components/ui/AnimatedNumber'
-import { ChevronLeft, ChevronRight, Trash2, Receipt } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Trash2, Receipt, Pencil } from 'lucide-react'
 import { addMonths, subMonths, format, isToday, isYesterday, parseISO } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { toast } from 'sonner'
@@ -76,12 +77,15 @@ export default function ExpensesPage() {
   const household = useHouseholdStore((s) => s.household)
   const expenses = useExpenseStore((s) => s.expenses)
   const removeExpense = useExpenseStore((s) => s.removeExpense)
+  const updateExpense = useExpenseStore((s) => s.updateExpense)
   const getTotalByMonth = useExpenseStore((s) => s.getTotalByMonth)
   const getCategoryColor = useCategoriesStore((s) => s.getCategoryColor)
   const getCategoryEmoji = useCategoriesStore((s) => s.getCategoryEmoji)
 
   const [currentMonth, setCurrentMonth] = useState(getCurrentMonth())
   const [activeCategory, setActiveCategory] = useState(null)
+  const [editingExpense, setEditingExpense] = useState(null)
+  const [editForm, setEditForm] = useState({ note: '', amount: '', category: '', date: '' })
   const touchStartX = useRef(null)
 
   const navigateMonth = (direction) => {
@@ -147,6 +151,44 @@ export default function ExpensesPage() {
     return '#6C63FF'
   }
 
+  const CATEGORY_OPTIONS = [
+    { value: 'alimentation', label: getCategoryLabel('alimentation'), emoji: getCategoryEmoji('alimentation') },
+    { value: 'loisirs', label: getCategoryLabel('loisirs'), emoji: getCategoryEmoji('loisirs') },
+    { value: 'transport', label: getCategoryLabel('transport'), emoji: getCategoryEmoji('transport') },
+    { value: 'sante', label: getCategoryLabel('sante'), emoji: getCategoryEmoji('sante') },
+    { value: 'logement', label: getCategoryLabel('logement'), emoji: getCategoryEmoji('logement') },
+    { value: 'abonnement', label: getCategoryLabel('abonnement'), emoji: getCategoryEmoji('abonnement') },
+    { value: 'enfants', label: getCategoryLabel('enfants'), emoji: getCategoryEmoji('enfants') },
+    { value: 'autre', label: getCategoryLabel('autre'), emoji: getCategoryEmoji('autre') },
+  ]
+
+  const handleEdit = (expense) => {
+    setEditingExpense(expense)
+    setEditForm({
+      note: expense.note || '',
+      amount: String(expense.amount),
+      category: expense.category || 'autre',
+      date: expense.date || '',
+    })
+  }
+
+  const handleEditSave = () => {
+    if (!editingExpense) return
+    const amount = parseFloat(editForm.amount)
+    if (!amount || amount <= 0) {
+      toast.error('Le montant doit être supérieur à 0')
+      return
+    }
+    updateExpense(editingExpense.id, {
+      note: editForm.note.trim() || undefined,
+      amount,
+      category: editForm.category,
+      date: editForm.date,
+    })
+    toast.success(t('expenses.updated'))
+    setEditingExpense(null)
+  }
+
   const handleDelete = useCallback(
     (id, note) => {
       const item = useExpenseStore.getState().expenses.find((e) => e.id === id)
@@ -171,18 +213,18 @@ export default function ExpensesPage() {
   return (
     <div className="space-y-4" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       {/* Month navigation */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-center gap-3">
         <button
           onClick={() => navigateMonth('prev')}
           className="p-2 text-text-muted hover:text-white rounded-xl hover:bg-white/[0.06] transition-colors"
           aria-label={t('expenses.prevMonth')}
         >
-          <ChevronLeft size={22} />
+          <ChevronLeft size={20} />
         </button>
         <AnimatePresence mode="wait">
           <motion.h1
             key={currentMonth}
-            className="text-xl font-bold"
+            className="text-xl font-bold min-w-[120px] text-center"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
@@ -196,7 +238,7 @@ export default function ExpensesPage() {
           className="p-2 text-text-muted hover:text-white rounded-xl hover:bg-white/[0.06] transition-colors"
           aria-label={t('expenses.nextMonth')}
         >
-          <ChevronRight size={22} />
+          <ChevronRight size={20} />
         </button>
       </div>
 
@@ -321,7 +363,7 @@ export default function ExpensesPage() {
                           onDelete={() => handleDelete(expense.id, expense.note)}
                           t={t}
                         >
-                          <Card animate={false}>
+                          <Card animate={false} className="cursor-pointer" onClick={() => handleEdit(expense)}>
                             <div className="flex items-center gap-3">
                               {/* Category emoji */}
                               <div
@@ -367,6 +409,98 @@ export default function ExpensesPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Edit expense modal */}
+      <Modal
+        isOpen={!!editingExpense}
+        onClose={() => setEditingExpense(null)}
+        title={t('expenses.editExpense')}
+      >
+        <div className="space-y-4">
+          {/* Amount */}
+          <div>
+            <label className="block text-xs font-medium text-text-secondary mb-1.5">
+              {t('common.amount')}
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                min="0"
+                value={editForm.amount}
+                onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })}
+                className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-transparent pr-8"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted text-sm">€</span>
+            </div>
+          </div>
+
+          {/* Note */}
+          <div>
+            <label className="block text-xs font-medium text-text-secondary mb-1.5">
+              {t('expenses.note')}
+            </label>
+            <input
+              type="text"
+              value={editForm.note}
+              onChange={(e) => setEditForm({ ...editForm, note: e.target.value })}
+              placeholder={t('quickAdd.notePlaceholder')}
+              className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-transparent"
+            />
+          </div>
+
+          {/* Category */}
+          <div>
+            <label className="block text-xs font-medium text-text-secondary mb-1.5">
+              {t('expenses.category')}
+            </label>
+            <div className="grid grid-cols-4 gap-1.5">
+              {CATEGORY_OPTIONS.map((cat) => (
+                <button
+                  key={cat.value}
+                  type="button"
+                  onClick={() => setEditForm({ ...editForm, category: cat.value })}
+                  className={`flex flex-col items-center gap-0.5 py-2 px-1 rounded-xl transition-all cursor-pointer text-center ${
+                    editForm.category === cat.value
+                      ? 'bg-brand/15 border-2 border-brand'
+                      : 'bg-white/[0.03] border-2 border-transparent hover:bg-white/[0.06]'
+                  }`}
+                >
+                  <span className="text-lg">{cat.emoji}</span>
+                  <span className={`text-[10px] font-medium leading-tight ${
+                    editForm.category === cat.value ? 'text-brand-light' : 'text-text-secondary'
+                  }`}>
+                    {cat.label}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Date */}
+          <div>
+            <label className="block text-xs font-medium text-text-secondary mb-1.5">
+              {t('expenses.date')}
+            </label>
+            <input
+              type="date"
+              value={editForm.date}
+              onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
+              style={{ colorScheme: 'dark' }}
+              className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-transparent"
+            />
+          </div>
+
+          {/* Save */}
+          <button
+            onClick={handleEditSave}
+            className="w-full py-3 rounded-2xl text-sm font-semibold bg-brand hover:bg-brand-dark text-white shadow-lg shadow-brand/25 transition-all cursor-pointer"
+          >
+            {t('common.save')}
+          </button>
+        </div>
+      </Modal>
     </div>
   )
 }

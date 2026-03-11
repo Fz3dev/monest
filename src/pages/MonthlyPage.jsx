@@ -60,18 +60,18 @@ export default function MonthlyPage() {
   return (
     <div className="space-y-4" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       {/* Month navigation — swipe left/right to change month */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-center gap-3">
         <button
           onClick={() => navigateMonth('prev')}
           className="p-2 text-text-muted hover:text-white rounded-xl hover:bg-white/[0.06] transition-colors"
           aria-label={t('expenses.prevMonth')}
         >
-          <ChevronLeft size={22} />
+          <ChevronLeft size={20} />
         </button>
         <AnimatePresence mode="wait">
           <motion.h1
             key={currentMonth}
-            className="text-xl font-bold"
+            className="text-xl font-bold min-w-[120px] text-center"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
@@ -85,7 +85,7 @@ export default function MonthlyPage() {
           className="p-2 text-text-muted hover:text-white rounded-xl hover:bg-white/[0.06] transition-colors"
           aria-label={t('expenses.nextMonth')}
         >
-          <ChevronRight size={22} />
+          <ChevronRight size={20} />
         </button>
       </div>
 
@@ -100,7 +100,7 @@ export default function MonthlyPage() {
               value={entry?.incomeA || ''}
               onChange={(e) => handleIncomeChange('incomeA', e.target.value)}
               placeholder="0"
-              suffix="\u20ac"
+              suffix="€"
             />
             {household?.personBName && (
               <Input
@@ -109,7 +109,7 @@ export default function MonthlyPage() {
                 value={entry?.incomeB || ''}
                 onChange={(e) => handleIncomeChange('incomeB', e.target.value)}
                 placeholder="0"
-                suffix="\u20ac"
+                suffix="€"
               />
             )}
           </div>
@@ -136,7 +136,7 @@ export default function MonthlyPage() {
               value={entry?.startingBalanceA ?? ''}
               onChange={(e) => handleIncomeChange('startingBalanceA', e.target.value)}
               placeholder="0"
-              suffix="\u20ac"
+              suffix="€"
             />
             {household?.personBName && (
               <Input
@@ -145,7 +145,7 @@ export default function MonthlyPage() {
                 value={entry?.startingBalanceB ?? ''}
                 onChange={(e) => handleIncomeChange('startingBalanceB', e.target.value)}
                 placeholder="0"
-                suffix="\u20ac"
+                suffix="€"
               />
             )}
           </div>
@@ -300,7 +300,7 @@ export default function MonthlyPage() {
               value={entry?.transferredA ?? ''}
               onChange={(e) => handleIncomeChange('transferredA', e.target.value)}
               placeholder="0"
-              suffix="\u20ac"
+              suffix="€"
             />
             <Input
               label={t('monthly.transferredBy', { name: household.personBName })}
@@ -308,7 +308,7 @@ export default function MonthlyPage() {
               value={entry?.transferredB ?? ''}
               onChange={(e) => handleIncomeChange('transferredB', e.target.value)}
               placeholder="0"
-              suffix="\u20ac"
+              suffix="€"
             />
           </div>
 

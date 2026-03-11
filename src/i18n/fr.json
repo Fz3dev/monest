@@ -16,7 +16,8 @@
     "personA": "Personne A",
     "personB": "B",
     "common": "Commun",
-    "finish": "Terminer"
+    "finish": "Terminer",
+    "amount": "Montant"
   },
   "nav": {
     "home": "Accueil",
@@ -148,7 +149,12 @@
     "noExpensesInCategory": "Aucune d\u00e9pense dans cette cat\u00e9gorie",
     "expensesWillAppear": "Les d\u00e9penses ajout\u00e9es appara\u00eetront ici",
     "today": "Aujourd'hui",
-    "yesterday": "Hier"
+    "yesterday": "Hier",
+    "editExpense": "Modifier la dépense",
+    "updated": "Dépense modifiée",
+    "note": "Note",
+    "category": "Catégorie",
+    "date": "Date"
   },
   "monthly": {
     "income": "Revenus",

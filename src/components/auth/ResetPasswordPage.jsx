@@ -111,7 +111,7 @@ export default function ResetPasswordPage({ onComplete }) {
             <Input
               label={t('auth.newPassword')}
               type={showPassword ? 'text' : 'password'}
-              placeholder={'\u2022'.repeat(8)}
+              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -131,7 +131,7 @@ export default function ResetPasswordPage({ onComplete }) {
             <Input
               label={t('auth.confirmNewPassword')}
               type={showPassword ? 'text' : 'password'}
-              placeholder={'\u2022'.repeat(8)}
+              placeholder="••••••••"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required

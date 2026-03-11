@@ -90,7 +90,7 @@ function ChargeForm({ initialValues, onSubmit, onCancel, household, t }) {
   return (
     <div className="space-y-4">
       <Input label={t('charges.formName')} value={form.name} onChange={(e) => update('name', e.target.value)} placeholder={t('charges.formNamePlaceholder')} />
-      <Input label={t('charges.formAmount')} type="number" value={form.amount} onChange={(e) => update('amount', e.target.value)} placeholder="0" suffix="\u20ac" />
+      <Input label={t('charges.formAmount')} type="number" value={form.amount} onChange={(e) => update('amount', e.target.value)} placeholder="0" suffix="€" />
       <Select label={t('charges.formWhoPays')} value={form.payer} onChange={(e) => update('payer', e.target.value)} options={payerOptions} />
       <Select label={t('charges.formFrequency')} value={form.frequency} onChange={(e) => update('frequency', e.target.value)} options={frequencies} />
       {showStartMonth && (
@@ -155,9 +155,9 @@ function InstallmentForm({ initialValues, onSubmit, onCancel, household, t }) {
   return (
     <div className="space-y-4">
       <Input label={t('charges.formName')} value={form.name} onChange={(e) => update('name', e.target.value)} placeholder={t('charges.installmentNamePlaceholder')} />
-      <Input label={t('charges.formTotalAmount')} type="number" value={form.totalAmount} onChange={(e) => update('totalAmount', e.target.value)} suffix="\u20ac" />
+      <Input label={t('charges.formTotalAmount')} type="number" value={form.totalAmount} onChange={(e) => update('totalAmount', e.target.value)} suffix="€" />
       <Input label={t('charges.formInstallmentCount')} type="number" min="2" value={form.installmentCount} onChange={(e) => update('installmentCount', e.target.value === '' ? '' : parseInt(e.target.value) || '')} />
-      <Input label={t('charges.formInstallmentAmount')} type="number" value={form.installmentAmount} onChange={(e) => update('installmentAmount', e.target.value)} suffix="\u20ac" />
+      <Input label={t('charges.formInstallmentAmount')} type="number" value={form.installmentAmount} onChange={(e) => update('installmentAmount', e.target.value)} suffix="€" />
       <Input label={t('charges.formFirstPaymentDate')} type="date" value={form.firstPaymentDate} onChange={(e) => update('firstPaymentDate', e.target.value)} />
       <Select label={t('charges.formWhoPays')} value={form.payer} onChange={(e) => update('payer', e.target.value)} options={payerOptions} />
       <div className="flex gap-3 pt-2">
@@ -198,7 +198,7 @@ function PlannedExpenseForm({ initialValues, onSubmit, onCancel, household, t })
   return (
     <div className="space-y-4">
       <Input label={t('charges.formName')} value={form.name} onChange={(e) => update('name', e.target.value)} placeholder={t('charges.plannedNamePlaceholder')} />
-      <Input label={t('charges.formEstimatedAmount')} type="number" value={form.estimatedAmount} onChange={(e) => update('estimatedAmount', e.target.value)} suffix="\u20ac" />
+      <Input label={t('charges.formEstimatedAmount')} type="number" value={form.estimatedAmount} onChange={(e) => update('estimatedAmount', e.target.value)} suffix="€" />
       <Input label={t('charges.formTargetMonth')} type="month" value={form.targetMonth} onChange={(e) => update('targetMonth', e.target.value)} />
       <Select label={t('charges.formWhoPays')} value={form.payer} onChange={(e) => update('payer', e.target.value)} options={payerOptions} />
       <Input label={t('charges.formNote')} value={form.note} onChange={(e) => update('note', e.target.value)} placeholder={t('charges.formNotePlaceholder')} />

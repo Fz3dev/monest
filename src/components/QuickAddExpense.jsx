@@ -99,7 +99,7 @@ export default function QuickAddExpense() {
       payer: isCouple ? payer : 'person_a',
     })
 
-    toast.success(`${selected.emoji} ${t(selected.labelKey)} \u2014 ${parseFloat(amount).toFixed(2)} \u20ac`, {
+    toast.success(`${selected.emoji} ${t(selected.labelKey)} — ${parseFloat(amount).toFixed(2)} €`, {
       duration: 2000,
     })
 

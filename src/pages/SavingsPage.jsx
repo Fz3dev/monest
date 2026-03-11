@@ -169,7 +169,7 @@ function GoalForm({ initialValues, onSubmit, onCancel, t }) {
   return (
     <div className="space-y-4">
       <Input label={t('savings.goalName')} value={form.name} onChange={(e) => update('name', e.target.value)} placeholder={t('savings.goalNamePlaceholder')} />
-      <Input label={t('savings.targetAmount')} type="number" value={form.targetAmount} onChange={(e) => update('targetAmount', e.target.value)} placeholder="0" suffix="\u20ac" />
+      <Input label={t('savings.targetAmount')} type="number" value={form.targetAmount} onChange={(e) => update('targetAmount', e.target.value)} placeholder="0" suffix="€" />
       <EmojiSelector value={form.icon} onChange={(v) => update('icon', v)} t={t} />
       <ColorPicker value={form.color} onChange={(v) => update('color', v)} t={t} />
       <Input label={t('savings.deadline')} type="month" value={form.deadline} onChange={(e) => update('deadline', e.target.value)} />
@@ -209,7 +209,7 @@ function ContributeForm({ goal, onSubmit, onCancel, t }) {
           </p>
         </div>
       </div>
-      <Input label={t('savings.amountToAdd')} type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" suffix="\u20ac" />
+      <Input label={t('savings.amountToAdd')} type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" suffix="€" />
       <div className="grid grid-cols-4 gap-2">
         {QUICK_AMOUNTS.map((qa) => (
           <motion.button
