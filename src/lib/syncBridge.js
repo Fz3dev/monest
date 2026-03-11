@@ -262,7 +262,18 @@ export async function flushOfflineQueue() {
   // Sort by timestamp to replay in order
   pending.sort((a, b) => a.timestamp - b.timestamp)
 
-  for (const entry of pending) {
+  // Discard entries older than 7 days
+  const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
+  const now = Date.now()
+  const validPending = pending.filter(entry => {
+    if (now - entry.timestamp > MAX_AGE_MS) {
+      removePendingWrite(entry.key).catch(() => {})
+      return false
+    }
+    return true
+  })
+
+  for (const entry of validPending) {
     try {
       if (entry.isMonthly && _syncMonthlyEntry) {
         // Monthly entry

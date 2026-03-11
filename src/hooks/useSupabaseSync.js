@@ -73,7 +73,7 @@ export function useSupabaseSync(session) {
         supabase.from('planned_expenses').select('*').eq('household_id', hId),
         supabase.from('monthly_entries').select('*').eq('household_id', hId),
         supabase.from('savings_goals').select('*').eq('household_id', hId),
-        supabase.from('expenses').select('*').eq('household_id', hId).order('created_at', { ascending: false }),
+        supabase.from('expenses').select('*').eq('household_id', hId).order('created_at', { ascending: false }).limit(500),
         supabase.from('category_rules').select('*').eq('household_id', hId),
       ])
 
@@ -296,7 +296,7 @@ export function useSupabaseSync(session) {
     let timer = null
     const debouncedReload = () => {
       clearTimeout(timer)
-      timer = setTimeout(() => loadFromSupabase(), 500)
+      timer = setTimeout(() => { loadFromSupabase() }, 500)
     }
 
     const tables = [
@@ -305,20 +305,36 @@ export function useSupabaseSync(session) {
       'category_rules',
     ]
 
-    let channel = supabase.channel('household-sync')
-    tables.forEach((table) => {
-      channel = channel.on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table,
-        filter: `household_id=eq.${householdId}`,
-      }, debouncedReload)
-    })
-    channel.subscribe()
+    let channel = null
+    let reconnectTimer = null
+
+    const setupChannel = () => {
+      if (channel) {
+        supabase.removeChannel(channel)
+      }
+      channel = supabase.channel(`household-sync-${Date.now()}`)
+      tables.forEach((table) => {
+        channel = channel.on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table,
+          filter: `household_id=eq.${householdId}`,
+        }, debouncedReload)
+      })
+      channel.subscribe((status) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          // Reconnect after 3 seconds
+          reconnectTimer = setTimeout(setupChannel, 3000)
+        }
+      })
+    }
+
+    setupChannel()
 
     return () => {
       clearTimeout(timer)
-      supabase.removeChannel(channel)
+      clearTimeout(reconnectTimer)
+      if (channel) supabase.removeChannel(channel)
     }
   }, [householdId, loadFromSupabase])
 

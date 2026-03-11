@@ -203,7 +203,7 @@ export default function AuthPage({ inviteCode }) {
         >
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-2 mb-3">
-              <img src="/logo-crown.png" alt="Monest" className="w-10 h-10" />
+              <img src="/logo-crown-sm.webp" alt="Monest" className="w-10 h-10" />
               <h1 className="text-4xl font-bold bg-gradient-to-r from-brand to-brand-light bg-clip-text text-transparent">
                 Monest
               </h1>
@@ -379,7 +379,7 @@ export default function AuthPage({ inviteCode }) {
             transition={{ delay: 0.1, duration: 0.4 }}
             className="flex items-center justify-center gap-2 mb-3"
           >
-            <img src="/logo-crown.png" alt="Monest" className="w-10 h-10" />
+            <img src="/logo-crown-sm.webp" alt="Monest" className="w-10 h-10" />
             <h1 className="text-4xl font-bold bg-gradient-to-r from-brand to-brand-light bg-clip-text text-transparent">
               Monest
             </h1>

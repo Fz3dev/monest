@@ -104,9 +104,9 @@ export function computeMonth(month, household, fixedCharges, installments, plann
   })
 
   // Sums by payer
-  const commonCharges = chargesDetail.filter((c) => c.payer === 'common').reduce((sum, c) => sum + c.amount, 0)
-  const personalACharges = chargesDetail.filter((c) => c.payer === 'person_a').reduce((sum, c) => sum + c.amount, 0)
-  const personalBCharges = chargesDetail.filter((c) => c.payer === 'person_b').reduce((sum, c) => sum + c.amount, 0)
+  const commonCharges = Math.round(chargesDetail.filter((c) => c.payer === 'common').reduce((sum, c) => sum + c.amount, 0) * 100) / 100
+  const personalACharges = Math.round(chargesDetail.filter((c) => c.payer === 'person_a').reduce((sum, c) => sum + c.amount, 0) * 100) / 100
+  const personalBCharges = Math.round(chargesDetail.filter((c) => c.payer === 'person_b').reduce((sum, c) => sum + c.amount, 0) * 100) / 100
 
   // Pro rata: dynamically compute split ratio from actual incomes
   let ratio = household.splitRatio || 0.5
@@ -114,10 +114,11 @@ export function computeMonth(month, household, fixedCharges, installments, plann
     ratio = incomeA / (incomeA + incomeB)
   }
 
-  const shareA = commonCharges * ratio
-  const shareB = commonCharges * (1 - ratio)
-  const resteA = incomeA + startingBalanceA - shareA - personalACharges
-  const resteB = incomeB + startingBalanceB - shareB - personalBCharges
+  const shareA = Math.round(commonCharges * ratio * 100) / 100
+  const shareB = Math.round(commonCharges * (1 - ratio) * 100) / 100
+  const resteA = Math.round((incomeA + startingBalanceA - shareA - personalACharges) * 100) / 100
+  const resteB = Math.round((incomeB + startingBalanceB - shareB - personalBCharges) * 100) / 100
+  const resteFoyer = Math.round((resteA + resteB) * 100) / 100
 
   return {
     incomeA,
@@ -126,7 +127,7 @@ export function computeMonth(month, household, fixedCharges, installments, plann
     startingBalanceB,
     resteA,
     resteB,
-    resteFoyer: resteA + resteB,
+    resteFoyer,
     totalCommon: commonCharges,
     shareA,
     shareB,

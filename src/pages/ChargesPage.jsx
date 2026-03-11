@@ -286,7 +286,7 @@ export default function ChargesPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <img src="/logo-crown.png" alt="Monest" className="w-7 h-7 lg:hidden" />
+          <img src="/logo-crown-sm.webp" alt="Monest" className="w-7 h-7 lg:hidden" />
           <motion.h1
             className="text-2xl font-bold"
             initial={{ opacity: 0, x: -10 }}
@@ -541,6 +541,10 @@ export default function ChargesPage() {
         <ChargeForm
           initialValues={modal?.editId ? fixedCharges.find((c) => c.id === modal.editId) : undefined}
           onSubmit={(data) => {
+            if (!data.amount || parseFloat(data.amount) <= 0) {
+              toast.error('Le montant doit \u00eatre sup\u00e9rieur \u00e0 0')
+              return
+            }
             if (modal?.editId) updateFixedCharge(modal.editId, data)
             else { addFixedCharge(data); toast.success(t('charges.added', { name: data.name })) }
             setModal(null)
@@ -555,6 +559,10 @@ export default function ChargesPage() {
         <InstallmentForm
           initialValues={modal?.editId ? installmentPayments.find((p) => p.id === modal.editId) : undefined}
           onSubmit={(data) => {
+            if (!data.totalAmount || parseFloat(data.totalAmount) <= 0) {
+              toast.error('Le montant doit \u00eatre sup\u00e9rieur \u00e0 0')
+              return
+            }
             if (modal?.editId) updateInstallment(modal.editId, data)
             else { addInstallment(data); toast.success(t('charges.installmentAdded', { name: data.name })) }
             setModal(null)
@@ -569,6 +577,10 @@ export default function ChargesPage() {
         <PlannedExpenseForm
           initialValues={modal?.editId ? plannedExpenses.find((e) => e.id === modal.editId) : undefined}
           onSubmit={(data) => {
+            if (!data.estimatedAmount || parseFloat(data.estimatedAmount) <= 0) {
+              toast.error('Le montant doit \u00eatre sup\u00e9rieur \u00e0 0')
+              return
+            }
             if (modal?.editId) updatePlannedExpense(modal.editId, data)
             else { addPlannedExpense(data); toast.success(t('charges.added', { name: data.name })) }
             setModal(null)
