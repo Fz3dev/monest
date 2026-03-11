@@ -34,7 +34,12 @@ export default function ResetPasswordPage({ onComplete }) {
     try {
       const { error: authError } = await supabase.auth.updateUser({ password })
       if (authError) {
-        setError(authError.message)
+        const msg = authError.message
+        if (msg && msg.toLowerCase().includes('rate limit')) {
+          setError(t('auth.errors.rateLimited'))
+        } else {
+          setError(msg)
+        }
       } else {
         setSuccess(true)
         setTimeout(() => onComplete(), 2000)

@@ -179,7 +179,9 @@ function AppContent({ session }) {
 export default function App() {
   const [session, setSession] = useState(null)
   const [authLoading, setAuthLoading] = useState(() => isSupabaseConfigured())
-  const [passwordRecovery, setPasswordRecovery] = useState(false)
+  const [passwordRecovery, setPasswordRecovery] = useState(
+    () => window.location.hash.includes('type=recovery')
+  )
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return
