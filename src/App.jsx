@@ -195,7 +195,10 @@ export default function App() {
           <Routes>
             {/* Public routes */}
             <Route path="/" element={
-              session ? <Navigate to="/dashboard" replace /> : <LandingPage />
+              session ? <Navigate to="/dashboard" replace /> : <LandingPage lang="fr" />
+            } />
+            <Route path="/en" element={
+              session ? <Navigate to="/dashboard" replace /> : <LandingPage lang="en" />
             } />
             <Route path="/login" element={
               passwordRecovery && session
