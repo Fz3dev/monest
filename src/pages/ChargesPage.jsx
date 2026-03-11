@@ -265,14 +265,14 @@ export default function ChargesPage() {
   const [filterPayer, setFilterPayer] = useState(null)
   const [filterCategory, setFilterCategory] = useState(null)
   const [filterActive, setFilterActive] = useState(null) // null = all, true = active, false = inactive
-  const [sortBy, setSortBy] = useState('default') // 'default' | 'amount_desc' | 'amount_asc' | 'name'
+  const [sortBy, setSortBy] = useState('default') // 'default' | 'amount_desc' | 'amount_asc' | 'name' | 'category'
 
-  const SORT_MODES = ['default', 'amount_desc', 'amount_asc', 'name']
+  const SORT_MODES = ['default', 'amount_desc', 'amount_asc', 'name', 'category']
   const cycleSortBy = () => {
     const idx = SORT_MODES.indexOf(sortBy)
     setSortBy(SORT_MODES[(idx + 1) % SORT_MODES.length])
   }
-  const sortLabel = { default: t('charges.sortDefault'), amount_desc: t('charges.sortAmountDesc'), amount_asc: t('charges.sortAmountAsc'), name: t('charges.sortName') }
+  const sortLabel = { default: t('charges.sortDefault'), amount_desc: t('charges.sortAmountDesc'), amount_asc: t('charges.sortAmountAsc'), name: t('charges.sortName'), category: t('charges.sortCategory') }
 
   // Generic filter function for any charge list
   const filterItems = useCallback((items, hasCategory = false, hasActive = false) => {
@@ -299,6 +299,7 @@ export default function ChargesPage() {
     if (sortBy === 'amount_desc') sorted.sort((a, b) => (b.amount || b.installmentAmount || b.estimatedAmount || 0) - (a.amount || a.installmentAmount || a.estimatedAmount || 0))
     if (sortBy === 'amount_asc') sorted.sort((a, b) => (a.amount || a.installmentAmount || a.estimatedAmount || 0) - (b.amount || b.installmentAmount || b.estimatedAmount || 0))
     if (sortBy === 'name') sorted.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+    if (sortBy === 'category') sorted.sort((a, b) => (a.category || 'autre').localeCompare(b.category || 'autre'))
     return sorted
   }, [sortBy])
 

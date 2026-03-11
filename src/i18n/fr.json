@@ -139,7 +139,8 @@
     "sortDefault": "Par d\u00e9faut",
     "sortAmountDesc": "Montant \u2193",
     "sortAmountAsc": "Montant \u2191",
-    "sortName": "A \u2192 Z",
+    "sortName": "A → Z",
+    "sortCategory": "Catégorie",
     "noResults": "Aucun r\u00e9sultat avec ces filtres"
   },
   "expenses": {
