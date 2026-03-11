@@ -15,7 +15,7 @@ export default defineConfig({
       includeAssets: ['favicon.svg', 'favicon.png', 'apple-touch-icon.png', 'logo-crown.png'],
       manifest: {
         id: '/',
-        name: 'Monest — Votre budget, en clair',
+        name: 'Monest',
         short_name: 'Monest',
         description: 'Votre budget, en clair. Charges, épargne, reste à vivre — tout en un.',
         lang: 'fr',
