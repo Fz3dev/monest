@@ -12,6 +12,7 @@ import { Toaster, toast } from 'sonner'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import { DashboardSkeleton, ExpensesSkeleton, ChargesSkeleton, MonthlySkeleton, SavingsSkeleton } from './components/ui/Skeleton'
+import InstallPrompt from './components/InstallPrompt'
 
 // Lazy import with auto-recovery: if chunk fails (stale cache), nuke SW & reload
 function lazyRetry(importFn) {
@@ -151,6 +152,7 @@ function AppContent({ session }) {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <InstallPrompt />
     </AppShell>
   )
 }
