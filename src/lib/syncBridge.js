@@ -203,10 +203,18 @@ export function syncCategoryRule(pattern, category) {
 
 // ─── Monthly entries sync (composite key: household_id + month) ──────────────
 
-export function syncMonthlyEntryToSupabase(month, entry) {
+export function syncMonthlyEntryToSupabase(month, entry, changedFields = null) {
   if (!_syncMonthlyEntry) return
   const key = `monthly:${month}`
-  _pendingWrites.set(key, { table: '__monthly__', item: { month, entry } })
+
+  // Accumulate changed fields across debounce window
+  const existing = _pendingWrites.get(key)
+  const accumulatedFields = new Set([
+    ...(existing?.changedFields || []),
+    ...(changedFields || []),
+  ])
+
+  _pendingWrites.set(key, { table: '__monthly__', item: { month, entry }, changedFields: accumulatedFields })
 
   // Persist to IndexedDB so it survives page refresh
   addPendingMonthlyWrite(month, entry)
@@ -220,7 +228,7 @@ export function syncMonthlyEntryToSupabase(month, entry) {
     _pendingWrites.delete(key)
     if (!pending || !_syncMonthlyEntry) return
     try {
-      await withRetry(() => _syncMonthlyEntry(pending.item.month, pending.item.entry))
+      await withRetry(() => _syncMonthlyEntry(pending.item.month, pending.item.entry, pending.changedFields))
       notifyForMonthly(pending.item.month)
       removePendingWrite(key)
     } catch (err) {

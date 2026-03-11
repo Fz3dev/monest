@@ -103,6 +103,16 @@ export const useDashboardLayoutStore = create(
         }, 1000)
       },
     }),
-    { name: 'monest-dashboard-layout', version: 3 }
+    {
+      name: 'monest-dashboard-layout',
+      version: 3,
+      migrate: (state) => {
+        // Ensure layouts always has all required breakpoints
+        if (state && !state.layouts?.sm) {
+          state.layouts = DEFAULT_LAYOUTS
+        }
+        return state
+      },
+    }
   )
 )

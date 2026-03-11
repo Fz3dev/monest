@@ -11,6 +11,7 @@ import ResetPasswordPage from './components/auth/ResetPasswordPage'
 import { Toaster, toast } from 'sonner'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
+import { DashboardSkeleton, ExpensesSkeleton, ChargesSkeleton, MonthlySkeleton, SavingsSkeleton } from './components/ui/Skeleton'
 
 // Lazy import with auto-recovery: if chunk fails (stale cache), nuke SW & reload
 function lazyRetry(importFn) {
@@ -138,21 +139,18 @@ function AppContent({ session }) {
 
   return (
     <AppShell memberCount={memberCount}>
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/mensuel" element={<MonthlyPage syncMonthlyEntry={syncMonthlyEntry} />} />
-          <Route path="/charges" element={<ChargesPage />} />
-          <Route path="/depenses" element={<ExpensesPage />} />
-          <Route path="/epargne" element={<SavingsPage />} />
-          <Route path="/calendrier" element={<CalendarPage />} />
-          <Route path="/import" element={<ImportPage />} />
-          <Route path="/parametres" element={<SettingsPage session={session} saveHousehold={saveHousehold} createInvite={createInvite} />} />
-          {/* Redirect / to /dashboard when authenticated */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Suspense>
+      <Routes>
+        <Route path="/dashboard" element={<Suspense fallback={<DashboardSkeleton />}><DashboardPage /></Suspense>} />
+        <Route path="/mensuel" element={<Suspense fallback={<MonthlySkeleton />}><MonthlyPage syncMonthlyEntry={syncMonthlyEntry} /></Suspense>} />
+        <Route path="/charges" element={<Suspense fallback={<ChargesSkeleton />}><ChargesPage /></Suspense>} />
+        <Route path="/depenses" element={<Suspense fallback={<ExpensesSkeleton />}><ExpensesPage /></Suspense>} />
+        <Route path="/epargne" element={<Suspense fallback={<SavingsSkeleton />}><SavingsPage /></Suspense>} />
+        <Route path="/calendrier" element={<Suspense fallback={<PageLoader />}><CalendarPage /></Suspense>} />
+        <Route path="/import" element={<Suspense fallback={<PageLoader />}><ImportPage /></Suspense>} />
+        <Route path="/parametres" element={<Suspense fallback={<PageLoader />}><SettingsPage session={session} saveHousehold={saveHousehold} createInvite={createInvite} /></Suspense>} />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
     </AppShell>
   )
 }

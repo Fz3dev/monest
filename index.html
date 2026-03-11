@@ -5,30 +5,58 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#0B0B0F" />
-    <meta name="description" content="Votre budget, en clair. Charges, épargne, reste à vivre — tout en un." />
-    <title>Monest — Votre budget, en clair</title>
+    <meta name="theme-color" content="#6C63FF" />
+    <meta name="description" content="Suivez vos dépenses, gérez vos finances en solo ou en couple, et épargnez intelligemment. Gratuit, privé et disponible sur tous vos appareils." />
+    <meta name="author" content="Monest" />
+    <link rel="canonical" href="https://monest.vercel.app" />
+    <title>Monest — Gérez votre budget en toute simplicité</title>
 
-    <!-- Open Graph -->
+    <!-- Open Graph (iMessage, WhatsApp, Telegram, Facebook, LinkedIn, Slack) -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://monest.vercel.app" />
-    <meta property="og:title" content="Monest — Votre budget, en clair" />
-    <meta property="og:description" content="Votre budget, en clair. Charges, épargne, reste à vivre — tout en un." />
-    <meta property="og:image" content="https://monest.vercel.app/logo-full.png" />
+    <meta property="og:title" content="Monest — Votre budget, en clair." />
+    <meta property="og:description" content="Charges, revenus, épargne, reste à vivre — tout en un. En solo ou en couple, gratuit et privé." />
+    <meta property="og:image" content="https://monest.vercel.app/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Monest — Application de gestion de budget avec dashboard montrant le reste à vivre, les charges et l'épargne" />
     <meta property="og:locale" content="fr_FR" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <meta property="og:site_name" content="Monest" />
 
-    <!-- Twitter -->
+    <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Monest — Votre budget, en clair" />
-    <meta name="twitter:description" content="Votre budget, en clair. Charges, épargne, reste à vivre." />
-    <meta name="twitter:image" content="https://monest.vercel.app/logo-full.png" />
+    <meta name="twitter:title" content="Monest — Votre budget, en clair." />
+    <meta name="twitter:description" content="Charges, revenus, épargne, reste à vivre — tout en un. En solo ou en couple, gratuit et privé." />
+    <meta name="twitter:image" content="https://monest.vercel.app/og-image.png" />
+    <meta name="twitter:image:alt" content="Monest — Application de gestion de budget" />
 
     <!-- Apple -->
     <meta name="apple-mobile-web-app-title" content="Monest" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- Structured Data (Google Rich Results) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Monest",
+      "url": "https://monest.vercel.app",
+      "description": "Suivez vos dépenses, gérez vos finances en solo ou en couple, et épargnez intelligemment.",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "All",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
+      },
+      "screenshot": "https://monest.vercel.app/og-image.png",
+      "featureList": "Suivi des dépenses, Gestion des charges fixes, Épargne par objectifs, Reste à vivre en temps réel, Mode solo ou couple",
+      "inLanguage": ["fr", "en"]
+    }
+    </script>
   </head>
   <body class="bg-[#0B0B0F] text-[#E8E8ED]">
     <div id="root"></div>

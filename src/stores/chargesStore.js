@@ -129,6 +129,10 @@ export const useChargesStore = create(
         deleteFromSupabase('planned_expenses', id)
       },
     }),
-    { name: 'monest-charges', version: 1 }
+    {
+      name: 'monest-charges',
+      version: 1,
+      migrate: (state) => state,
+    }
   )
 )

@@ -23,6 +23,10 @@ export const useHouseholdStore = create(
         })),
       resetHousehold: () => set({ household: null }),
     }),
-    { name: 'monest-household', version: 1 }
+    {
+      name: 'monest-household',
+      version: 1,
+      migrate: (state) => state,
+    }
   )
 )

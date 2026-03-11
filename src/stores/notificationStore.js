@@ -49,6 +49,7 @@ export const useNotificationStore = create(
       name: 'monest-notifications',
       version: 1,
       partialize: (state) => ({ notifications: state.notifications }),
+      migrate: (state) => state,
     }
   )
 )

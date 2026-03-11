@@ -18,7 +18,8 @@ export const useMonthlyStore = create(
         set((state) => ({
           entries: { ...state.entries, [month]: updated },
         }))
-        syncMonthlyEntryToSupabase(month, updated)
+        // Pass only the changed field names for field-level sync
+        syncMonthlyEntryToSupabase(month, updated, Object.keys(data))
       },
 
       updateVariable: (month, chargeId, amount) => {
@@ -31,9 +32,13 @@ export const useMonthlyStore = create(
         set((state) => ({
           entries: { ...state.entries, [month]: updated },
         }))
-        syncMonthlyEntryToSupabase(month, updated)
+        syncMonthlyEntryToSupabase(month, updated, ['variableOverrides'])
       },
     }),
-    { name: 'monest-monthly', version: 1 }
+    {
+      name: 'monest-monthly',
+      version: 1,
+      migrate: (state) => state,
+    }
   )
 )

@@ -53,6 +53,10 @@ export const useCategoriesStore = create(
 
       resetCategories: () => set({ categories: DEFAULT_CATEGORIES }),
     }),
-    { name: 'monest-categories', version: 1 }
+    {
+      name: 'monest-categories',
+      version: 1,
+      migrate: (state) => state,
+    }
   )
 )

@@ -232,19 +232,61 @@ export function useSupabaseSync(session) {
     if (error) throw error
   }, [])
 
-  const syncMonthlyEntry = useCallback(async (month, entry) => {
+  const syncMonthlyEntry = useCallback(async (month, entry, changedFields = null) => {
     if (!isSupabaseConfigured() || !householdId) return
-    await supabase.from('monthly_entries').upsert({
-      household_id: householdId,
-      month,
-      income_a: entry.incomeA || 0,
-      income_b: entry.incomeB || 0,
-      starting_balance_a: entry.startingBalanceA || 0,
-      starting_balance_b: entry.startingBalanceB || 0,
-      transferred_a: entry.transferredA || 0,
-      transferred_b: entry.transferredB || 0,
-      variable_overrides: entry.variableOverrides || {},
-    }, { onConflict: 'household_id,month' })
+
+    const FIELD_MAP = {
+      incomeA: 'income_a', incomeB: 'income_b',
+      startingBalanceA: 'starting_balance_a', startingBalanceB: 'starting_balance_b',
+      transferredA: 'transferred_a', transferredB: 'transferred_b',
+      variableOverrides: 'variable_overrides',
+    }
+
+    // Field-level UPDATE when we know which fields changed (prevents overwriting partner's data)
+    if (changedFields && changedFields.size > 0) {
+      const update = { updated_at: new Date().toISOString() }
+      for (const field of changedFields) {
+        const col = FIELD_MAP[field]
+        if (col) {
+          update[col] = field === 'variableOverrides' ? (entry[field] || {}) : (entry[field] || 0)
+        }
+      }
+
+      // Try UPDATE first (entry already exists)
+      const { data } = await supabase.from('monthly_entries')
+        .update(update)
+        .eq('household_id', householdId)
+        .eq('month', month)
+        .select('id')
+
+      // If no row matched, entry doesn't exist yet — do full INSERT
+      if (!data?.length) {
+        await supabase.from('monthly_entries').upsert({
+          household_id: householdId,
+          month,
+          income_a: entry.incomeA || 0,
+          income_b: entry.incomeB || 0,
+          starting_balance_a: entry.startingBalanceA || 0,
+          starting_balance_b: entry.startingBalanceB || 0,
+          transferred_a: entry.transferredA || 0,
+          transferred_b: entry.transferredB || 0,
+          variable_overrides: entry.variableOverrides || {},
+        }, { onConflict: 'household_id,month' })
+      }
+    } else {
+      // Full upsert fallback (offline flush, bulk import, etc.)
+      await supabase.from('monthly_entries').upsert({
+        household_id: householdId,
+        month,
+        income_a: entry.incomeA || 0,
+        income_b: entry.incomeB || 0,
+        starting_balance_a: entry.startingBalanceA || 0,
+        starting_balance_b: entry.startingBalanceB || 0,
+        transferred_a: entry.transferredA || 0,
+        transferred_b: entry.transferredB || 0,
+        variable_overrides: entry.variableOverrides || {},
+      }, { onConflict: 'household_id,month' })
+    }
   }, [householdId])
 
   // Activate sync bridge so stores auto-sync to Supabase

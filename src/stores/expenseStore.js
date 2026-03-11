@@ -51,6 +51,10 @@ export const useExpenseStore = create(
           .expenses.filter((e) => e.date?.startsWith(month))
           .reduce((sum, e) => sum + e.amount, 0),
     }),
-    { name: 'monest-expenses', version: 1 }
+    {
+      name: 'monest-expenses',
+      version: 1,
+      migrate: (state) => state,
+    }
   )
 )

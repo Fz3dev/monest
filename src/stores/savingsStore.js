@@ -50,6 +50,10 @@ export const useSavingsStore = create(
       getTotalSaved: () => get().goals.reduce((sum, g) => sum + g.currentAmount, 0),
       getTotalTarget: () => get().goals.reduce((sum, g) => sum + g.targetAmount, 0),
     }),
-    { name: 'monest-savings', version: 1 }
+    {
+      name: 'monest-savings',
+      version: 1,
+      migrate: (state) => state,
+    }
   )
 )

@@ -1,23 +1,58 @@
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
 import { X } from 'lucide-react'
 
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
 export default function Modal({ isOpen, onClose, title, children }) {
   const { t } = useTranslation()
+  const dialogRef = useRef(null)
+  const previousFocus = useRef(null)
+
   const handleKeyDown = useCallback(
-    (e) => { if (e.key === 'Escape') onClose() },
+    (e) => {
+      if (e.key === 'Escape') {
+        onClose()
+        return
+      }
+      // Focus trap: Tab cycles within the modal
+      if (e.key === 'Tab' && dialogRef.current) {
+        const focusable = dialogRef.current.querySelectorAll(FOCUSABLE)
+        if (focusable.length === 0) return
+        const first = focusable[0]
+        const last = focusable[focusable.length - 1]
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault()
+          last.focus()
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
+    },
     [onClose]
   )
 
   useEffect(() => {
     if (isOpen) {
+      previousFocus.current = document.activeElement
       document.body.style.overflow = 'hidden'
       document.addEventListener('keydown', handleKeyDown)
+      // Auto-focus first focusable element in the modal
+      requestAnimationFrame(() => {
+        const focusable = dialogRef.current?.querySelectorAll(FOCUSABLE)
+        if (focusable?.length) focusable[0].focus()
+      })
     }
     return () => {
       document.body.style.overflow = ''
       document.removeEventListener('keydown', handleKeyDown)
+      // Restore focus to the element that opened the modal
+      if (!isOpen && previousFocus.current) {
+        previousFocus.current.focus?.()
+        previousFocus.current = null
+      }
     }
   }, [isOpen, handleKeyDown])
 
@@ -33,6 +68,7 @@ export default function Modal({ isOpen, onClose, title, children }) {
             onClick={onClose}
           />
           <motion.div
+            ref={dialogRef}
             initial={{ opacity: 0, y: 100 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 100 }}
