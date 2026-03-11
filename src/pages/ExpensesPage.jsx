@@ -380,7 +380,7 @@ export default function ExpensesPage() {
                 min="0"
                 value={editForm.amount}
                 onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })}
-                className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-transparent pr-8"
+                className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2.5 text-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-transparent pr-8"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted text-sm">€</span>
             </div>
@@ -396,7 +396,7 @@ export default function ExpensesPage() {
               value={editForm.note}
               onChange={(e) => setEditForm({ ...editForm, note: e.target.value })}
               placeholder={t('quickAdd.notePlaceholder')}
-              className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-transparent"
+              className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2.5 text-base text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-transparent"
             />
           </div>
 
@@ -438,7 +438,7 @@ export default function ExpensesPage() {
               value={editForm.date}
               onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
               style={{ colorScheme: 'dark' }}
-              className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-transparent"
+              className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2.5 text-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-transparent"
             />
           </div>
 

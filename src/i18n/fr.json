@@ -179,7 +179,14 @@
     "upToDate": "\u00c0 jour",
     "transfersMatch": "Les virements correspondent aux parts. Rien \u00e0 r\u00e9gulariser.",
     "mustTransfer": "doit remettre {{amount}}",
-    "overTransferred": "a trop vir\u00e9 de {{amount}}"
+    "overTransferred": "a trop vir\u00e9 de {{amount}}",
+    "disabled": "D\u00e9sactiv\u00e9e",
+    "enableCharge": "R\u00e9activer cette charge pour ce mois",
+    "disableCharge": "D\u00e9sactiver cette charge pour ce mois",
+    "sendCorrectionNotif": "Notifier la correction",
+    "correctionNotifTitle": "Correction virements — {{month}}",
+    "correctionNotifSent": "Notification envoy\u00e9e",
+    "correctionNotifError": "Erreur lors de l'envoi de la notification"
   },
   "savings": {
     "title": "Objectifs",

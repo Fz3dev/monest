@@ -546,7 +546,7 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
                 value={newCategoryName}
                 onChange={(e) => setNewCategoryName(e.target.value)}
                 placeholder={t('settings.newCategoryPlaceholder')}
-                className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1.5 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-brand/50"
+                className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1.5 text-base text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-brand/50"
               />
               <button
                 onClick={() => {

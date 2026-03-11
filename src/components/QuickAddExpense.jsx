@@ -283,14 +283,14 @@ export default function QuickAddExpense() {
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     placeholder={t('quickAdd.notePlaceholder')}
-                    className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-transparent transition-all"
+                    className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2.5 text-base text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-transparent transition-all"
                   />
                   <input
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
                     style={{ colorScheme: 'dark' }}
-                    className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-transparent transition-all w-[130px]"
+                    className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2.5 text-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-transparent transition-all w-[130px]"
                   />
                 </div>
 

@@ -34,6 +34,24 @@ export const useMonthlyStore = create(
         }))
         syncMonthlyEntryToSupabase(month, updated, ['variableOverrides'])
       },
+
+      toggleChargeForMonth: (month, chargeId) => {
+        const entry = get().entries[month] || { month }
+        const disabled = new Set(entry.disabledCharges || [])
+        if (disabled.has(chargeId)) {
+          disabled.delete(chargeId)
+        } else {
+          disabled.add(chargeId)
+        }
+        const updated = {
+          ...entry,
+          disabledCharges: [...disabled],
+        }
+        set((state) => ({
+          entries: { ...state.entries, [month]: updated },
+        }))
+        syncMonthlyEntryToSupabase(month, updated, ['disabledCharges'])
+      },
     }),
     {
       name: 'monest-monthly',

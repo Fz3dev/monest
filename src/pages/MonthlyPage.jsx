@@ -6,12 +6,16 @@ import { useChargesStore } from '../stores/chargesStore'
 import { useMonthlyStore } from '../stores/monthlyStore'
 import { computeMonth } from '../utils/calculations'
 import { formatCurrency, formatMonth, getCurrentMonth } from '../utils/format'
+import { useCategoriesStore } from '../stores/categoriesStore'
 import Card from '../components/ui/Card'
 import Input from '../components/ui/Input'
 import AnimatedNumber from '../components/ui/AnimatedNumber'
 import ProgressBar from '../components/ui/ProgressBar'
-import { ChevronLeft, ChevronRight, Wallet, TrendingDown, AlertTriangle, CheckCircle2, ArrowUpDown } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Wallet, TrendingDown, AlertTriangle, CheckCircle2, ArrowUpDown, ToggleLeft, ToggleRight, Send } from 'lucide-react'
 import { addMonths, subMonths, format } from 'date-fns'
+import { createNotification } from '../lib/notifications'
+import { supabase, isSupabaseConfigured } from '../lib/supabase'
+import { toast } from 'sonner'
 
 export default function MonthlyPage() {
   const { t } = useTranslation()
@@ -19,9 +23,11 @@ export default function MonthlyPage() {
   const fixedCharges = useChargesStore((s) => s.fixedCharges)
   const installmentPayments = useChargesStore((s) => s.installmentPayments)
   const plannedExpenses = useChargesStore((s) => s.plannedExpenses)
+  const getCategoryColor = useCategoriesStore((s) => s.getCategoryColor)
   const entries = useMonthlyStore((s) => s.entries)
   const setEntry = useMonthlyStore((s) => s.setEntry)
   const updateVariable = useMonthlyStore((s) => s.updateVariable)
+  const toggleChargeForMonth = useMonthlyStore((s) => s.toggleChargeForMonth)
 
   const [currentMonth, setCurrentMonth] = useState(() => getCurrentMonth())
   const touchStartX = useRef(null)
@@ -157,38 +163,51 @@ export default function MonthlyPage() {
         <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">{t('monthly.monthCharges')}</h2>
         <div className="space-y-1">
           {result.charges.map((charge) => (
-            <div key={charge.id} className="flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0">
+            <div key={charge.id} className={`flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0 ${charge.isDisabledThisMonth ? 'opacity-40' : ''}`}>
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <div
                   className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{
-                    backgroundColor:
-                      charge.payer === 'person_a' ? household?.personAColor
-                      : charge.payer === 'person_b' ? household?.personBColor
-                      : '#6C63FF',
-                  }}
+                  style={{ backgroundColor: getCategoryColor(charge.category) }}
                 />
                 <span className="text-sm text-text-secondary truncate">{charge.name}</span>
               </div>
-              {charge.type === 'fixed' ? (
-                <div className="flex items-center gap-1">
-                  <input
-                    type="number"
-                    value={String(
-                      entry?.variableOverrides?.[charge.id] !== undefined
-                        ? entry.variableOverrides[charge.id]
-                        : charge.originalAmount
-                    )}
-                    onChange={(e) =>
-                      updateVariable(currentMonth, charge.id, parseFloat(e.target.value) || 0)
+              <div className="flex items-center gap-1.5">
+                {charge.type === 'fixed' && !charge.isDisabledThisMonth && (
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      value={String(
+                        entry?.variableOverrides?.[charge.id] !== undefined
+                          ? entry.variableOverrides[charge.id]
+                          : charge.originalAmount
+                      )}
+                      onChange={(e) =>
+                        updateVariable(currentMonth, charge.id, parseFloat(e.target.value) || 0)
+                      }
+                      className="w-24 text-right bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1 text-base text-text-primary focus:outline-none focus:ring-1 focus:ring-brand/50"
+                    />
+                    <span className="text-xs text-text-muted">€</span>
+                  </div>
+                )}
+                {charge.type !== 'fixed' && (
+                  <span className="text-sm font-medium tabular-nums">{formatCurrency(charge.amount)}</span>
+                )}
+                {charge.isDisabledThisMonth && charge.type === 'fixed' && (
+                  <span className="text-xs text-text-muted italic">{t('monthly.disabled')}</span>
+                )}
+                {charge.type === 'fixed' && (
+                  <button
+                    onClick={() => toggleChargeForMonth(currentMonth, charge.id)}
+                    className="p-0.5 text-text-muted flex-shrink-0"
+                    aria-label={charge.isDisabledThisMonth ? t('monthly.enableCharge') : t('monthly.disableCharge')}
+                  >
+                    {charge.isDisabledThisMonth
+                      ? <ToggleLeft size={18} />
+                      : <ToggleRight size={18} className="text-success" />
                     }
-                    className="w-24 text-right bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-brand/50"
-                  />
-                  <span className="text-xs text-text-muted">€</span>
-                </div>
-              ) : (
-                <span className="text-sm font-medium tabular-nums">{formatCurrency(charge.amount)}</span>
-              )}
+                  </button>
+                )}
+              </div>
             </div>
           ))}
 
@@ -320,6 +339,38 @@ export default function MonthlyPage() {
             const regulB = Math.round((result.shareB - transferredB) * 100) / 100
             const hasRegul = Math.abs(regulA) >= 0.01 || Math.abs(regulB) >= 0.01
 
+            const sendCorrectionNotif = async () => {
+              if (!isSupabaseConfigured()) return
+              const { data: { session: s } } = await supabase.auth.getSession()
+              if (!s) return
+
+              const lines = []
+              if (Math.abs(regulA) >= 0.01) {
+                lines.push(regulA > 0
+                  ? `${household.personAName} doit verser ${formatCurrency(regulA)} supplementaires`
+                  : `${household.personAName} a un trop-percu de ${formatCurrency(Math.abs(regulA))}`)
+              }
+              if (Math.abs(regulB) >= 0.01) {
+                lines.push(regulB > 0
+                  ? `${household.personBName} doit verser ${formatCurrency(regulB)} supplementaires`
+                  : `${household.personBName} a un trop-percu de ${formatCurrency(Math.abs(regulB))}`)
+              }
+
+              try {
+                await createNotification({
+                  householdId: household.id,
+                  actorId: s.user.id,
+                  type: 'charge_updated',
+                  title: t('monthly.correctionNotifTitle', { month: formatMonth(currentMonth) }),
+                  body: lines.join(' · '),
+                  metadata: { month: currentMonth },
+                })
+                toast.success(t('monthly.correctionNotifSent'))
+              } catch {
+                toast.error(t('monthly.correctionNotifError'))
+              }
+            }
+
             return (
               <div className="mt-4 pt-3 border-t border-white/[0.06]">
                 <div className="flex items-center gap-2 mb-2">
@@ -348,6 +399,13 @@ export default function MonthlyPage() {
                         </span>
                       </div>
                     )}
+                    <button
+                      onClick={sendCorrectionNotif}
+                      className="mt-2 flex items-center justify-center gap-2 w-full py-2 rounded-xl bg-brand/10 text-brand text-xs font-medium hover:bg-brand/20 transition-colors cursor-pointer"
+                    >
+                      <Send size={12} />
+                      {t('monthly.sendCorrectionNotif')}
+                    </button>
                   </div>
                 )}
               </div>

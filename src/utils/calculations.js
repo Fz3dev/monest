@@ -55,6 +55,7 @@ export function computeMonth(month, household, fixedCharges, installments, plann
   const startingBalanceA = entry.startingBalanceA || 0
   const startingBalanceB = entry.startingBalanceB || 0
   const variableOverrides = entry.variableOverrides || {}
+  const disabledCharges = new Set(entry.disabledCharges || [])
 
   const chargesDetail = []
 
@@ -65,7 +66,8 @@ export function computeMonth(month, household, fixedCharges, installments, plann
   })
 
   activeCharges.forEach((c) => {
-    const amount = variableOverrides[c.id] !== undefined ? variableOverrides[c.id] : c.amount
+    const isDisabledThisMonth = disabledCharges.has(c.id)
+    const amount = isDisabledThisMonth ? 0 : (variableOverrides[c.id] !== undefined ? variableOverrides[c.id] : c.amount)
     chargesDetail.push({
       id: c.id,
       name: c.name,
@@ -74,6 +76,7 @@ export function computeMonth(month, household, fixedCharges, installments, plann
       category: c.category,
       type: 'fixed',
       isVariable: variableOverrides[c.id] !== undefined,
+      isDisabledThisMonth,
       originalAmount: c.amount,
     })
   })
