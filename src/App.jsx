@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState, useEffect } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useHouseholdStore } from './stores/householdStore'
 import { supabase, isSupabaseConfigured } from './lib/supabase'
 import { useSupabaseSync } from './hooks/useSupabaseSync'
@@ -31,6 +31,7 @@ function lazyRetry(importFn) {
   )
 }
 
+const LandingPage = lazyRetry(() => import('./pages/LandingPage'))
 const DashboardPage = lazyRetry(() => import('./pages/DashboardPage'))
 const MonthlyPage = lazyRetry(() => import('./pages/MonthlyPage'))
 const ChargesPage = lazyRetry(() => import('./pages/ChargesPage'))
@@ -61,7 +62,6 @@ function getInviteCode() {
   const params = new URLSearchParams(window.location.search)
   const fromUrl = params.get('invite')
   if (fromUrl) {
-    // Persist invite code so it survives email confirmation/magic link redirects
     localStorage.setItem('monest-invite-code', fromUrl)
     return fromUrl
   }
@@ -71,6 +71,15 @@ function getInviteCode() {
 function clearInviteCode() {
   localStorage.removeItem('monest-invite-code')
   window.history.replaceState({}, '', window.location.pathname)
+}
+
+// Protected route wrapper — redirects to /login if not authenticated
+function ProtectedRoute({ session, children }) {
+  const location = useLocation()
+  if (isSupabaseConfigured() && !session) {
+    return <Navigate to="/login" state={{ from: location }} replace />
+  }
+  return children
 }
 
 function AppContent({ session }) {
@@ -85,7 +94,6 @@ function AppContent({ session }) {
     const init = async () => {
       const hId = await loadFromSupabase()
 
-      // If no household but has invite code, try to join
       if (!hId && inviteCode) {
         const result = await acceptInvite(inviteCode)
         if (result?.error) {
@@ -100,7 +108,6 @@ function AppContent({ session }) {
           toast.success('Vous avez rejoint le foyer !')
         }
       }
-      // Clean up invite code from localStorage and URL
       clearInviteCode()
       setLoading(false)
     }
@@ -123,32 +130,28 @@ function AppContent({ session }) {
     return (
       <ErrorBoundary>
         <OnboardingWizard onComplete={createHousehold} />
-        <Toaster theme="dark" position="top-center" richColors />
       </ErrorBoundary>
     )
   }
 
   return (
-    <ErrorBoundary>
-      <BrowserRouter>
-        <AppShell memberCount={memberCount}>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/" element={<DashboardPage />} />
-              <Route path="/mensuel" element={<MonthlyPage syncMonthlyEntry={syncMonthlyEntry} />} />
-              <Route path="/charges" element={<ChargesPage />} />
-              <Route path="/depenses" element={<ExpensesPage />} />
-              <Route path="/epargne" element={<SavingsPage />} />
-              <Route path="/calendrier" element={<CalendarPage />} />
-              <Route path="/import" element={<ImportPage />} />
-              <Route path="/parametres" element={<SettingsPage session={session} saveHousehold={saveHousehold} createInvite={createInvite} />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </AppShell>
-        <Toaster theme="dark" position="top-center" richColors />
-      </BrowserRouter>
-    </ErrorBoundary>
+    <AppShell memberCount={memberCount}>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/mensuel" element={<MonthlyPage syncMonthlyEntry={syncMonthlyEntry} />} />
+          <Route path="/charges" element={<ChargesPage />} />
+          <Route path="/depenses" element={<ExpensesPage />} />
+          <Route path="/epargne" element={<SavingsPage />} />
+          <Route path="/calendrier" element={<CalendarPage />} />
+          <Route path="/import" element={<ImportPage />} />
+          <Route path="/parametres" element={<SettingsPage session={session} saveHousehold={saveHousehold} createInvite={createInvite} />} />
+          {/* Redirect / to /dashboard when authenticated */}
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </AppShell>
   )
 }
 
@@ -183,25 +186,38 @@ export default function App() {
     )
   }
 
-  // Password recovery flow — user clicked reset link in email
-  if (passwordRecovery && session) {
-    return (
-      <ErrorBoundary>
-        <ResetPasswordPage onComplete={() => setPasswordRecovery(false)} />
-        <Toaster theme="dark" position="top-center" richColors />
-      </ErrorBoundary>
-    )
-  }
+  return (
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={
+              session ? <Navigate to="/dashboard" replace /> : <LandingPage />
+            } />
+            <Route path="/login" element={
+              passwordRecovery && session
+                ? <ResetPasswordPage onComplete={() => setPasswordRecovery(false)} />
+                : session
+                  ? <Navigate to="/dashboard" replace />
+                  : <AuthPage inviteCode={getInviteCode()} />
+            } />
+            <Route path="/signup" element={
+              session
+                ? <Navigate to="/dashboard" replace />
+                : <AuthPage inviteCode={getInviteCode()} defaultMode="signup" />
+            } />
 
-  // If Supabase is configured, require auth
-  if (isSupabaseConfigured() && !session) {
-    return (
-      <ErrorBoundary>
-        <AuthPage inviteCode={getInviteCode()} />
+            {/* Protected routes — everything else requires auth */}
+            <Route path="/*" element={
+              <ProtectedRoute session={session}>
+                <AppContent session={session} />
+              </ProtectedRoute>
+            } />
+          </Routes>
+        </Suspense>
         <Toaster theme="dark" position="top-center" richColors />
-      </ErrorBoundary>
-    )
-  }
-
-  return <AppContent session={session} />
+      </BrowserRouter>
+    </ErrorBoundary>
+  )
 }

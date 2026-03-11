@@ -182,7 +182,7 @@ export default function AppShell({ children, memberCount = 0 }) {
   }, [])
 
   const navItems = [
-    { to: '/', icon: Home, label: t('nav.home') },
+    { to: '/dashboard', icon: Home, label: t('nav.home') },
     { to: '/depenses', icon: ShoppingBag, label: t('nav.expenses') },
     { to: '/charges', icon: CreditCard, label: t('nav.charges') },
     { to: '/epargne', icon: PiggyBank, label: t('nav.savings') },

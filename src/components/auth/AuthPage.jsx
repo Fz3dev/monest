@@ -19,11 +19,11 @@ function useErrorTranslation() {
   return (message) => ERROR_MAP[message] || message
 }
 
-export default function AuthPage({ inviteCode }) {
+export default function AuthPage({ inviteCode, defaultMode }) {
   const { t } = useTranslation()
   const translateError = useErrorTranslation()
 
-  const [mode, setMode] = useState(inviteCode ? 'signup' : 'login')
+  const [mode, setMode] = useState(inviteCode ? 'signup' : (defaultMode || 'login'))
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
