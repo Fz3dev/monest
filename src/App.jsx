@@ -25,7 +25,7 @@ function lazyRetry(importFn) {
           await Promise.all(regs.map(r => r.unregister()))
           const keys = await caches.keys()
           await Promise.all(keys.map(k => caches.delete(k)))
-        } catch (e) { /* ignore */ }
+        } catch { /* ignore */ }
         window.location.reload()
         return new Promise(() => {}) // never resolves — page is reloading
       }

@@ -61,7 +61,7 @@ function parseAmount(str) {
       str
         .replace(/\s/g, '')
         .replace(',', '.')
-        .replace(/[^0-9.\-]/g, '')
+        .replace(/[^0-9.-]/g, '')
     )
   )
 }
@@ -97,7 +97,7 @@ function parseDate(dateStr) {
   let match = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})/)
   if (match) return `${match[3]}-${match[2]}-${match[1]}`
   // DD-MM-YYYY or DD.MM.YYYY
-  match = dateStr.match(/(\d{2})[.\-](\d{2})[.\-](\d{4})/)
+  match = dateStr.match(/(\d{2})[.-](\d{2})[.-](\d{4})/)
   if (match) return `${match[3]}-${match[2]}-${match[1]}`
   // DD/MM/YY
   match = dateStr.match(/(\d{2})\/(\d{2})\/(\d{2})$/)

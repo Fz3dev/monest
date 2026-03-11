@@ -127,7 +127,7 @@ export default function DashboardPage() {
         color: getCategoryColor(name),
       }))
       .sort((a, b) => b.value - a.value)
-  }, [result.charges])
+  }, [result.charges, getCategoryColor])
 
   const [selectedChargeId, setSelectedChargeId] = useState(null)
 

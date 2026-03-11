@@ -144,7 +144,7 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
     try {
       const dbs = await indexedDB.databases()
       dbs.forEach(db => indexedDB.deleteDatabase(db.name))
-    } catch {}
+    } catch { /* IndexedDB cleanup is best-effort */ }
     resetHousehold()
     window.location.reload()
   }

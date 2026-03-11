@@ -14,20 +14,19 @@ function setDismissed() {
   localStorage.setItem(DISMISS_KEY, new Date().toISOString())
 }
 
+function isStandalonePWA() {
+  return window.matchMedia('(display-mode: standalone)').matches ||
+    navigator.standalone === true // Safari iOS
+}
+
 export function useInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState(null)
-  const [isInstalled, setIsInstalled] = useState(false)
+  const [isInstalled, setIsInstalled] = useState(isStandalonePWA)
   const [dismissed, setDismissedState] = useState(isDismissed)
 
   useEffect(() => {
-    // Already running as installed PWA?
-    const isStandalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      navigator.standalone === true // Safari iOS
-    if (isStandalone) {
-      setIsInstalled(true)
-      return
-    }
+    // Already running as installed PWA — skip event listeners
+    if (isInstalled) return
 
     const handler = (e) => {
       e.preventDefault() // Prevent Chrome mini-infobar
@@ -46,7 +45,7 @@ export function useInstallPrompt() {
       window.removeEventListener('beforeinstallprompt', handler)
       window.removeEventListener('appinstalled', installedHandler)
     }
-  }, [])
+  }, [isInstalled])
 
   const promptInstall = useCallback(async () => {
     if (!deferredPrompt) return null

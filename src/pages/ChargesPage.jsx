@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'motion/react'
+import { motion, AnimatePresence, useMotionValue, animate } from 'motion/react'
 import { useHouseholdStore } from '../stores/householdStore'
 import { useChargesStore } from '../stores/chargesStore'
 import { useCategoriesStore } from '../stores/categoriesStore'

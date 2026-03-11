@@ -212,12 +212,15 @@ function PieChart({ items, size = 100 }) {
   const r = size / 2 - 4
   const cx = size / 2
   const cy = size / 2
-  let cumulative = 0
-  const paths = items.map((item) => {
-    const start = cumulative
-    cumulative += item.pct / 100
+  const offsets = items.reduce((acc, item, i) => {
+    acc[i + 1] = acc[i] + item.pct / 100
+    return acc
+  }, [0])
+  const paths = items.map((item, i) => {
+    const start = offsets[i]
+    const end = offsets[i + 1]
     const startAngle = start * 2 * Math.PI - Math.PI / 2
-    const endAngle = cumulative * 2 * Math.PI - Math.PI / 2
+    const endAngle = end * 2 * Math.PI - Math.PI / 2
     const largeArc = item.pct > 50 ? 1 : 0
     const x1 = cx + r * Math.cos(startAngle)
     const y1 = cy + r * Math.sin(startAngle)
