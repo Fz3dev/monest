@@ -9,6 +9,7 @@ import { useSavingsStore } from '../stores/savingsStore'
 import { useExpenseStore } from '../stores/expenseStore'
 import { computeMonth } from '../utils/calculations'
 import { generateInsights } from '../utils/insights'
+import { calculateStreak, calculateBadges } from '../utils/streaks'
 import { formatCurrency, formatMonth, getCurrentMonth, formatMonthShort, getCategoryLabel } from '../utils/format'
 import { useCategoriesStore } from '../stores/categoriesStore'
 import Card from '../components/ui/Card'
@@ -81,10 +82,19 @@ export default function DashboardPage() {
     return generateInsights(currentMonth, household, fixedCharges, installmentPayments, plannedExpenses, entries)
   }, [currentMonth, household, fixedCharges, installmentPayments, plannedExpenses, entries])
 
+  const streak = useMemo(
+    () => calculateStreak(currentMonth, household, fixedCharges, installmentPayments, plannedExpenses, entries),
+    [currentMonth, household, fixedCharges, installmentPayments, plannedExpenses, entries]
+  )
+
   const totalIncome = result.incomeA + result.incomeB
   const totalCharges = result.totalCommon + result.personalACharges + result.personalBCharges
   const hasIncome = result.incomeA > 0 || result.incomeB > 0
   const chargesRate = totalIncome > 0 ? Math.round((totalCharges / totalIncome) * 100) : 0
+  const badges = useMemo(
+    () => calculateBadges(streak, totalCharges, totalIncome, savingsGoals),
+    [streak, totalCharges, totalIncome, savingsGoals]
+  )
   const flexNumber = result.resteFoyer - monthExpenses
   const today = new Date()
   const daysLeft = getDaysInMonth(today) - getDate(today) + 1
@@ -308,6 +318,42 @@ export default function DashboardPage() {
         </Card>
       </Link>
     </div>
+  )
+
+  // Streak & Badges
+  widgets.streakBadges = (
+    <Card animate={false} className="h-full">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-lg">{streak > 0 ? '\u{1F525}' : '\u{1F31F}'}</span>
+        <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
+          {t('dashboard.badges')}
+        </span>
+      </div>
+      {streak > 0 ? (
+        <div className="text-center mb-3">
+          <span className="text-2xl font-black text-brand">
+            {streak === 1 ? t('dashboard.streakSingle') : t('dashboard.streak', { count: streak })}
+          </span>
+        </div>
+      ) : (
+        <div className="text-center mb-3">
+          <span className="text-sm text-text-muted">{t('dashboard.noStreak')}</span>
+        </div>
+      )}
+      {badges.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {badges.slice(0, 4).map((badge) => (
+            <div
+              key={badge.id}
+              className="flex items-center gap-1.5 bg-white/[0.06] rounded-full px-3 py-1"
+            >
+              <span className="text-sm">{badge.icon}</span>
+              <span className="text-[11px] text-text-secondary">{badge.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
   )
 
   // Savings — conditional

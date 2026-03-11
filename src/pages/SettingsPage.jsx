@@ -12,8 +12,15 @@ import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Select from '../components/ui/Select'
-import { Download, Upload, Trash2, User, Database, LogOut, Users, Share2, Copy, Check, Loader2, UserPlus, Tag, Plus, X, RotateCcw } from 'lucide-react'
+import { Download, Upload, Trash2, User, Database, LogOut, Users, Share2, Copy, Check, Loader2, UserPlus, Tag, Plus, X, RotateCcw, Bell } from 'lucide-react'
 import { toast } from 'sonner'
+import {
+  isNotificationSupported,
+  isNotificationEnabled,
+  disableNotifications,
+  requestPermission,
+  registerPeriodicSync,
+} from '../utils/notifications'
 
 const COLORS = [
   '#6C63FF', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#22c55e',
@@ -41,6 +48,29 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
     splitMode: '50/50',
   })
   const fileInputRef = useRef(null)
+  const [notificationsOn, setNotificationsOn] = useState(() => isNotificationEnabled())
+
+  const handleToggleNotifications = async () => {
+    if (notificationsOn) {
+      disableNotifications()
+      setNotificationsOn(false)
+      toast.success(t('notifications.disabled'))
+    } else {
+      if (!isNotificationSupported()) return
+      if (Notification.permission === 'denied') {
+        toast.error(t('notifications.permissionDenied'))
+        return
+      }
+      const granted = await requestPermission()
+      if (granted) {
+        setNotificationsOn(true)
+        toast.success(t('notifications.enabled'))
+        await registerPeriodicSync()
+      } else {
+        toast.error(t('notifications.permissionDenied'))
+      }
+    }
+  }
 
   const handleExport = () => {
     const data = {
@@ -533,6 +563,37 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
         <Button variant="secondary" onClick={handleLogout} className="w-full">
           <LogOut size={14} className="inline mr-1.5" /> {t('settings.logout')}
         </Button>
+      )}
+
+      {/* Notifications */}
+      {isNotificationSupported() && (
+        <Card>
+          <div className="flex items-center gap-2 mb-3">
+            <Bell size={14} className="text-brand" />
+            <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">{t('settings.notifications')}</h2>
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-text-primary">{t('settings.weeklyReminder')}</p>
+              <p className="text-xs text-text-muted mt-0.5">{t('settings.weeklyReminderHint')}</p>
+            </div>
+            <button
+              onClick={handleToggleNotifications}
+              className={`relative ml-3 flex-shrink-0 w-11 h-6 rounded-full transition-colors cursor-pointer ${
+                notificationsOn ? 'bg-brand' : 'bg-white/[0.12]'
+              }`}
+              role="switch"
+              aria-checked={notificationsOn}
+              aria-label={t('settings.weeklyReminder')}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                  notificationsOn ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+        </Card>
       )}
 
       {/* Reset */}

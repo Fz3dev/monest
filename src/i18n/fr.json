@@ -85,7 +85,11 @@
     "chargesDetail": "D\u00e9tail des charges",
     "installmentBadge": "\u00e9ch.",
     "plannedBadge": "pr\u00e9vu",
-    "whatIf": "Sans cette charge : {{amount}}"
+    "whatIf": "Sans cette charge : {{amount}}",
+    "streak": "{{count}} mois cons\u00e9cutifs",
+    "streakSingle": "1 mois positif",
+    "noStreak": "Commencez votre s\u00e9rie !",
+    "badges": "Badges"
   },
   "charges": {
     "title": "Charges",
@@ -259,6 +263,9 @@
     "categoriesReset": "Cat\u00e9gories r\u00e9initialis\u00e9es",
     "currency": "Devise",
     "currencyHint": "La devise utilis\u00e9e dans toute l'application",
+    "notifications": "Notifications",
+    "weeklyReminder": "Rappel hebdomadaire",
+    "weeklyReminderHint": "Recevez une notification chaque semaine pour v\u00e9rifier votre budget",
     "modelLabels": {
       "common_and_personal": "Commun + Perso",
       "full_common": "Tout commun",
@@ -397,7 +404,14 @@
   "notifications": {
     "title": "Notifications",
     "markAllRead": "Tout marquer comme lu",
-    "noNotifications": "Aucune notification"
+    "noNotifications": "Aucune notification",
+    "weeklyReminder": "Pensez à vérifier votre budget cette semaine !",
+    "askPermission": "Activez les notifications pour recevoir un rappel hebdomadaire de votre budget.",
+    "enable": "Activer",
+    "later": "Plus tard",
+    "enabled": "Notifications activées",
+    "disabled": "Notifications désactivées",
+    "permissionDenied": "Les notifications sont bloquées par votre navigateur. Modifiez les permissions dans les réglages."
   },
   "insights": {
     "lowChargesRate": "Vos charges ne repr\u00e9sentent que {{rate}}% de vos revenus. Confortable !",
@@ -409,6 +423,12 @@
     "chargesDown": "Charges r\u00e9duites de {{percent}}% par rapport au mois dernier ({{amount}} \u00e9conomies).",
     "categoryUp": "{{label}} : +{{percent}}% ce mois (+{{amount}}).",
     "heavyMonth": "Attention : {{amount}} de charges pr\u00e9vues en {{month}}."
+  },
+  "offline": {
+    "banner": "Mode hors ligne",
+    "syncPending": "Modifications en attente de synchronisation",
+    "syncing": "Synchronisation...",
+    "synced": "Synchronis\u00e9 !"
   },
   "dashboardGrid": {
     "editLayout": "Personnaliser la disposition",

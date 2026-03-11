@@ -3,6 +3,13 @@
 
 import { toast } from 'sonner'
 import { createNotification } from './notifications'
+import {
+  addPendingWrite,
+  removePendingWrite,
+  getAllPendingWrites,
+  addPendingDelete,
+  addPendingMonthlyWrite,
+} from './offlineQueue'
 
 let _syncItem = null
 let _deleteItem = null
@@ -47,13 +54,18 @@ function flushWrite(key) {
   _pendingTimers.delete(key)
   _pendingWrites.delete(key)
   if (!pending || !_syncItem) return
-  executeSyncToSupabase(pending.table, pending.item)
+  executeSyncToSupabase(pending.table, pending.item).then((ok) => {
+    if (ok) removePendingWrite(key)
+  })
 }
 
 function debouncedSync(table, item) {
   if (!_syncItem) return
   const key = `${table}:${item.id}`
   _pendingWrites.set(key, { table, item })
+
+  // Persist to IndexedDB so it survives page refresh
+  addPendingWrite(table, item)
 
   // Clear existing timer for this key
   const existingTimer = _pendingTimers.get(key)
@@ -170,7 +182,12 @@ export function deleteFromSupabase(table, id) {
     _pendingTimers.delete(key)
     _pendingWrites.delete(key)
   }
-  executeDeleteFromSupabase(table, id)
+  // Remove any pending write from IndexedDB & persist the delete
+  removePendingWrite(key)
+  addPendingDelete(table, id)
+  executeDeleteFromSupabase(table, id).then((ok) => {
+    if (ok) removePendingWrite(`delete:${table}:${id}`)
+  })
   notifyForDelete(table, id)
 }
 
@@ -191,6 +208,9 @@ export function syncMonthlyEntryToSupabase(month, entry) {
   const key = `monthly:${month}`
   _pendingWrites.set(key, { table: '__monthly__', item: { month, entry } })
 
+  // Persist to IndexedDB so it survives page refresh
+  addPendingMonthlyWrite(month, entry)
+
   const existingTimer = _pendingTimers.get(key)
   if (existingTimer) clearTimeout(existingTimer)
 
@@ -202,6 +222,7 @@ export function syncMonthlyEntryToSupabase(month, entry) {
     try {
       await withRetry(() => _syncMonthlyEntry(pending.item.month, pending.item.entry))
       notifyForMonthly(pending.item.month)
+      removePendingWrite(key)
     } catch (err) {
       console.error('Monthly sync error:', err)
       toast.error('Erreur de sync — vos modifications pourraient ne pas etre sauvegardees')
@@ -222,4 +243,48 @@ export function deleteCategoryRule(pattern) {
     _pendingWrites.delete(key)
   }
   executeDeleteFromSupabase('category_rules', id)
+}
+
+// ─── Offline queue flush ────────────────────────────────────────────────────
+
+export async function flushOfflineQueue() {
+  if (!_syncItem && !_deleteItem && !_syncMonthlyEntry) return 0
+
+  let flushed = 0
+  let pending
+  try {
+    pending = await getAllPendingWrites()
+  } catch {
+    return 0
+  }
+  if (!pending.length) return 0
+
+  // Sort by timestamp to replay in order
+  pending.sort((a, b) => a.timestamp - b.timestamp)
+
+  for (const entry of pending) {
+    try {
+      if (entry.isMonthly && _syncMonthlyEntry) {
+        // Monthly entry
+        await withRetry(() => _syncMonthlyEntry(entry.item.month, entry.item.entry))
+        await removePendingWrite(entry.key)
+        flushed++
+      } else if (entry.isDelete && _deleteItem) {
+        // Delete operation
+        await withRetry(() => _deleteItem(entry.table, entry.id))
+        await removePendingWrite(entry.key)
+        flushed++
+      } else if (!entry.isDelete && !entry.isMonthly && _syncItem) {
+        // Regular upsert
+        await withRetry(() => _syncItem(entry.table, entry.item))
+        await removePendingWrite(entry.key)
+        flushed++
+      }
+    } catch (err) {
+      console.error(`Offline queue flush error for ${entry.key}:`, err)
+      // Leave in queue for next attempt
+    }
+  }
+
+  return flushed
 }

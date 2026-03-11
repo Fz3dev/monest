@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
-import { setSyncFunctions, setUserInfo } from '../lib/syncBridge'
+import { setSyncFunctions, setUserInfo, flushOfflineQueue } from '../lib/syncBridge'
 import { useHouseholdStore } from '../stores/householdStore'
 import { useChargesStore } from '../stores/chargesStore'
 import { useMonthlyStore } from '../stores/monthlyStore'
@@ -259,6 +259,12 @@ export function useSupabaseSync(session) {
       || session?.user?.email?.split('@')[0]
       || 'Quelqu\'un'
     setUserInfo(session?.user?.id, userName, householdId)
+
+    // Flush any pending offline writes now that sync functions are available
+    flushOfflineQueue().then((count) => {
+      if (count > 0) console.log(`Flushed ${count} offline pending write(s)`)
+    })
+
     return () => {
       setSyncFunctions(null, null, null)
       setUserInfo(null, null, null)
