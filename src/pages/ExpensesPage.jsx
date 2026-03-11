@@ -32,7 +32,7 @@ export default function ExpensesPage() {
   const getCategoryColor = useCategoriesStore((s) => s.getCategoryColor)
   const getCategoryEmoji = useCategoriesStore((s) => s.getCategoryEmoji)
 
-  const [currentMonth, setCurrentMonth] = useState(getCurrentMonth())
+  const [currentMonth, setCurrentMonth] = useState(() => getCurrentMonth())
   const [activeCategory, setActiveCategory] = useState(null)
   const [editingExpense, setEditingExpense] = useState(null)
   const [editForm, setEditForm] = useState({ note: '', amount: '', category: '', date: '' })

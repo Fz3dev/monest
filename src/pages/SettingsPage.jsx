@@ -498,12 +498,13 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
               const label = t(`categories.${key}`, { defaultValue: key.charAt(0).toUpperCase() + key.slice(1) })
               return (
                 <div key={key} className="flex items-center gap-3">
-                  <label className="relative cursor-pointer">
+                  <label className="relative cursor-pointer" aria-label={label}>
                     <input
                       type="color"
                       value={cat.color}
                       onChange={(e) => updateCategoryColor(key, e.target.value)}
                       className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                      aria-label={label}
                     />
                     <div className="w-6 h-6 rounded-full border-2 border-white/10" style={{ backgroundColor: cat.color }} />
                   </label>
@@ -521,12 +522,13 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
 
             {/* Add custom category */}
             <div className="flex items-center gap-2 pt-2 border-t border-white/[0.06]">
-              <label className="relative cursor-pointer">
+              <label className="relative cursor-pointer" aria-label={t('settings.categoryColor')}>
                 <input
                   type="color"
                   value={newCategoryColor}
                   onChange={(e) => setNewCategoryColor(e.target.value)}
                   className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                  aria-label={t('settings.categoryColor')}
                 />
                 <div className="w-6 h-6 rounded-full border-2 border-dashed border-white/20" style={{ backgroundColor: newCategoryColor }} />
               </label>

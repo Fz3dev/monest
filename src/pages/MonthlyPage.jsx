@@ -23,7 +23,7 @@ export default function MonthlyPage() {
   const setEntry = useMonthlyStore((s) => s.setEntry)
   const updateVariable = useMonthlyStore((s) => s.updateVariable)
 
-  const [currentMonth, setCurrentMonth] = useState(getCurrentMonth())
+  const [currentMonth, setCurrentMonth] = useState(() => getCurrentMonth())
   const [swipeDir, setSwipeDir] = useState(0)
   const touchStartX = useRef(null)
 

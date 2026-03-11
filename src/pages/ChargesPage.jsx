@@ -14,7 +14,9 @@ import Modal from '../components/ui/Modal'
 import { Plus, Trash2, ToggleLeft, ToggleRight, Edit3 } from 'lucide-react'
 import { toast } from 'sonner'
 
-function SwipeableCard({ actions = [], children }) {
+const EMPTY_ACTIONS = []
+
+function SwipeableCard({ actions = EMPTY_ACTIONS, children }) {
   const x = useMotionValue(0)
   const totalWidth = actions.length * 70
 
@@ -385,8 +387,11 @@ export default function ChargesPage() {
                 <Card className={`${!charge.active ? 'opacity-40' : ''}`} animate={false}>
                   <div className="flex items-center gap-3">
                     <div
+                      role="button"
+                      tabIndex={0}
                       className="flex-1 min-w-0 lg:cursor-pointer"
                       onClick={() => setModal({ type: 'fixed', editId: charge.id })}
+                      onKeyDown={(e) => { if (e.key === 'Enter') setModal({ type: 'fixed', editId: charge.id }) }}
                     >
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-sm truncate">{charge.name}</span>
@@ -468,8 +473,11 @@ export default function ChargesPage() {
                 <Card animate={false}>
                   <div className="flex items-center gap-3">
                     <div
+                      role="button"
+                      tabIndex={0}
                       className="flex-1 min-w-0 lg:cursor-pointer"
                       onClick={() => setModal({ type: 'installment', editId: payment.id })}
+                      onKeyDown={(e) => { if (e.key === 'Enter') setModal({ type: 'installment', editId: payment.id }) }}
                     >
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getPayerColor(payment.payer) }} />
@@ -529,8 +537,11 @@ export default function ChargesPage() {
                 <Card animate={false}>
                   <div className="flex items-center gap-3">
                     <div
+                      role="button"
+                      tabIndex={0}
                       className="flex-1 min-w-0 lg:cursor-pointer"
                       onClick={() => setModal({ type: 'planned', editId: expense.id })}
+                      onKeyDown={(e) => { if (e.key === 'Enter') setModal({ type: 'planned', editId: expense.id }) }}
                     >
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getPayerColor(expense.payer) }} />

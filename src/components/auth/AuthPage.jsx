@@ -180,8 +180,8 @@ export default function AuthPage({ inviteCode, defaultMode }) {
         >
           <Card className="text-center p-8">
             <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
             >
               <CheckCircle2 className="w-16 h-16 text-success mx-auto mb-4" />
@@ -313,8 +313,8 @@ export default function AuthPage({ inviteCode, defaultMode }) {
         >
           <Card className="text-center p-8">
             <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
             >
               {signupSent ? (

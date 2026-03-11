@@ -498,8 +498,11 @@ export default function DashboardPage() {
           {result.charges.map((charge) => (
             <div
               key={charge.id}
+              role="button"
+              tabIndex={0}
               className="cursor-pointer rounded-lg px-1.5 py-1.5 -mx-1.5 transition-colors hover:bg-white/[0.04]"
               onClick={() => setSelectedChargeId(selectedChargeId === charge.id ? null : charge.id)}
+              onKeyDown={(e) => { if (e.key === 'Enter') setSelectedChargeId(selectedChargeId === charge.id ? null : charge.id) }}
             >
               <div className="flex justify-between items-center text-sm">
                 <div className="flex items-center gap-2 min-w-0">

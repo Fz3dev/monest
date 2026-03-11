@@ -176,7 +176,7 @@ function AppContent({ session }) {
 
 export default function App() {
   const [session, setSession] = useState(null)
-  const [authLoading, setAuthLoading] = useState(isSupabaseConfigured())
+  const [authLoading, setAuthLoading] = useState(() => isSupabaseConfigured())
   const [passwordRecovery, setPasswordRecovery] = useState(false)
 
   useEffect(() => {

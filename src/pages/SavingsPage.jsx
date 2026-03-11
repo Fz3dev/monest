@@ -241,7 +241,7 @@ function GoalCard({ goal, index, onEdit, onContribute, onDelete, t }) {
         <Card animate={false} className="relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-[2px] opacity-60" style={{ background: `linear-gradient(90deg, ${goal.color}, ${goal.color}00)` }} />
           {isComplete && (
-            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-3 right-3">
+            <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="absolute top-3 right-3">
               <div className="bg-success/15 text-success text-[10px] font-semibold px-2 py-0.5 rounded-full border border-success/20 flex items-center gap-1">
                 <Sparkles size={10} />
                 {t('savings.reached')}

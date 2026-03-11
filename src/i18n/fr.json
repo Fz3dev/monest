@@ -264,6 +264,7 @@
     "colorLabel": "Couleur {{color}}",
     "categories": "Cat\u00e9gories",
     "newCategoryPlaceholder": "Nouvelle cat\u00e9gorie...",
+    "categoryColor": "Couleur de la cat\u00e9gorie",
     "categoryAdded": "Cat\u00e9gorie ajout\u00e9e",
     "resetCategories": "R\u00e9initialiser les cat\u00e9gories",
     "categoriesReset": "Cat\u00e9gories r\u00e9initialis\u00e9es",

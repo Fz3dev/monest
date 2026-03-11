@@ -70,10 +70,13 @@ function NotificationPanel({ onClose, bellRef }) {
             return (
               <div
                 key={notif.id}
+                role="button"
+                tabIndex={0}
                 className={`flex gap-3 px-4 py-3 transition-colors cursor-pointer hover:bg-white/[0.03] ${
                   !notif.read ? 'bg-brand/[0.04]' : ''
                 }`}
                 onClick={() => { if (!notif.read) markAsRead(notif.id) }}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !notif.read) markAsRead(notif.id) }}
               >
                 <div className={`flex-shrink-0 mt-0.5 w-8 h-8 rounded-full flex items-center justify-center ${
                   !notif.read ? 'bg-brand/10 text-brand' : 'bg-white/[0.06] text-text-muted'

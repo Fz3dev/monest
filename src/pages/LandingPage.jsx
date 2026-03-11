@@ -315,8 +315,8 @@ function DashboardMockup({ t }) {
             <p className="text-[10px] font-semibold text-text-secondary mb-3">{m.categories}</p>
             <div className="flex items-center gap-4">
               <motion.div
-                initial={{ scale: 0, rotate: -90 }}
-                whileInView={{ scale: 1, rotate: 0 }}
+                initial={{ scale: 0.5, opacity: 0, rotate: -90 }}
+                whileInView={{ scale: 1, opacity: 1, rotate: 0 }}
                 transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
                 viewport={{ once: true }}
               >
