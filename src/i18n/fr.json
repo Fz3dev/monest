@@ -133,7 +133,14 @@
     "formNotePlaceholder": "D\u00e9tails optionnels...",
     "installmentSummary": "{{total}} en {{count}}x ({{monthly}}/mois)",
     "activate": "Activer",
-    "deactivate": "D\u00e9sactiver"
+    "deactivate": "D\u00e9sactiver",
+    "search": "Rechercher...",
+    "sort": "Trier",
+    "sortDefault": "Par d\u00e9faut",
+    "sortAmountDesc": "Montant \u2193",
+    "sortAmountAsc": "Montant \u2191",
+    "sortName": "A \u2192 Z",
+    "noResults": "Aucun r\u00e9sultat avec ces filtres"
   },
   "expenses": {
     "prevMonth": "Mois pr\u00e9c\u00e9dent",

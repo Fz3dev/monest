@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence, useMotionValue, animate } from 'motion/react'
 import { useHouseholdStore } from '../stores/householdStore'
@@ -11,7 +11,7 @@ import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Select from '../components/ui/Select'
 import Modal from '../components/ui/Modal'
-import { Plus, Trash2, ToggleLeft, ToggleRight, Edit3 } from 'lucide-react'
+import { Plus, Trash2, ToggleLeft, ToggleRight, Edit3, Search, ArrowUpDown } from 'lucide-react'
 import { toast } from 'sonner'
 
 const EMPTY_ACTIONS = []
@@ -261,14 +261,58 @@ export default function ChargesPage() {
 
   const [modal, setModal] = useState(null)
   const [tab, setTab] = useState('fixed')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filterPayer, setFilterPayer] = useState(null)
+  const [filterCategory, setFilterCategory] = useState(null)
+  const [filterActive, setFilterActive] = useState(null) // null = all, true = active, false = inactive
+  const [sortBy, setSortBy] = useState('default') // 'default' | 'amount_desc' | 'amount_asc' | 'name'
+
+  const SORT_MODES = ['default', 'amount_desc', 'amount_asc', 'name']
+  const cycleSortBy = () => {
+    const idx = SORT_MODES.indexOf(sortBy)
+    setSortBy(SORT_MODES[(idx + 1) % SORT_MODES.length])
+  }
+  const sortLabel = { default: t('charges.sortDefault'), amount_desc: t('charges.sortAmountDesc'), amount_asc: t('charges.sortAmountAsc'), name: t('charges.sortName') }
+
+  // Generic filter function for any charge list
+  const filterItems = useCallback((items, hasCategory = false, hasActive = false) => {
+    let result = items
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter((c) => (c.name || '').toLowerCase().includes(q))
+    }
+    if (filterPayer) {
+      result = result.filter((c) => c.payer === filterPayer)
+    }
+    if (filterCategory && hasCategory) {
+      result = result.filter((c) => (c.category || 'autre') === filterCategory)
+    }
+    if (filterActive !== null && hasActive) {
+      result = result.filter((c) => c.active === filterActive)
+    }
+    return result
+  }, [searchQuery, filterPayer, filterCategory, filterActive])
+
+  const sortItems = useCallback((items) => {
+    if (sortBy === 'default') return items
+    const sorted = [...items]
+    if (sortBy === 'amount_desc') sorted.sort((a, b) => (b.amount || b.installmentAmount || b.estimatedAmount || 0) - (a.amount || a.installmentAmount || a.estimatedAmount || 0))
+    if (sortBy === 'amount_asc') sorted.sort((a, b) => (a.amount || a.installmentAmount || a.estimatedAmount || 0) - (b.amount || b.installmentAmount || b.estimatedAmount || 0))
+    if (sortBy === 'name') sorted.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+    return sorted
+  }, [sortBy])
+
+  const filteredFixed = useMemo(() => sortItems(filterItems(fixedCharges, true, true)), [fixedCharges, filterItems, sortItems])
+  const filteredInstallments = useMemo(() => sortItems(filterItems(installmentPayments)), [installmentPayments, filterItems, sortItems])
+  const filteredPlanned = useMemo(() => sortItems(filterItems(plannedExpenses)), [plannedExpenses, filterItems, sortItems])
 
   const tabs = [
-    { id: 'fixed', label: t('charges.fixedTab'), count: fixedCharges.length },
-    { id: 'installment', label: t('charges.installmentTab'), count: installmentPayments.length },
-    { id: 'planned', label: t('charges.plannedTab'), count: plannedExpenses.length },
+    { id: 'fixed', label: t('charges.fixedTab'), count: filteredFixed.length },
+    { id: 'installment', label: t('charges.installmentTab'), count: filteredInstallments.length },
+    { id: 'planned', label: t('charges.plannedTab'), count: filteredPlanned.length },
   ]
 
-  const totalMonthly = fixedCharges
+  const totalMonthly = filteredFixed
     .filter((c) => c.active)
     .reduce((sum, c) => {
       if (c.frequency === 'monthly') return sum + c.amount
@@ -277,6 +321,14 @@ export default function ChargesPage() {
       if (c.frequency === 'annual') return sum + c.amount / 12
       return sum + c.amount
     }, 0)
+
+  // Unique categories from fixed charges for filter pills
+  const availableCategories = useMemo(() => {
+    const cats = new Set(fixedCharges.map((c) => c.category || 'autre'))
+    return [...cats].sort()
+  }, [fixedCharges])
+
+  const hasFilters = searchQuery || filterPayer || filterCategory || filterActive !== null || sortBy !== 'default'
 
   const getPayerLabel = (payer) => {
     if (payer === 'person_a') return household?.personAName || 'A'
@@ -336,10 +388,106 @@ export default function ChargesPage() {
       {fixedCharges.length > 0 && (
         <Card className="glass !border-brand/10">
           <div className="flex justify-between items-center">
-            <span className="text-xs text-text-secondary">{t('charges.totalMonthly')}</span>
+            <span className="text-xs text-text-secondary">
+              {t('charges.totalMonthly')}
+              {hasFilters && ` (${filteredFixed.filter((c) => c.active).length}/${fixedCharges.filter((c) => c.active).length})`}
+            </span>
             <span className="text-lg font-bold text-brand tabular-nums">{formatCurrency(Math.round(totalMonthly))}</span>
           </div>
         </Card>
+      )}
+
+      {/* Search + Sort */}
+      {(fixedCharges.length > 3 || installmentPayments.length > 3 || plannedExpenses.length > 3) && (
+        <div className="flex gap-2">
+          <div className="flex-1 relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t('charges.search')}
+              className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-9 pr-3 py-2 text-base text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-transparent transition-all"
+            />
+          </div>
+          <button
+            onClick={cycleSortBy}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+              sortBy !== 'default' ? 'bg-brand/15 text-brand border border-brand/30' : 'bg-white/[0.04] text-text-muted border border-white/[0.08] hover:text-white'
+            }`}
+            aria-label={t('charges.sort')}
+          >
+            <ArrowUpDown size={12} />
+            <span className="hidden sm:inline">{sortLabel[sortBy]}</span>
+          </button>
+        </div>
+      )}
+
+      {/* Filter pills — payer + category + active/inactive */}
+      {fixedCharges.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+          {/* Payer filters */}
+          {[
+            { value: null, label: t('common.all') },
+            { value: 'common', label: t('payer.common') },
+            ...(household?.personAName ? [{ value: 'person_a', label: household.personAName }] : []),
+            ...(household?.personBName ? [{ value: 'person_b', label: household.personBName }] : []),
+          ].map((opt) => (
+            <button
+              key={opt.value || 'all'}
+              onClick={() => setFilterPayer(opt.value)}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
+                filterPayer === opt.value
+                  ? 'bg-brand text-white shadow-lg shadow-brand/20'
+                  : 'bg-white/[0.06] text-text-muted hover:text-white'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+          {/* Active/Inactive filter (fixed tab only) */}
+          {tab === 'fixed' && fixedCharges.some((c) => !c.active) && (
+            <>
+              <div className="w-px bg-white/[0.08] flex-shrink-0 my-1" />
+              {[
+                { value: true, label: t('charges.activate') },
+                { value: false, label: t('charges.deactivate') },
+              ].map((opt) => (
+                <button
+                  key={String(opt.value)}
+                  onClick={() => setFilterActive(filterActive === opt.value ? null : opt.value)}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
+                    filterActive === opt.value
+                      ? opt.value ? 'bg-success/20 text-success' : 'bg-danger/20 text-danger'
+                      : 'bg-white/[0.06] text-text-muted hover:text-white'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </>
+          )}
+          {/* Category filters (fixed tab only) */}
+          {tab === 'fixed' && availableCategories.length > 1 && (
+            <>
+              <div className="w-px bg-white/[0.08] flex-shrink-0 my-1" />
+              {availableCategories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setFilterCategory(filterCategory === cat ? null : cat)}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
+                    filterCategory === cat
+                      ? 'text-white shadow-lg'
+                      : 'bg-white/[0.06] text-text-muted hover:text-white'
+                  }`}
+                  style={filterCategory === cat ? { backgroundColor: getCategoryColor(cat) } : undefined}
+                >
+                  {getCategoryLabel(cat)}
+                </button>
+              ))}
+            </>
+          )}
+        </div>
       )}
 
       {/* Tabs */}
@@ -363,10 +511,10 @@ export default function ChargesPage() {
       <AnimatePresence mode="wait">
         {tab === 'fixed' && (
           <motion.div key="fixed" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-2">
-            {fixedCharges.length === 0 && (
-              <Card><p className="text-center text-text-muted py-6 text-sm">{t('charges.noFixed')}</p></Card>
+            {filteredFixed.length === 0 && (
+              <Card><p className="text-center text-text-muted py-6 text-sm">{hasFilters ? t('charges.noResults') : t('charges.noFixed')}</p></Card>
             )}
-            {fixedCharges.map((charge) => (
+            {filteredFixed.map((charge) => (
               <SwipeableCard
                 key={charge.id}
                 actions={[
@@ -449,10 +597,10 @@ export default function ChargesPage() {
 
         {tab === 'installment' && (
           <motion.div key="installment" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-2">
-            {installmentPayments.length === 0 && (
-              <Card><p className="text-center text-text-muted py-6 text-sm">{t('charges.noInstallment')}</p></Card>
+            {filteredInstallments.length === 0 && (
+              <Card><p className="text-center text-text-muted py-6 text-sm">{hasFilters ? t('charges.noResults') : t('charges.noInstallment')}</p></Card>
             )}
-            {installmentPayments.map((payment) => (
+            {filteredInstallments.map((payment) => (
               <SwipeableCard
                 key={payment.id}
                 actions={[
@@ -513,10 +661,10 @@ export default function ChargesPage() {
 
         {tab === 'planned' && (
           <motion.div key="planned" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-2">
-            {plannedExpenses.length === 0 && (
-              <Card><p className="text-center text-text-muted py-6 text-sm">{t('charges.noPlanned')}</p></Card>
+            {filteredPlanned.length === 0 && (
+              <Card><p className="text-center text-text-muted py-6 text-sm">{hasFilters ? t('charges.noResults') : t('charges.noPlanned')}</p></Card>
             )}
-            {plannedExpenses.map((expense) => (
+            {filteredPlanned.map((expense) => (
               <SwipeableCard
                 key={expense.id}
                 actions={[
