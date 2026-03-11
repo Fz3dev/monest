@@ -64,16 +64,21 @@ export function useInstallPrompt() {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
 
-  const isMobile = isIOS || /Android/.test(navigator.userAgent)
+  const isAndroid = /Android/.test(navigator.userAgent)
+  const isMobile = isIOS || isAndroid
+
+  // Show manual guide if: mobile + no native prompt + not installed + not dismissed
+  const showManualGuide = isMobile && !deferredPrompt && !isInstalled && !dismissed
 
   return {
-    // Chrome/Android: can trigger native install dialog
+    // Chrome/Edge Android: can trigger native install dialog
     canPrompt: !!deferredPrompt && !isInstalled && !dismissed,
-    // iOS: need to show manual instructions
-    showIOSGuide: isIOS && !isInstalled && !dismissed && isMobile,
+    // iOS or Android without beforeinstallprompt: show manual steps
+    showIOSGuide: showManualGuide,
     isInstalled,
     isMobile,
     isIOS,
+    isAndroid,
     promptInstall,
     dismiss,
   }
