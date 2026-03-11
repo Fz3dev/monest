@@ -24,7 +24,7 @@ const CONTENT = {
       { value: '100%', label: 'Privé et sécurisé' },
       { value: '0€', label: 'Gratuit pour toujours' },
       { value: '<2 min', label: 'Temps de config' },
-      { value: 'PWA', label: 'Fonctionne hors ligne' },
+      { value: 'Hors ligne', label: 'Fonctionne sans internet' },
     ],
     problem: {
       label: 'Le problème',
@@ -115,7 +115,7 @@ const CONTENT = {
       { value: '100%', label: 'Private & secure' },
       { value: '0€', label: 'Free forever' },
       { value: '<2 min', label: 'Setup time' },
-      { value: 'PWA', label: 'Works offline' },
+      { value: 'Offline', label: 'Works without internet' },
     ],
     problem: {
       label: 'The problem',
