@@ -23,14 +23,18 @@ export default function NotificationBanner() {
   }, [])
 
   const handleAccept = async () => {
-    const granted = await requestPermission()
-    if (granted) {
-      toast.success(t('notifications.enabled'))
-      await registerPeriodicSync()
-    } else {
-      toast.error(t('notifications.permissionDenied'))
-    }
     setVisible(false)
+    try {
+      const granted = await requestPermission()
+      if (granted) {
+        toast.success(t('notifications.enabled'))
+        await registerPeriodicSync()
+      } else {
+        toast.error(t('notifications.permissionDenied'))
+      }
+    } catch {
+      dismissBanner()
+    }
   }
 
   const handleLater = () => {
