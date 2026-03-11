@@ -14,9 +14,13 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'favicon.png', 'apple-touch-icon.png', 'logo-crown.png'],
       manifest: {
+        id: '/',
         name: 'Monest — Votre budget, en clair',
         short_name: 'Monest',
         description: 'Votre budget, en clair. Charges, épargne, reste à vivre — tout en un.',
+        lang: 'fr',
+        dir: 'ltr',
+        categories: ['finance', 'lifestyle'],
         theme_color: '#0B0B0F',
         background_color: '#0B0B0F',
         display: 'standalone',
@@ -28,6 +32,7 @@ export default defineConfig({
           client_mode: ['navigate-existing', 'auto'],
         },
         icons: [
+          { src: '/pwa-64x64.png', sizes: '64x64', type: 'image/png' },
           { src: '/pwa-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/pwa-512.png', sizes: '512x512', type: 'image/png' },
           { src: '/pwa-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
