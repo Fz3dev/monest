@@ -436,7 +436,7 @@ export default function AuthPage({ inviteCode }) {
               <Input
                 label={t('auth.passwordLabel')}
                 type={showPassword ? 'text' : 'password'}
-                placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -456,11 +456,11 @@ export default function AuthPage({ inviteCode }) {
 
             {/* Forgot password link (login only) */}
             {!isSignup && (
-              <div className="flex justify-end -mt-2">
+              <div className="flex justify-end">
                 <button
                   type="button"
                   onClick={() => { setForgotMode(true); setError('') }}
-                  className="text-xs text-brand-light hover:text-brand transition-colors cursor-pointer"
+                  className="text-sm text-brand hover:text-brand-light font-medium transition-colors cursor-pointer"
                 >
                   {t('auth.forgotPassword')}
                 </button>
@@ -480,7 +480,7 @@ export default function AuthPage({ inviteCode }) {
                   <Input
                     label={t('auth.confirmPasswordLabel')}
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+                    placeholder="••••••••"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
