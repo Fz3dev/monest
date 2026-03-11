@@ -367,7 +367,7 @@ export default function LandingPage({ lang = 'fr' }) {
   const t = CONTENT[lang] || CONTENT.fr
 
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary overflow-x-hidden">
+    <div className="min-h-screen bg-bg-primary text-text-primary overflow-x-hidden safe-area-top">
       {/* Ambient gradient orbs */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
         <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-brand/[0.07] blur-[120px]" />

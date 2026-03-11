@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react'
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary">
+    <div className="min-h-screen bg-bg-primary text-text-primary safe-area-top">
       <div className="max-w-2xl mx-auto px-4 py-8">
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors mb-8">
           <ArrowLeft size={16} /> Retour

@@ -1,95 +1,92 @@
-# Monest — Budget intelligent de couple
+# Monest — Votre budget, en clair.
 
-> Mon reste a vivre, simplifie.
+> Charges, revenus, epargne, reste a vivre — tout en un. En solo ou en couple, gratuit et prive.
 
-Application PWA de gestion de budget pour couples (et solo). Calcul automatique du reste a vivre, repartition des charges, import CSV bancaire avec auto-categorisation, insights intelligents, et calendrier previsionnel.
+Application PWA de gestion de budget personnel et couple. Calcul automatique du reste a vivre, repartition des charges, import CSV bancaire, notifications push, et bien plus.
+
+**[monest.vercel.app](https://monest.vercel.app)**
 
 ---
 
 ## Fonctionnalites
 
 ### Dashboard
-- **Reste a vivre foyer** en temps reel avec compteur anime
+- **Reste a vivre** en temps reel avec compteur anime
 - **Cartes individuelles** avec couleurs personnalisees par personne
-- **Taux d'epargne** avec icone tirelire (seuils 10% / 20% / 30%)
-- **Insights intelligents** — jusqu'a 3 analyses en langage naturel :
-  - Taux d'epargne et recommandations
-  - Evolution mensuelle des charges (hausse/baisse)
-  - Detection d'anomalies par categorie
-  - Alertes mois lourds a venir
+- **Insights intelligents** — analyses en langage naturel (taux d'epargne, evolution charges, anomalies)
 - **Graphique tendance 6 mois** (BarChart reste a vivre vs charges)
-- **Repartition par categorie** avec barres de progression colorees et pie chart
-- Indicateurs de sante budgetaire (vert / orange / rouge + icones)
-- Resume revenus / charges / epargne dans la carte hero
+- **Repartition par categorie** avec barres de progression et pie chart
+- **Badges et streaks** — gamification du suivi budgetaire
+- Layout personnalisable (drag & drop des widgets)
+
+### Depenses rapides
+- **FAB (bouton flottant)** pour ajouter une depense en 2 secondes
+- Categories predefinies avec icones
+- Attribution par personne (solo/couple)
+- Swipe-to-delete avec undo
 
 ### Saisie mensuelle
 - Revenus (salaire) par personne
-- Override variable des charges fixes (electricite, etc.)
-- **Swipe gauche/droite** pour naviguer entre les mois
-- **Barre de progression** revenus vs charges
-- Calcul en temps reel du reste a vivre avec animation
+- Override variable des charges fixes
+- Swipe gauche/droite pour naviguer entre les mois
+- Barre de progression revenus vs charges
 
 ### Charges
 Trois types de charges geres :
 
 | Type | Description | Exemple |
 |------|-------------|---------|
-| **Fixes** | Charges recurrentes (mensuel, bimestriel, trimestriel, annuel) | Loyer, assurance, abonnements |
-| **Etalees** | Paiements en N fois avec date de debut | Tennis enfant en 10x, electromenager en 4x |
+| **Fixes** | Recurrentes (mensuel, bimestriel, trimestriel, annuel) | Loyer, assurance |
+| **Etalees** | Paiements en N fois | Tennis enfant en 10x |
 | **Planifiees** | Depenses ponctuelles a date cible | Vacances, impots |
 
-Chaque charge supporte :
 - Attribution : Commun / Personne A / Personne B
-- 12 categories (logement, assurance, credit, abonnement, impot, transport, etc.)
-- **Swipe gauche pour supprimer** (geste tactile natif)
-- Activation/desactivation sans suppression
-- Edition inline via modal
-- Badges categorie sur chaque charge
-- **Carte total mensualise** (somme normalisee de toutes les charges)
-- Mois de debut configurable pour bimestriel/trimestriel
-- Decalage de prelevement (M-1, M-2...)
+- 12 categories avec couleurs personnalisables
+- Swipe-to-delete, activation/desactivation, edition inline
+- Decalage de prelevement configurable
 
-### Repartition des charges
-Trois modes de repartition :
-
-| Mode | Fonctionnement |
-|------|----------------|
-| **50/50** | Partage egal |
-| **Pourcentage custom** | Ratio configurable (ex: 60/40, 70/30) |
-| **Pro rata** | Calcule automatiquement chaque mois selon les salaires reels |
+### Epargne
+- **Objectifs d'epargne** avec barre de progression
+- Icones et couleurs personnalisables
+- Echeance optionnelle
+- Contributions progressives
 
 ### Calendrier previsionnel
-- Vue sur 12 mois avec code couleur
-- **Barre d'intensite de depense** sur chaque mois (relative au max)
-- Detail au clic : reste foyer, total charges, repartition par categorie
-- **Barres de progression par categorie** dans le detail
-- Grille resume (reste foyer + total charges)
-- Legende visuelle avec icones (accessibilite daltoniens)
-- Indicateur de mois charges (echeanciers, depenses planifiees)
+- Vue 12 mois avec code couleur
+- Detail : reste foyer, charges, repartition par categorie
+- Detection des mois charges
 
 ### Import CSV bancaire
-- **Detection automatique** des colonnes (date, libelle, debit, credit, montant)
-- **Auto-categorisation intelligente** : 50+ mots-cles francais sur 11 categories
-- **Apprentissage** : retient les corrections utilisateur pour les futurs imports
-- Selecteur de categorie inline sur chaque suggestion
-- Compatible BoursoBank, et la plupart des banques francaises
-- Auto-detection encodage UTF-8 / Latin-1
-- Detection des charges recurrentes avec analyse de frequence
-- Import selectif : accepter ou ignorer chaque suggestion
-- Traitement 100% local (aucun envoi de donnees)
+- Detection automatique des colonnes et de l'encodage
+- Auto-categorisation intelligente (50+ mots-cles)
+- Apprentissage des corrections utilisateur
+- Compatible BoursoBank et la plupart des banques francaises
+- Traitement 100% local
 
-### Reglages
-- Modification du foyer (prenoms, couleurs, ratio) apres onboarding
-- Export JSON complet du backup
-- Import/restauration depuis un fichier JSON
-- Reinitialisation avec double confirmation
-- Statistiques des donnees (nb charges, mois saisis)
+### Authentification
+- Email / mot de passe
+- Lien magique (passwordless)
+- **Google OAuth** (Continuer avec Google)
+- Mot de passe oublie
 
-### Onboarding
-- Wizard en 3 etapes avec animations
-- Choix du modele de comptes (commun+perso, tout commun, tout perso, solo)
-- Selection des couleurs par personne
-- Configuration du mode de repartition
+### Mode couple
+- Invitation par lien/code
+- 3 modes de repartition : 50/50, pourcentage custom, pro rata des salaires
+- Notifications in-app en temps reel (depenses du partenaire, charges modifiees)
+- Synchronisation multi-appareils
+
+### Notifications push
+- **Web Push natives** (meme quand l'app est fermee)
+- Rappels budget hebdomadaires
+- Alertes depenses du partenaire
+- Gestion dans Reglages (activer/desactiver)
+
+### PWA
+- Installation sur l'ecran d'accueil (Android + iOS)
+- Mode hors-ligne avec synchronisation automatique
+- Raccourcis (Depenses, Dashboard, Epargne)
+- Share target (recevoir du texte partage)
+- Guide d'installation adapte par plateforme (iOS Safari, Chrome, Android)
 
 ---
 
@@ -100,13 +97,17 @@ Trois modes de repartition :
 | Framework | React 19 + Vite 7 (SWC) |
 | Style | Tailwind CSS 4 (design tokens via @theme) |
 | Etat | Zustand (persist localStorage) |
+| Backend | Supabase (auth, DB, real-time, Edge Functions) |
 | Dates | date-fns |
 | Charts | Recharts (PieChart, BarChart) |
 | Animations | Motion (framer-motion) |
 | Toasts | Sonner |
 | Icones | Lucide React |
-| PWA | vite-plugin-pwa (Workbox) |
-| Tests | Vitest |
+| PWA | vite-plugin-pwa (injectManifest) |
+| Push | Web Push API + VAPID |
+| Tests | Vitest (82 tests) |
+| Deploy | Vercel |
+| Analytics | Vercel Analytics + Speed Insights |
 
 ---
 
@@ -114,72 +115,99 @@ Trois modes de repartition :
 
 ```
 src/
-  __tests__/           — Tests unitaires (79 tests)
-    calculations.test.js  (41 tests)
-    csvParser.test.js     (15 tests)
-    format.test.js        (17 tests)
-    insights.test.js      (6 tests)
+  sw.js                — Service worker custom (push, cache, periodic sync)
+  lib/
+    supabase.js        — Client Supabase
+    pushSubscription.js — Web Push subscribe/unsubscribe
+    notifications.js   — Creation notifications in-app + push trigger
+    syncBridge.js      — File d'attente offline
+  hooks/
+    useSupabaseSync.js — Auth + real-time sync + push sync
+    useInstallPrompt.js — Detection plateforme PWA install
   components/
     ui/                — Card, Button, Input, Select, Modal, AnimatedNumber,
-                         ProgressBar, Skeleton
-    layout/            — AppShell (bottom nav + safe area)
-    onboarding/        — OnboardingWizard (3 etapes)
-    ErrorBoundary.jsx  — Crash recovery UI
-  pages/               — 6 pages lazy-loaded
+                         ProgressBar, Skeleton, SwipeToDelete
+    layout/            — AppShell (bottom nav + notification bell)
+    auth/              — AuthPage, ResetPasswordPage
+    onboarding/        — OnboardingWizard
+    InstallPrompt      — Guide install PWA (iOS/Android)
+    NotificationBanner — Demande permission push
+    QuickAddExpense    — FAB + bottom sheet
+  pages/
+    LandingPage        — Page d'accueil publique (FR/EN)
     DashboardPage      — Vue d'ensemble + charts + insights
-    MonthlyPage        — Saisie mensuelle + swipe + progress bar
-    ChargesPage        — CRUD 3 types + swipe-to-delete
-    CalendarPage       — Grille 12 mois + intensite + categories
-    ImportPage         — Import CSV + auto-categorisation
-    SettingsPage       — Config foyer + export/import
-  stores/              — Zustand + persist + versioning
+    MonthlyPage        — Saisie mensuelle
+    ChargesPage        — CRUD 3 types de charges
+    ExpensesPage       — Liste des depenses
+    SavingsPage        — Objectifs d'epargne
+    CalendarPage       — Previsions 12 mois
+    ImportPage         — Import CSV bancaire
+    SettingsPage       — Configuration + export/import
+    PrivacyPage        — Politique de confidentialite
+    TermsPage          — Conditions d'utilisation
+  stores/              — Zustand + persist
     householdStore     — Config foyer
     chargesStore       — Charges + regles auto-categorisation
     monthlyStore       — Entries mensuelles
+    savingsStore       — Objectifs epargne
+    expenseStore       — Depenses rapides
+    notificationStore  — Notifications in-app
+    dashboardLayoutStore — Layout personnalisable
   utils/
     calculations.js    — Moteur de calcul budget
     csvParser.js       — Parsing CSV multi-format
-    format.js          — Formatage monnaie, dates, constantes
-    insights.js        — Generateur d'insights intelligents
-    motion.js          — Presets d'animation Motion
+    format.js          — Formatage monnaie, dates
+    insights.js        — Generateur d'insights
+    notifications.js   — Permission + rappels hebdo
+supabase/
+  functions/
+    send-push/         — Edge Function envoi push notifications
+  migrations/          — DDL (push_subscriptions, etc.)
 ```
+
+---
+
+## Supabase
+
+- **Tables** : households, household_members, fixed_charges, installment_payments, planned_expenses, monthly_entries, savings_goals, expenses, category_rules, notifications, push_subscriptions
+- **RLS** active sur toutes les tables (acces scope par foyer)
+- **Real-time** sur toutes les tables de donnees
+- **Edge Functions** : `send-push` (envoi notifications push via VAPID)
+- **Auth** : email/password, magic link, Google OAuth
 
 ---
 
 ## Qualite
 
 ### Tests
-- **79 tests unitaires** couvrant :
-  - Moteur de calcul (41 tests) : frequences, pro rata, installments, overrides, solo
+- **82 tests unitaires** couvrant :
+  - Moteur de calcul (44 tests) : frequences, pro rata, installments, overrides, solo
   - Parser CSV (15 tests) : colonnes, formats, amounts, grouping
   - Format (17 tests) : monnaie, dates, constantes, payer options
-  - Insights (6 tests) : epargne, deficit, comparaison mensuelle, max insights
+  - Insights (6 tests) : epargne, deficit, comparaison mensuelle
 
 ### Accessibilite
-- `htmlFor`/`id` sur tous les champs de formulaire (`useId()`)
+- `htmlFor`/`id` sur tous les champs (`useId()`)
 - `aria-label` sur tous les boutons icones
 - `role="dialog"` + `aria-modal` + `Escape` sur les modales
-- Pas de `user-scalable=no` (zoom autorise)
-- Indicateurs visuels + icones (pas couleur seule) pour daltoniens
+- `role="button"` + `tabIndex` + `onKeyDown` sur les elements cliquables
+- Zoom autorise (pas de `user-scalable=no`)
+- Indicateurs visuels + icones (daltoniens)
 
 ### Performance
-- SWC au lieu de Babel (build rapide)
-- Lazy loading de toutes les pages (`React.lazy`)
-- Code splitting automatique
-- PWA avec precache Workbox (22 entries)
-- `useMemo` pour les calculs couteux
-- Animations reduites si `prefers-reduced-motion`
+- SWC (build rapide)
+- Lazy loading de toutes les pages
+- Code splitting (recharts, supabase, motion en chunks separes)
+- PWA avec precache Workbox (55 entries)
+- Zustand selectors individuels (pas de re-renders inutiles)
+- `useMemo` / lazy `useState` init
 
-### Design
-- Dark mode natif (#0B0B0F)
-- Glassmorphism (backdrop-blur)
-- Compteurs animes (AnimatedNumber)
-- Barres de progression animees (ProgressBar)
-- Transitions Spring sur les modales
-- Micro-interactions (whileTap scale, swipe gestures)
-- Skeletons de chargement
-- Safe area pour iPhone (notch)
-- Touch targets 44px minimum
+### Securite
+- Security headers (X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy)
+- `crypto.getRandomValues()` pour les codes d'invitation
+- VAPID pour l'authentification push
+- RLS Supabase sur toutes les tables
+- HTTPS uniquement
 
 ---
 
@@ -196,11 +224,23 @@ npm run preview    # Preview du build
 
 ---
 
-## Conventions
+## Variables d'environnement
 
-- Functional components, no classes (sauf ErrorBoundary)
-- Named exports pour les stores, default pour les composants/pages
-- Tailwind inline, pas de CSS modules
-- Texte UI en francais, pas d'accents dans les identifiants
-- Store keys prefixes `monest-`
-- Couleurs definies dans le bloc `@theme` de index.css
+```bash
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_VAPID_PUBLIC_KEY=your-vapid-public-key
+```
+
+Secrets Edge Functions (Supabase Dashboard) :
+```
+VAPID_PUBLIC_KEY=...
+VAPID_PRIVATE_KEY=...
+```
+
+---
+
+## Deploy
+
+- **Vercel** : [monest.vercel.app](https://monest.vercel.app)
+- Push sur `main` → deploy automatique
