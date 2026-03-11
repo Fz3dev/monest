@@ -210,7 +210,7 @@ export default function AppShell({ children, memberCount = 0 }) {
   ]
 
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary">
+    <div className="min-h-screen bg-bg-primary text-text-primary safe-area-top">
       <OfflineBanner />
       <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-56 lg:flex-col lg:border-r lg:border-white/[0.06] lg:bg-bg-primary z-40">
         <div className="flex items-center gap-2.5 px-5 h-16 border-b border-white/[0.06]">
