@@ -531,6 +531,17 @@ export default function DashboardPage() {
                         <div className="flex justify-between items-center text-sm">
                           <div className="flex items-center gap-2 min-w-0 pl-3.5">
                             <span className="text-text-secondary truncate">{charge.name}</span>
+                            {household?.personBName && (
+                              <span
+                                className="text-[9px] px-1.5 py-0.5 rounded-full flex-shrink-0"
+                                style={charge.payer === 'common'
+                                  ? { backgroundColor: 'rgba(255,255,255,0.06)', color: 'var(--color-text-muted)' }
+                                  : { backgroundColor: `${charge.payer === 'person_a' ? household.personAColor : household.personBColor}15`, color: charge.payer === 'person_a' ? household.personAColor : household.personBColor }
+                                }
+                              >
+                                {charge.payer === 'common' ? t('common.common') : charge.payer === 'person_a' ? household.personAName : household.personBName}
+                              </span>
+                            )}
                             {charge.type === 'installment' && (
                               <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-brand/10 text-brand flex-shrink-0">{t('dashboard.installmentBadge')}</span>
                             )}

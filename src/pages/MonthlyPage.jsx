@@ -195,7 +195,20 @@ export default function MonthlyPage() {
                     <div>
                       {charges.map((charge) => (
                         <div key={charge.id} className={`flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0 ${charge.isDisabledThisMonth ? 'opacity-40' : ''}`}>
-                          <span className="text-sm text-text-secondary truncate flex-1 min-w-0 pl-3.5">{charge.name}</span>
+                          <div className="flex items-center gap-2 flex-1 min-w-0 pl-3.5">
+                            <span className="text-sm text-text-secondary truncate">{charge.name}</span>
+                            {household?.personBName && (
+                              <span
+                                className="text-[9px] px-1.5 py-0.5 rounded-full flex-shrink-0"
+                                style={charge.payer === 'common'
+                                  ? { backgroundColor: 'rgba(255,255,255,0.06)', color: 'var(--color-text-muted)' }
+                                  : { backgroundColor: `${charge.payer === 'person_a' ? household.personAColor : household.personBColor}15`, color: charge.payer === 'person_a' ? household.personAColor : household.personBColor }
+                                }
+                              >
+                                {charge.payer === 'common' ? t('common.common') : charge.payer === 'person_a' ? household.personAName : household.personBName}
+                              </span>
+                            )}
+                          </div>
                           <div className="flex items-center gap-1.5">
                             {charge.type === 'fixed' && !charge.isDisabledThisMonth && (
                               <div className="flex items-center gap-1">
