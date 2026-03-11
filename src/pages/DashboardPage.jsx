@@ -426,7 +426,7 @@ export default function DashboardPage() {
   // Categories — conditional
   if (result.charges.length > 0) {
     widgets.categories = (
-      <Card animate={false} className="h-full overflow-y-auto">
+      <Card animate={false}>
         <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">
           {t('dashboard.categoryBreakdown')}
         </div>
@@ -491,7 +491,7 @@ export default function DashboardPage() {
   // Charges detail — conditional
   if (result.charges.length > 0) {
     widgets.chargesDetail = (
-      <Card animate={false} className="h-full overflow-y-auto">
+      <Card animate={false}>
         <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">
           {t('dashboard.chargesDetail')}
         </div>
