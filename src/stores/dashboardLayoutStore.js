@@ -6,26 +6,26 @@ export const ALL_WIDGETS = ['hero', 'persons', 'quickLinks', 'streakBadges', 'sa
 
 export const DEFAULT_LAYOUTS = {
   lg: [
-    { i: 'hero', x: 0, y: 0, w: 2, h: 5 },
-    { i: 'savings', x: 2, y: 0, w: 1, h: 2 },
-    { i: 'insights', x: 2, y: 2, w: 1, h: 3 },
-    { i: 'persons', x: 0, y: 5, w: 2, h: 3 },
-    { i: 'categories', x: 2, y: 5, w: 1, h: 6 },
-    { i: 'quickLinks', x: 0, y: 8, w: 2, h: 2 },
-    { i: 'streakBadges', x: 0, y: 10, w: 1, h: 3 },
-    { i: 'trend', x: 0, y: 13, w: 1, h: 5 },
-    { i: 'chargesDetail', x: 1, y: 10, w: 2, h: 5 },
+    { i: 'hero', x: 0, y: 0, w: 2, h: 7 },
+    { i: 'savings', x: 2, y: 0, w: 1, h: 3 },
+    { i: 'insights', x: 2, y: 3, w: 1, h: 4 },
+    { i: 'persons', x: 0, y: 7, w: 2, h: 5 },
+    { i: 'categories', x: 2, y: 7, w: 1, h: 7 },
+    { i: 'quickLinks', x: 0, y: 12, w: 2, h: 2 },
+    { i: 'streakBadges', x: 0, y: 14, w: 1, h: 4 },
+    { i: 'trend', x: 0, y: 18, w: 1, h: 6 },
+    { i: 'chargesDetail', x: 1, y: 14, w: 2, h: 10 },
   ],
   md: [
-    { i: 'hero', x: 0, y: 0, w: 2, h: 5 },
-    { i: 'persons', x: 0, y: 5, w: 2, h: 3 },
-    { i: 'quickLinks', x: 0, y: 8, w: 2, h: 2 },
-    { i: 'streakBadges', x: 0, y: 10, w: 1, h: 3 },
-    { i: 'savings', x: 1, y: 10, w: 1, h: 2 },
-    { i: 'insights', x: 1, y: 12, w: 1, h: 3 },
-    { i: 'categories', x: 0, y: 15, w: 1, h: 6 },
-    { i: 'trend', x: 1, y: 15, w: 1, h: 5 },
-    { i: 'chargesDetail', x: 0, y: 21, w: 2, h: 5 },
+    { i: 'hero', x: 0, y: 0, w: 2, h: 7 },
+    { i: 'persons', x: 0, y: 7, w: 2, h: 5 },
+    { i: 'quickLinks', x: 0, y: 12, w: 2, h: 2 },
+    { i: 'streakBadges', x: 0, y: 14, w: 1, h: 4 },
+    { i: 'savings', x: 1, y: 14, w: 1, h: 3 },
+    { i: 'insights', x: 1, y: 17, w: 1, h: 4 },
+    { i: 'categories', x: 0, y: 21, w: 1, h: 7 },
+    { i: 'trend', x: 1, y: 21, w: 1, h: 6 },
+    { i: 'chargesDetail', x: 0, y: 28, w: 2, h: 10 },
   ],
   sm: [
     { i: 'hero', x: 0, y: 0, w: 1, h: 6 },
@@ -105,7 +105,7 @@ export const useDashboardLayoutStore = create(
     }),
     {
       name: 'monest-dashboard-layout',
-      version: 3,
+      version: 4,
       migrate: (state) => {
         // Ensure layouts always has all required breakpoints
         if (state && !state.layouts?.sm) {
