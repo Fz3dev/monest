@@ -253,7 +253,7 @@ function GoalCard({ goal, index, onEdit, onContribute, onDelete, t }) {
   const deadlineLabel = goal.deadline
     ? (() => {
         const [year, month] = goal.deadline.split('-')
-        const months = ['Jan', 'F\u00e9v', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Ao\u00fb', 'Sep', 'Oct', 'Nov', 'D\u00e9c']
+        const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
         return `${months[parseInt(month, 10) - 1]} ${year}`
       })()
     : null

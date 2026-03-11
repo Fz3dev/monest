@@ -174,11 +174,11 @@ export default function MonthlyPage() {
                 <div className="flex items-center gap-1">
                   <input
                     type="number"
-                    value={
+                    value={String(
                       entry?.variableOverrides?.[charge.id] !== undefined
                         ? entry.variableOverrides[charge.id]
                         : charge.originalAmount
-                    }
+                    )}
                     onChange={(e) =>
                       updateVariable(currentMonth, charge.id, parseFloat(e.target.value) || 0)
                     }

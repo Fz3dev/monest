@@ -63,18 +63,27 @@ function ChargeForm({ initialValues, onSubmit, onCancel, household, t }) {
   const payerOptions = PAYER_OPTIONS(household, t)
   const categories = getTranslatedCategories(t)
   const frequencies = getTranslatedFrequencies(t)
-  const [form, setForm] = useState(
-    initialValues || {
+  const [form, setForm] = useState(() => {
+    if (initialValues) {
+      return {
+        ...initialValues,
+        amount: initialValues.amount != null ? String(initialValues.amount) : '',
+        startMonth: String(initialValues.startMonth ?? 1),
+        dayOfMonth: String(initialValues.dayOfMonth ?? 1),
+        paymentDelayMonths: String(initialValues.paymentDelayMonths ?? 0),
+      }
+    }
+    return {
       name: '',
       amount: '',
       payer: payerOptions[0]?.value || 'common',
       frequency: 'monthly',
-      startMonth: 1,
-      dayOfMonth: 1,
+      startMonth: '1',
+      dayOfMonth: '1',
       category: 'autre',
-      paymentDelayMonths: 0,
+      paymentDelayMonths: '0',
     }
-  )
+  })
   const [submitting, setSubmitting] = useState(false)
   const update = (field, value) => setForm((f) => ({ ...f, [field]: value }))
 
@@ -100,12 +109,12 @@ function ChargeForm({ initialValues, onSubmit, onCancel, household, t }) {
           min="1"
           max="12"
           value={form.startMonth}
-          onChange={(e) => update('startMonth', e.target.value === '' ? '' : parseInt(e.target.value) || '')}
+          onChange={(e) => update('startMonth', e.target.value)}
         />
       )}
-      <Input label={t('charges.formDayOfMonth')} type="number" min="1" max="31" value={form.dayOfMonth} onChange={(e) => update('dayOfMonth', e.target.value === '' ? '' : parseInt(e.target.value) || '')} />
+      <Input label={t('charges.formDayOfMonth')} type="number" min="1" max="31" value={form.dayOfMonth} onChange={(e) => update('dayOfMonth', e.target.value)} />
       <Select label={t('charges.formCategory')} value={form.category} onChange={(e) => update('category', e.target.value)} options={categories} />
-      <Input label={t('charges.formPaymentDelay')} type="number" min="0" value={form.paymentDelayMonths} onChange={(e) => update('paymentDelayMonths', e.target.value === '' ? '' : parseInt(e.target.value) || '')} />
+      <Input label={t('charges.formPaymentDelay')} type="number" min="0" value={form.paymentDelayMonths} onChange={(e) => update('paymentDelayMonths', e.target.value)} />
       <div className="flex gap-3 pt-2">
         <Button variant="secondary" onClick={onCancel} className="flex-1">{t('common.cancel')}</Button>
         <Button onClick={handleSubmit} disabled={!form.name.trim() || !form.amount || submitting} className="flex-1">
@@ -118,24 +127,32 @@ function ChargeForm({ initialValues, onSubmit, onCancel, household, t }) {
 
 function InstallmentForm({ initialValues, onSubmit, onCancel, household, t }) {
   const payerOptions = PAYER_OPTIONS(household, t)
-  const [form, setForm] = useState(
-    initialValues || {
+  const [form, setForm] = useState(() => {
+    if (initialValues) {
+      return {
+        ...initialValues,
+        totalAmount: initialValues.totalAmount != null ? String(initialValues.totalAmount) : '',
+        installmentCount: String(initialValues.installmentCount ?? 3),
+        installmentAmount: initialValues.installmentAmount != null ? String(initialValues.installmentAmount) : '',
+      }
+    }
+    return {
       name: '',
       totalAmount: '',
-      installmentCount: 3,
+      installmentCount: '3',
       installmentAmount: '',
       firstPaymentDate: '',
       payer: payerOptions[0]?.value || 'common',
     }
-  )
+  })
   const [submitting, setSubmitting] = useState(false)
 
   const update = (field, value) => {
     const next = { ...form, [field]: value }
     if (field === 'totalAmount' || field === 'installmentCount') {
       const total = field === 'totalAmount' ? parseFloat(value) : parseFloat(form.totalAmount)
-      const count = field === 'installmentCount' ? parseInt(value) : form.installmentCount
-      if (total && count) next.installmentAmount = Math.round((total / count) * 100) / 100
+      const count = field === 'installmentCount' ? parseInt(value) : parseInt(form.installmentCount)
+      if (total && count) next.installmentAmount = String(Math.round((total / count) * 100) / 100)
     }
     setForm(next)
   }
@@ -156,7 +173,7 @@ function InstallmentForm({ initialValues, onSubmit, onCancel, household, t }) {
     <div className="space-y-4">
       <Input label={t('charges.formName')} value={form.name} onChange={(e) => update('name', e.target.value)} placeholder={t('charges.installmentNamePlaceholder')} />
       <Input label={t('charges.formTotalAmount')} type="number" value={form.totalAmount} onChange={(e) => update('totalAmount', e.target.value)} suffix="€" />
-      <Input label={t('charges.formInstallmentCount')} type="number" min="2" value={form.installmentCount} onChange={(e) => update('installmentCount', e.target.value === '' ? '' : parseInt(e.target.value) || '')} />
+      <Input label={t('charges.formInstallmentCount')} type="number" min="2" value={form.installmentCount} onChange={(e) => update('installmentCount', e.target.value)} />
       <Input label={t('charges.formInstallmentAmount')} type="number" value={form.installmentAmount} onChange={(e) => update('installmentAmount', e.target.value)} suffix="€" />
       <Input label={t('charges.formFirstPaymentDate')} type="date" value={form.firstPaymentDate} onChange={(e) => update('firstPaymentDate', e.target.value)} />
       <Select label={t('charges.formWhoPays')} value={form.payer} onChange={(e) => update('payer', e.target.value)} options={payerOptions} />
@@ -176,15 +193,21 @@ function InstallmentForm({ initialValues, onSubmit, onCancel, household, t }) {
 
 function PlannedExpenseForm({ initialValues, onSubmit, onCancel, household, t }) {
   const payerOptions = PAYER_OPTIONS(household, t)
-  const [form, setForm] = useState(
-    initialValues || {
+  const [form, setForm] = useState(() => {
+    if (initialValues) {
+      return {
+        ...initialValues,
+        estimatedAmount: initialValues.estimatedAmount != null ? String(initialValues.estimatedAmount) : '',
+      }
+    }
+    return {
       name: '',
       estimatedAmount: '',
       targetMonth: '',
       payer: payerOptions[0]?.value || 'common',
       note: '',
     }
-  )
+  })
   const [submitting, setSubmitting] = useState(false)
   const update = (field, value) => setForm((f) => ({ ...f, [field]: value }))
 
@@ -542,7 +565,7 @@ export default function ChargesPage() {
           initialValues={modal?.editId ? fixedCharges.find((c) => c.id === modal.editId) : undefined}
           onSubmit={(data) => {
             if (!data.amount || parseFloat(data.amount) <= 0) {
-              toast.error('Le montant doit \u00eatre sup\u00e9rieur \u00e0 0')
+              toast.error('Le montant doit être supérieur à 0')
               return
             }
             if (modal?.editId) updateFixedCharge(modal.editId, data)
@@ -560,7 +583,7 @@ export default function ChargesPage() {
           initialValues={modal?.editId ? installmentPayments.find((p) => p.id === modal.editId) : undefined}
           onSubmit={(data) => {
             if (!data.totalAmount || parseFloat(data.totalAmount) <= 0) {
-              toast.error('Le montant doit \u00eatre sup\u00e9rieur \u00e0 0')
+              toast.error('Le montant doit être supérieur à 0')
               return
             }
             if (modal?.editId) updateInstallment(modal.editId, data)
@@ -578,7 +601,7 @@ export default function ChargesPage() {
           initialValues={modal?.editId ? plannedExpenses.find((e) => e.id === modal.editId) : undefined}
           onSubmit={(data) => {
             if (!data.estimatedAmount || parseFloat(data.estimatedAmount) <= 0) {
-              toast.error('Le montant doit \u00eatre sup\u00e9rieur \u00e0 0')
+              toast.error('Le montant doit être supérieur à 0')
               return
             }
             if (modal?.editId) updatePlannedExpense(modal.editId, data)

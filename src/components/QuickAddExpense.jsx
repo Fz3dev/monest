@@ -84,7 +84,7 @@ export default function QuickAddExpense() {
 
   const handleSubmit = () => {
     if (!amount || parseFloat(amount) <= 0) {
-      toast.error('Le montant doit \u00eatre sup\u00e9rieur \u00e0 0')
+      toast.error('Le montant doit être supérieur à 0')
       return
     }
     if (!canSubmit) return

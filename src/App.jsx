@@ -9,6 +9,8 @@ import OnboardingWizard from './components/onboarding/OnboardingWizard'
 import AuthPage from './components/auth/AuthPage'
 import ResetPasswordPage from './components/auth/ResetPasswordPage'
 import { Toaster, toast } from 'sonner'
+import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 
 // Lazy import with auto-recovery: if chunk fails (stale cache), nuke SW & reload
 function lazyRetry(importFn) {
@@ -217,6 +219,8 @@ export default function App() {
           </Routes>
         </Suspense>
         <Toaster theme="dark" position="top-center" richColors />
+        <Analytics />
+        <SpeedInsights />
       </BrowserRouter>
     </ErrorBoundary>
   )

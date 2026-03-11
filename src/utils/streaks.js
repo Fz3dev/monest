@@ -36,19 +36,19 @@ export function calculateBadges(streak, totalCharges, totalIncome, savingsGoals)
 
   // Streak badges
   if (streak >= 1) badges.push({ id: 'streak1', icon: '\u{1F525}', label: 'Premier mois positif', unlocked: true })
-  if (streak >= 3) badges.push({ id: 'streak3', icon: '\u26A1', label: '3 mois cons\u00e9cutifs', unlocked: true })
-  if (streak >= 6) badges.push({ id: 'streak6', icon: '\u{1F3C6}', label: '6 mois cons\u00e9cutifs', unlocked: true })
+  if (streak >= 3) badges.push({ id: 'streak3', icon: '⚡', label: '3 mois consécutifs', unlocked: true })
+  if (streak >= 6) badges.push({ id: 'streak6', icon: '🏆', label: '6 mois consécutifs', unlocked: true })
   if (streak >= 12) badges.push({ id: 'streak12', icon: '\u{1F451}', label: '1 an positif !', unlocked: true })
 
   // Charges rate badge
   if (totalIncome > 0) {
     const rate = totalCharges / totalIncome
-    if (rate <= 0.3) badges.push({ id: 'lowCharges', icon: '\u{1F3AF}', label: 'Charges ma\u00eetris\u00e9es (<30%)', unlocked: true })
+    if (rate <= 0.3) badges.push({ id: 'lowCharges', icon: '🎯', label: 'Charges maîtrisées (<30%)', unlocked: true })
   }
 
   // Savings badges
   const hasGoals = savingsGoals?.length > 0
-  if (hasGoals) badges.push({ id: 'saver', icon: '\u{1F437}', label: '\u00c9pargnant', unlocked: true })
+  if (hasGoals) badges.push({ id: 'saver', icon: '🐷', label: 'Épargnant', unlocked: true })
 
   const completedGoals = savingsGoals?.filter(g => g.currentAmount >= g.targetAmount)?.length || 0
   if (completedGoals > 0) badges.push({ id: 'goalReached', icon: '\u{1F389}', label: 'Objectif atteint', unlocked: true })
