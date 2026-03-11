@@ -130,6 +130,7 @@ export default function DashboardPage() {
   }, [result.charges, getCategoryColor])
 
   const [selectedChargeId, setSelectedChargeId] = useState(null)
+  const [chargePayerFilter, setChargePayerFilter] = useState(null)
 
   const totalSaved = savingsGoals.reduce((sum, g) => sum + g.currentAmount, 0)
   const totalTarget = savingsGoals.reduce((sum, g) => sum + g.targetAmount, 0)
@@ -494,10 +495,40 @@ export default function DashboardPage() {
         <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">
           {t('dashboard.chargesDetail')}
         </div>
+        {household?.personBName && (
+          <div className="flex gap-1.5 mb-3 flex-wrap">
+            {[
+              { value: null, label: t('common.all') },
+              { value: 'common', label: t('common.common') },
+              { value: 'person_a', label: household.personAName },
+              { value: 'person_b', label: household.personBName },
+            ].map((opt) => (
+              <button
+                key={opt.value ?? 'all'}
+                onClick={() => setChargePayerFilter(chargePayerFilter === opt.value ? null : opt.value)}
+                className={`text-[11px] px-2.5 py-1 rounded-full transition-colors ${
+                  chargePayerFilter === opt.value
+                    ? 'bg-brand/15 text-brand border border-brand/30'
+                    : 'bg-white/[0.04] text-text-muted border border-white/[0.08]'
+                }`}
+                style={chargePayerFilter === opt.value && opt.value === 'person_a' ? { backgroundColor: `${household.personAColor}15`, color: household.personAColor, borderColor: `${household.personAColor}40` } :
+                       chargePayerFilter === opt.value && opt.value === 'person_b' ? { backgroundColor: `${household.personBColor}15`, color: household.personBColor, borderColor: `${household.personBColor}40` } : undefined}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="space-y-3">
           {(() => {
+            const filtered = chargePayerFilter
+              ? result.charges.filter((c) => c.payer === chargePayerFilter)
+              : result.charges
+            if (filtered.length === 0) return (
+              <p className="text-sm text-text-muted text-center py-4">{t('charges.noResults')}</p>
+            )
             const groups = {}
-            for (const charge of result.charges) {
+            for (const charge of filtered) {
               const cat = charge.category || 'autre'
               if (!groups[cat]) groups[cat] = []
               groups[cat].push(charge)
