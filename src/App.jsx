@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState, useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useHouseholdStore } from './stores/householdStore'
 import { supabase, isSupabaseConfigured } from './lib/supabase'
 import { useSupabaseSync } from './hooks/useSupabaseSync'
@@ -129,6 +129,23 @@ function AppContent({ session }) {
       </div>
     )
   }
+
+  // Handle share target (PWA: receive shared text with amount)
+  const navigate = useNavigate()
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('share') === 'true') {
+      const text = params.get('text') || params.get('title') || ''
+      const match = text.match(/(\d+[.,]?\d*)/)
+      if (match) {
+        const amount = parseFloat(match[1].replace(',', '.'))
+        navigate('/depenses', { state: { sharedAmount: amount }, replace: true })
+      } else {
+        navigate('/depenses', { replace: true })
+      }
+      window.history.replaceState({}, '', '/depenses')
+    }
+  }, [navigate])
 
   if (!household) {
     return (

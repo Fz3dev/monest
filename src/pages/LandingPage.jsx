@@ -52,7 +52,7 @@ const CONTENT = {
     howItWorks: {
       label: 'Comment ça marche',
       title: 'Opérationnel en moins de 2 minutes',
-      subtitle: 'Pas de configuration complexe. Pas de credentials bancaires. Juste votre budget.',
+      subtitle: 'Pas de configuration complexe. Pas de connexion bancaire. Juste votre budget.',
       steps: [
         { title: 'Créez votre compte', description: 'Inscription en 30 secondes. Choisissez le mode solo ou partagé.' },
         { title: 'Ajoutez vos charges', description: 'Saisissez vos charges fixes — loyer, abonnements, factures. Ou importez un CSV.' },
@@ -67,7 +67,7 @@ const CONTENT = {
       items: [
         'Chiffrement de bout en bout',
         'Nous ne vendons ni ne partageons vos données',
-        'Aucune information bancaire requise',
+        'Aucune connexion bancaire requise',
         'Conforme RGPD — hébergé en Europe',
       ],
       bigText: '256-bit',
@@ -143,7 +143,7 @@ const CONTENT = {
     howItWorks: {
       label: 'How it works',
       title: 'Up and running in under 2 minutes',
-      subtitle: 'No complicated setup. No bank credentials. Just your budget.',
+      subtitle: 'No complicated setup. No bank connection. Just your budget.',
       steps: [
         { title: 'Create your account', description: 'Sign up in 30 seconds. Choose solo or shared mode.' },
         { title: 'Set your charges', description: 'Add fixed expenses — rent, subscriptions, bills. Or import from CSV.' },
@@ -158,7 +158,7 @@ const CONTENT = {
       items: [
         'End-to-end encryption',
         'We never sell or share your data',
-        'No bank credentials required',
+        'No bank connection required',
         'GDPR compliant — EU hosted',
       ],
       bigText: '256-bit',
