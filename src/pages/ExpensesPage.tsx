@@ -273,7 +273,7 @@ export default function ExpensesPage() {
               }
             >
               <span>{getCategoryEmoji(category)}</span>
-              <span>{formatCurrency(Math.round(total))}</span>
+              <span>{formatCurrency(total)}</span>
             </button>
           ))}
         </div>
@@ -330,7 +330,7 @@ export default function ExpensesPage() {
                       {formatDateLabel(dateKey, t)}
                     </span>
                     <span className="text-xs font-medium text-danger tabular-nums">
-                      - {formatCurrency(Math.round(dayTotal))}
+                      - {formatCurrency(dayTotal)}
                     </span>
                   </div>
 
@@ -382,7 +382,7 @@ export default function ExpensesPage() {
 
                               {/* Amount */}
                               <span className="text-sm font-bold text-danger tabular-nums flex-shrink-0">
-                                - {formatCurrency(expense.amount, expense.amount % 1 !== 0)}
+                                - {formatCurrency(expense.amount)}
                               </span>
                             </div>
                           </Card>

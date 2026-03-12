@@ -20,9 +20,10 @@ function getFormatter(currency: string, decimals: boolean): Intl.NumberFormat {
   return formatterCache[key]
 }
 
-export function formatCurrency(amount: number, decimals: boolean = false, currency?: string): string {
+export function formatCurrency(amount: number, decimals?: boolean, currency?: string): string {
   const code = currency || useHouseholdStore.getState().household?.currency || DEFAULT_CURRENCY
-  return getFormatter(code, decimals).format(amount)
+  const showDecimals = decimals ?? (amount % 1 !== 0)
+  return getFormatter(code, showDecimals).format(amount)
 }
 
 export function formatMonth(monthStr: string): string {

@@ -510,6 +510,10 @@
     "syncing": "Synchronisation...",
     "synced": "Synchronis\u00e9 !"
   },
+  "presence": {
+    "online": "En ligne",
+    "offline": "Hors ligne"
+  },
   "dashboardGrid": {
     "editLayout": "Personnaliser la disposition",
     "done": "Terminer",

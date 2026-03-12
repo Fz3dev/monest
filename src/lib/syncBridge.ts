@@ -47,6 +47,10 @@ export function setUserInfo(userId: string, userName: string, householdId: strin
   _householdId = householdId
 }
 
+export function getUserInfo() {
+  return { userId: _userId, userName: _userName, householdId: _householdId }
+}
+
 // ─── Retry helper ────────────────────────────────────────────────────────────
 
 async function withRetry<T>(fn: () => Promise<T>): Promise<T> {

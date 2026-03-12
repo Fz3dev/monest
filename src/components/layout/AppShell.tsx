@@ -112,7 +112,7 @@ function NotificationPanel({ onClose, bellRef }: NotificationPanelProps) {
   )
 }
 
-function NotificationBell() {
+export function NotificationBell() {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const bellRef = useRef<HTMLButtonElement>(null)
@@ -237,11 +237,6 @@ export default function AppShell({ children, memberCount = 0 }: AppShellProps) {
       </aside>
 
       <div className="pb-20 lg:pb-0 lg:pl-56">
-        {isShared && (
-          <div className="fixed top-3 right-3 z-50 lg:hidden">
-            <NotificationBell />
-          </div>
-        )}
         <main className="max-w-lg mx-auto px-4 py-4 lg:max-w-5xl lg:px-8 lg:py-6">
           <NotificationBanner />
           {children}

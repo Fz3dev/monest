@@ -495,7 +495,7 @@ export default function ChargesPage() {
               {t('charges.totalMonthly')}
               {hasFilters && ` (${filteredFixed.filter((c) => c.active).length}/${fixedCharges.filter((c) => c.active).length})`}
             </span>
-            <span className="text-lg font-bold text-brand tabular-nums">{formatCurrency(Math.round(totalMonthly))}</span>
+            <span className="text-lg font-bold text-brand tabular-nums">{formatCurrency(totalMonthly)}</span>
           </div>
         </Card>
       )}
