@@ -211,12 +211,13 @@ export default function QuickAddExpense() {
                   <div className="relative inline-flex items-baseline gap-1">
                     <input
                       ref={amountRef}
-                      type="number"
+                      type="text"
                       inputMode="decimal"
-                      step="0.01"
-                      min="0"
                       value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(',', '.').replace(/[^0-9.]/g, '')
+                        setAmount(v)
+                      }}
                       placeholder="0"
                       className="bg-transparent text-center text-4xl font-bold text-text-primary placeholder-text-muted/50 focus:outline-none w-40 tabular-nums"
                     />

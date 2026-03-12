@@ -693,7 +693,7 @@ export default function ChargesPage() {
                         })()}
                       </div>
                       <div className="text-xs text-text-muted mt-1">
-                        {formatCurrency(charge.amount)} · {getPayerLabel(charge.payer)} · {getFrequencyLabel(charge.frequency)}
+                        <span className="tabular-nums">{formatCurrency(charge.amount)}</span> · {getPayerLabel(charge.payer)} · {getFrequencyLabel(charge.frequency)}
                       </div>
                     </div>
                     {/* Mobile: toggle visible on card */}
@@ -793,7 +793,7 @@ export default function ChargesPage() {
                                   </span>
                                 </div>
                                 <div className="text-xs text-text-muted mt-1">
-                                  {formatCurrency(charge.amount)} · {getPayerLabel(charge.payer)} · {getFrequencyLabel(charge.frequency)}
+                                  <span className="tabular-nums">{formatCurrency(charge.amount)}</span> · {getPayerLabel(charge.payer)} · {getFrequencyLabel(charge.frequency)}
                                 </div>
                               </div>
                               {/* Desktop: restore + delete inline */}
@@ -861,7 +861,7 @@ export default function ChargesPage() {
                         <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getPayerColor(payment.payer) }} />
                         <span className="font-medium text-sm truncate">{payment.name}</span>
                       </div>
-                      <div className="text-xs text-text-muted mt-1">
+                      <div className="text-xs text-text-muted mt-1 tabular-nums">
                         {t('charges.installmentSummary', { total: formatCurrency(payment.totalAmount ?? payment.installmentAmount * payment.installmentCount), count: payment.installmentCount, monthly: formatCurrency(payment.installmentAmount) })}
                       </div>
                     </div>
@@ -926,7 +926,7 @@ export default function ChargesPage() {
                         <span className="font-medium text-sm truncate">{expense.name}</span>
                       </div>
                       <div className="text-xs text-text-muted mt-1">
-                        ~{formatCurrency(expense.estimatedAmount)} · {expense.targetMonth}
+                        ~<span className="tabular-nums">{formatCurrency(expense.estimatedAmount)}</span> · {expense.targetMonth}
                       </div>
                       {expense.note && <div className="text-[10px] text-text-muted mt-0.5">{expense.note}</div>}
                     </div>

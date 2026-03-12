@@ -273,7 +273,7 @@ export default function ExpensesPage() {
               }
             >
               <span>{getCategoryEmoji(category)}</span>
-              <span>{formatCurrency(total)}</span>
+              <span className="tabular-nums">{formatCurrency(total)}</span>
             </button>
           ))}
         </div>
