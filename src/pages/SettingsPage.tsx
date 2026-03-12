@@ -16,8 +16,9 @@ import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Select from '../components/ui/Select'
 import Modal from '../components/ui/Modal'
-import { Download, Upload, Trash2, User, Database, LogOut, Users, Share2, Copy, Check, Loader2, UserPlus, Tag, Plus, X, RotateCcw, Bell, Sun, Moon, Monitor, ChevronRight } from 'lucide-react'
+import { Download, Upload, Trash2, User, Database, LogOut, Users, Share2, Copy, Check, Loader2, UserPlus, Tag, Plus, X, RotateCcw, Bell, Sun, Moon, Monitor, ChevronRight, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
+import { useUiStore } from '../stores/uiStore'
 import {
   isNotificationSupported,
   isNotificationEnabled,
@@ -53,6 +54,8 @@ export default function SettingsPage({ session, saveHousehold, createInvite }: S
   const monthlyEntries = useMonthlyStore((s) => s.entries)
   const savingsGoals = useSavingsStore((s) => s.goals)
   const settingsExpenses = useExpenseStore((s) => s.expenses)
+  const confidentialMode = useUiStore((s) => s.confidentialMode)
+  const toggleConfidentialMode = useUiStore((s) => s.toggleConfidentialMode)
   const [confirmReset, setConfirmReset] = useState(false)
   const [editing, setEditing] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -650,6 +653,34 @@ export default function SettingsPage({ session, saveHousehold, createInvite }: S
               {opt.label}
             </button>
           ))}
+        </div>
+      </Card>
+
+      {/* Confidential mode */}
+      <Card>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <EyeOff size={14} className="text-brand flex-shrink-0" />
+            <div>
+              <p className="text-sm text-text-primary">{t('settings.confidentialMode')}</p>
+              <p className="text-xs text-text-muted mt-0.5">{t('settings.confidentialModeHint')}</p>
+            </div>
+          </div>
+          <button
+            onClick={toggleConfidentialMode}
+            className={`relative ml-3 flex-shrink-0 w-11 h-6 rounded-full transition-colors cursor-pointer ${
+              confidentialMode ? 'bg-brand' : 'bg-white/[0.12]'
+            }`}
+            role="switch"
+            aria-checked={confidentialMode}
+            aria-label={t('settings.confidentialMode')}
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                confidentialMode ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
         </div>
       </Card>
 

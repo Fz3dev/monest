@@ -1,6 +1,7 @@
 import i18n from '../i18n'
 import { useCategoriesStore } from '../stores/categoriesStore'
 import { useHouseholdStore, DEFAULT_CURRENCY } from '../stores/householdStore'
+import { useUiStore } from '../stores/uiStore'
 import type { Household, CategoryListItem, FrequencyOption, CategoryOption } from '../types'
 import type { TFunction } from 'i18next'
 
@@ -21,6 +22,7 @@ function getFormatter(currency: string, decimals: boolean): Intl.NumberFormat {
 }
 
 export function formatCurrency(amount: number, decimals?: boolean, currency?: string): string {
+  if (useUiStore.getState().confidentialMode) return '•••• €'
   const code = currency || useHouseholdStore.getState().household?.currency || DEFAULT_CURRENCY
   const showDecimals = decimals ?? (amount % 1 !== 0)
   return getFormatter(code, showDecimals).format(amount)

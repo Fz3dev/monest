@@ -308,6 +308,8 @@
     "categoriesReset": "Cat\u00e9gories r\u00e9initialis\u00e9es",
     "currency": "Devise",
     "currencyHint": "La devise utilis\u00e9e dans toute l'application",
+    "confidentialMode": "Mode confidentiel",
+    "confidentialModeHint": "Masque tous les montants pour les captures d'\u00e9cran",
     "theme": "Apparence",
     "themeDark": "Sombre",
     "themeLight": "Clair",
