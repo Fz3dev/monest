@@ -51,7 +51,7 @@ function NotificationPanel({ onClose, bellRef }: NotificationPanelProps) {
   return (
     <div
       ref={panelRef}
-      className="fixed lg:absolute right-3 lg:right-auto lg:left-0 top-14 lg:top-full lg:mt-2 w-80 max-h-96 overflow-y-auto bg-bg-surface/95 backdrop-blur-xl border border-white/[0.08] rounded-2xl shadow-2xl z-50"
+      className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-bg-surface/95 backdrop-blur-xl border border-white/[0.08] rounded-2xl shadow-2xl z-50"
     >
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
         <span className="text-sm font-semibold text-text-primary">{t('notifications.title')}</span>
