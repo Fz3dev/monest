@@ -11,7 +11,7 @@ import type { Payer, ComputeMonthResult } from '../types'
 import Card from '../components/ui/Card'
 import ProgressBar from '../components/ui/ProgressBar'
 import { addMonths, format } from 'date-fns'
-import { CheckCircle2, AlertTriangle, XCircle, ChevronDown } from 'lucide-react'
+import { TrendingDown, TrendingUp, Minus, ChevronDown } from 'lucide-react'
 
 interface MonthData {
   month: string
@@ -42,16 +42,12 @@ export default function CalendarPage() {
 
   const months = useMemo(() => {
     const current = getCurrentMonth()
-    const results = []
+    const results: Omit<MonthData, 'status'>[] = []
     for (let i = 0; i < 12; i++) {
       const m = format(addMonths(new Date(current + '-01'), i), 'yyyy-MM')
       const entry = entries[m] || null
       const result = computeMonth(m, household, fixedCharges, installmentPayments, plannedExpenses, entry)
       const totalCharges = result.totalCommon + result.personalACharges + result.personalBCharges
-
-      let status: 'green' | 'yellow' | 'red' = 'green'
-      if (result.resteFoyer < 500) status = 'red'
-      else if (result.resteFoyer < 1500) status = 'yellow'
 
       const catBreakdown: Record<string, number> = {}
       result.charges.forEach((c) => {
@@ -64,7 +60,6 @@ export default function CalendarPage() {
         label: formatMonthShort(m),
         result,
         totalCharges,
-        status,
         hasSpecial: result.charges.some((c) => c.type === 'installment' || c.type === 'planned'),
         catBreakdown: Object.entries(catBreakdown)
           .map(([name, value]) => ({ name, label: getCategoryLabel(name), value }))
@@ -72,7 +67,15 @@ export default function CalendarPage() {
         isCurrent: m === current,
       })
     }
-    return results
+
+    // Status based on charges relative to the current month
+    const baseCharges = results[0]?.totalCharges || 1
+    return results.map((m) => {
+      let status: 'green' | 'yellow' | 'red' = 'yellow'
+      if (m.totalCharges < baseCharges * 0.9) status = 'green'
+      else if (m.totalCharges > baseCharges * 1.1) status = 'red'
+      return { ...m, status }
+    })
   }, [household, fixedCharges, installmentPayments, plannedExpenses, entries])
 
   const selected: MonthData | null = selectedMonth ? months.find((m) => m.month === selectedMonth) ?? null : null
@@ -85,17 +88,17 @@ export default function CalendarPage() {
     green: {
       bg: 'bg-success/10 border-success/20',
       text: 'text-success',
-      icon: <CheckCircle2 size={10} className="text-success" />,
+      icon: <TrendingDown size={10} className="text-success" />,
     },
     yellow: {
-      bg: 'bg-warning/10 border-warning/20',
-      text: 'text-warning',
-      icon: <AlertTriangle size={10} className="text-warning" />,
+      bg: 'bg-white/[0.04] border-white/[0.08]',
+      text: 'text-text-primary',
+      icon: <Minus size={10} className="text-text-muted" />,
     },
     red: {
       bg: 'bg-danger/10 border-danger/20',
       text: 'text-danger',
-      icon: <XCircle size={10} className="text-danger" />,
+      icon: <TrendingUp size={10} className="text-danger" />,
     },
   }
 
@@ -134,7 +137,7 @@ export default function CalendarPage() {
               </div>
               <div className="text-[10px] font-medium text-text-secondary">{m.label}</div>
               <div className={`text-base font-bold mt-0.5 tabular-nums ${cfg.text}`}>
-                {formatCurrency(m.result.resteFoyer)}
+                {formatCurrency(m.totalCharges)}
               </div>
               <div className="flex items-center justify-center gap-1 mt-1">
                 {cfg.icon}
@@ -148,13 +151,13 @@ export default function CalendarPage() {
       {/* Legend */}
       <div className="flex gap-4 text-[10px] text-text-muted justify-center">
         <div className="flex items-center gap-1.5">
-          <CheckCircle2 size={10} className="text-success" /> &gt; 1 500 €
+          <TrendingDown size={10} className="text-success" /> {t('calendar.lighter')}
         </div>
         <div className="flex items-center gap-1.5">
-          <AlertTriangle size={10} className="text-warning" /> 500–1 500 €
+          <Minus size={10} className="text-text-muted" /> {t('calendar.stable')}
         </div>
         <div className="flex items-center gap-1.5">
-          <XCircle size={10} className="text-danger" /> &lt; 500 €
+          <TrendingUp size={10} className="text-danger" /> {t('calendar.heavier')}
         </div>
       </div>
 
@@ -179,32 +182,19 @@ export default function CalendarPage() {
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="bg-white/[0.03] rounded-xl p-3">
-                  <div className="text-[10px] text-text-muted uppercase tracking-wider">{t('calendar.remainingHousehold')}</div>
-                  <div className={`text-lg font-bold tabular-nums ${statusConfig[selected.status].text}`}>
-                    {formatCurrency(selected.result.resteFoyer)}
-                  </div>
+              <div className="bg-white/[0.03] rounded-xl p-3 mb-4">
+                <div className="text-[10px] text-text-muted uppercase tracking-wider">{t('calendar.totalCharges')}</div>
+                <div className={`text-lg font-bold tabular-nums ${statusConfig[selected.status].text}`}>
+                  {formatCurrency(selected.totalCharges)}
                 </div>
-                <div className="bg-white/[0.03] rounded-xl p-3">
-                  <div className="text-[10px] text-text-muted uppercase tracking-wider">{t('calendar.totalCharges')}</div>
-                  <div className="text-lg font-bold tabular-nums text-text-primary">
-                    {formatCurrency(selected.totalCharges)}
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2 mb-4">
-                {household?.personAName && (
-                  <div className="flex justify-between text-sm">
-                    <span style={{ color: household.personAColor }}>{household.personAName}</span>
-                    <span className="tabular-nums">{formatCurrency(selected.result.resteA)}</span>
-                  </div>
-                )}
-                {household?.personBName && (
-                  <div className="flex justify-between text-sm">
-                    <span style={{ color: household.personBColor }}>{household.personBName}</span>
-                    <span className="tabular-nums">{formatCurrency(selected.result.resteB)}</span>
+                {months[0] && selected.month !== months[0].month && (
+                  <div className="text-[10px] text-text-muted mt-1">
+                    {selected.totalCharges < months[0].totalCharges
+                      ? `${formatCurrency(months[0].totalCharges - selected.totalCharges)} ${t('calendar.lessVsCurrent')}`
+                      : selected.totalCharges > months[0].totalCharges
+                        ? `+${formatCurrency(selected.totalCharges - months[0].totalCharges)} ${t('calendar.moreVsCurrent')}`
+                        : t('calendar.sameAsCurrent')
+                    }
                   </div>
                 )}
               </div>

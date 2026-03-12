@@ -75,8 +75,8 @@
     "expenses": "Dépenses",
     "monthly": "Mensuel",
     "enterIncome": "Saisir revenus",
-    "calendar": "Calendrier",
-    "forecast12Months": "Pr\u00e9visions 12 mois",
+    "calendar": "Pr\u00e9visionnel",
+    "forecast12Months": "Charges sur 12 mois",
     "import": "Import",
     "importCSV": "Détectez vos charges depuis un relevé bancaire",
     "expensesLink": "D\u00e9penses",
@@ -252,13 +252,18 @@
     "goalDeleted": "\"{{name}}\" supprim\u00e9"
   },
   "calendar": {
-    "title": "Calendrier pr\u00e9visionnel",
-    "remainingHousehold": "Reste \u00e0 vivre du foyer",
-    "totalCharges": "Total charges",
+    "title": "Pr\u00e9visionnel charges",
+    "totalCharges": "Total charges du mois",
     "byCategory": "Par cat\u00e9gorie",
-    "chargesLabel": "Charges",
+    "chargesLabel": "D\u00e9tail des charges",
     "installmentBadge": "\u00e9ch.",
-    "plannedBadge": "pr\u00e9vu"
+    "plannedBadge": "pr\u00e9vu",
+    "lighter": "Mois all\u00e9g\u00e9",
+    "stable": "Stable",
+    "heavier": "Mois charg\u00e9",
+    "lessVsCurrent": "de moins vs ce mois",
+    "moreVsCurrent": "de plus vs ce mois",
+    "sameAsCurrent": "Identique au mois en cours"
   },
   "settings": {
     "title": "R\u00e9glages",
