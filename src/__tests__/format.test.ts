@@ -115,10 +115,10 @@ describe('PAYER_OPTIONS', () => {
 // ─── Constants ───────────────────────────────────────────────
 
 describe('Constants', () => {
-  it('CATEGORIES has 12 entries', () => {
-    expect(CATEGORIES).toHaveLength(12)
+  it('CATEGORIES has 13 entries', () => {
+    expect(CATEGORIES).toHaveLength(13)
     expect(CATEGORIES[0].value).toBe('logement')
-    expect(CATEGORIES[11].value).toBe('autre')
+    expect(CATEGORIES[12].value).toBe('autre')
   })
 
   it('FREQUENCIES has 4 entries', () => {

@@ -15,6 +15,7 @@ export const DEFAULT_CATEGORIES: Record<string, CategoryMeta> = {
   loisirs: { color: '#EC4899', emoji: '\u{1F3AE}' },         // rose — fun
   enfants: { color: '#D946EF', emoji: '\u{1F476}' },         // fuchsia — enfance
   banque: { color: '#64748B', emoji: '\u{1F3E6}' },          // ardoise — institutionnel
+  epargne: { color: '#4ADE80', emoji: '\u{1F4B0}' },         // vert épargne — tirelire
   autre: { color: '#94A3B8', emoji: '\u{1F381}' },           // gris — neutre
 }
 

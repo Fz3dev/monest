@@ -55,6 +55,7 @@ export const CATEGORIES: CategoryListItem[] = [
   { value: 'education', labelKey: 'categories.education' },
   { value: 'loisirs', labelKey: 'categories.loisirs' },
   { value: 'enfants', labelKey: 'categories.enfants' },
+  { value: 'epargne', labelKey: 'categories.epargne' },
   { value: 'autre', labelKey: 'categories.autre' },
 ] as const
 
