@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
 import { useChargesStore } from '../stores/chargesStore'
@@ -7,14 +7,36 @@ import { parsePDF } from '../utils/pdfParser'
 import { formatCurrency, getTranslatedCategories } from '../utils/format'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
-import { Upload, Check, X, Loader2, FileText, Tag, HelpCircle, Shield, Pencil } from 'lucide-react'
+import Modal from '../components/ui/Modal'
+import { Upload, Check, X, Loader2, FileText, Tag, HelpCircle, Shield, Pencil, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function ImportPage() {
   const { t } = useTranslation()
-  const { addFixedCharge, matchCategory, addCategoryRule } = useChargesStore()
+  const { addFixedCharge, matchCategory, addCategoryRule, fixedCharges } = useChargesStore()
   const fileInputRef = useRef(null)
   const categories = getTranslatedCategories(t)
+
+  const normalize = useCallback((str) => str.toUpperCase().replace(/[^A-Z0-9]/g, ''), [])
+
+  const existingNormalized = useMemo(
+    () => fixedCharges.map((c) => ({ name: c.name, amount: c.amount, normalized: normalize(c.name) })),
+    [fixedCharges, normalize]
+  )
+
+  const findDuplicate = useCallback((name) => {
+    const norm = normalize(name)
+    const match = existingNormalized.find((c) => c.normalized === norm)
+    if (match) return { name: match.name, amount: match.amount }
+    // Fuzzy: check if one contains the other (at least 4 chars)
+    if (norm.length >= 4) {
+      const fuzzy = existingNormalized.find(
+        (c) => (c.normalized.includes(norm) || norm.includes(c.normalized)) && c.normalized.length >= 4
+      )
+      if (fuzzy) return { name: fuzzy.name, amount: fuzzy.amount }
+    }
+    return null
+  }, [normalize, existingNormalized])
 
   const [status, setStatus] = useState('idle')
   const [suggestions, setSuggestions] = useState([])
@@ -26,6 +48,7 @@ export default function ImportPage() {
   const [nameOverrides, setNameOverrides] = useState({})
   const [amountOverrides, setAmountOverrides] = useState({})
   const [editing, setEditing] = useState(null)
+  const [confirmDuplicate, setConfirmDuplicate] = useState(null)
 
   const handleFileSelect = async (e) => {
     const file = e.target.files?.[0]
@@ -92,7 +115,7 @@ export default function ImportPage() {
   const getName = (s) => nameOverrides[s.suggestedName] ?? s.suggestedName
   const getAmount = (s) => amountOverrides[s.suggestedName] ?? s.avgAmount
 
-  const handleAdd = (suggestion) => {
+  const doAdd = (suggestion) => {
     const category = getCategory(suggestion)
     const name = getName(suggestion)
     const amount = getAmount(suggestion)
@@ -111,7 +134,18 @@ export default function ImportPage() {
 
     setAdded((prev) => new Set([...prev, suggestion.suggestedName]))
     setEditing(null)
+    setConfirmDuplicate(null)
     toast.success(t('import.added', { name }))
+  }
+
+  const handleAdd = (suggestion) => {
+    const name = getName(suggestion)
+    const duplicate = findDuplicate(name)
+    if (duplicate) {
+      setConfirmDuplicate({ suggestion, existingName: duplicate.name, existingAmount: duplicate.amount })
+    } else {
+      doAdd(suggestion)
+    }
   }
 
   const handleDismiss = (name) => {
@@ -250,7 +284,14 @@ export default function ImportPage() {
                     ) : (
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
-                          <span className="font-medium text-sm">{getName(s)}</span>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-medium text-sm">{getName(s)}</span>
+                            {findDuplicate(getName(s)) && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-warning/15 text-warning border border-warning/20">
+                                <AlertTriangle size={10} /> {t('import.alreadyExists')}
+                              </span>
+                            )}
+                          </div>
                           <div className="text-xs text-text-muted mt-0.5">
                             {formatCurrency(getAmount(s), true)}/mois — {s.occurrences}x
                             {s.isStable && <span className="text-success ml-1">{t('import.stable')}</span>}
@@ -319,6 +360,47 @@ export default function ImportPage() {
         </ul>
         <p className="text-[11px] text-text-muted mt-3 opacity-60">{t('import.howItWorksFormats')}</p>
       </Card>
+
+      <Modal
+        isOpen={!!confirmDuplicate}
+        onClose={() => setConfirmDuplicate(null)}
+        title={t('import.duplicateTitle')}
+      >
+        <div className="space-y-4">
+          <div className="p-3 rounded-xl bg-warning/10 border border-warning/20 space-y-3">
+            <div className="flex items-start gap-3">
+              <AlertTriangle size={18} className="text-warning flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-text-secondary">
+                {t('import.duplicateMessage')}
+              </p>
+            </div>
+            <div className="ml-7 text-xs space-y-1.5">
+              <div className="flex justify-between items-center p-2 rounded-lg bg-white/[0.04]">
+                <span className="text-text-muted">{t('import.existingCharge')}</span>
+                <span className="font-medium text-text-primary">{confirmDuplicate?.existingName} — {formatCurrency(confirmDuplicate?.existingAmount || 0)}</span>
+              </div>
+              <div className="flex justify-between items-center p-2 rounded-lg bg-white/[0.04]">
+                <span className="text-text-muted">{t('import.newCharge')}</span>
+                <span className="font-medium text-brand">{confirmDuplicate?.suggestion && getName(confirmDuplicate.suggestion)} — {confirmDuplicate?.suggestion && formatCurrency(getAmount(confirmDuplicate.suggestion))}</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => doAdd(confirmDuplicate.suggestion)}
+              className="flex-1 py-3 rounded-2xl text-sm font-semibold bg-warning/20 hover:bg-warning/30 text-warning transition-all cursor-pointer"
+            >
+              {t('import.addAnyway')}
+            </button>
+            <button
+              onClick={() => setConfirmDuplicate(null)}
+              className="flex-1 py-3 rounded-2xl text-sm font-semibold bg-card-bg border border-border-default text-text-secondary hover:text-text-primary transition-all cursor-pointer"
+            >
+              {t('common.cancel')}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
