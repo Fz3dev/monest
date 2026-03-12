@@ -522,6 +522,8 @@
     "widget_insights": "Insights",
     "widget_trend": "Tendance",
     "widget_categories": "Catégories",
-    "widget_chargesDetail": "Détail charges"
+    "widget_chargesDetail": "Détail charges",
+    "moveUp": "Monter",
+    "moveDown": "Descendre"
   }
 }
