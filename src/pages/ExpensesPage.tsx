@@ -38,7 +38,7 @@ export default function ExpensesPage() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [payerFilter, setPayerFilter] = useState<string | null>(null) // null = all, 'common', 'person_a', 'person_b'
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
-  const [editForm, setEditForm] = useState({ note: '', amount: '', category: '', date: '' })
+  const [editForm, setEditForm] = useState({ note: '', amount: '', category: '', date: '', payer: 'common' as Payer })
   const touchStartX = useRef<number | null>(null)
 
   const navigateMonth = (direction: 'prev' | 'next') => {
@@ -130,6 +130,7 @@ export default function ExpensesPage() {
       amount: String(expense.amount),
       category: expense.category || 'autre',
       date: expense.date || '',
+      payer: expense.payer || 'person_a',
     })
   }
 
@@ -145,6 +146,7 @@ export default function ExpensesPage() {
       amount,
       category: editForm.category,
       date: editForm.date,
+      payer: editForm.payer,
     })
     toast.success(t('expenses.updated'))
     setEditingExpense(null)
@@ -411,12 +413,13 @@ export default function ExpensesPage() {
             </label>
             <div className="relative">
               <input
-                type="number"
+                type="text"
                 inputMode="decimal"
-                step="0.01"
-                min="0"
                 value={editForm.amount}
-                onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })}
+                onChange={(e) => {
+                  const v = e.target.value.replace(',', '.').replace(/[^0-9.]/g, '')
+                  setEditForm({ ...editForm, amount: v })
+                }}
                 className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2.5 text-base text-text-primary focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-transparent pr-8"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted text-sm">€</span>
@@ -464,6 +467,37 @@ export default function ExpensesPage() {
               ))}
             </div>
           </div>
+
+          {/* Payer (couple mode) */}
+          {household?.configModel !== 'solo' && (
+            <div>
+              <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                {t('quickAdd.paidBy')}
+              </label>
+              <div className="flex gap-1.5 bg-white/[0.03] rounded-2xl p-1 border border-white/[0.06]">
+                {[
+                  { value: 'common' as Payer, label: t('payer.common') },
+                  { value: 'person_a' as Payer, label: household?.personAName || t('common.personA') },
+                  ...(household?.personBName
+                    ? [{ value: 'person_b' as Payer, label: household.personBName }]
+                    : []),
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setEditForm({ ...editForm, payer: opt.value })}
+                    className={`flex-1 py-2 text-xs font-medium rounded-xl transition-all cursor-pointer ${
+                      editForm.payer === opt.value
+                        ? 'bg-brand text-white shadow-md shadow-brand/20'
+                        : 'text-text-secondary hover:text-text-primary'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Date */}
           <div>
