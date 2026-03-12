@@ -8,10 +8,11 @@ import { computeMonth } from '../utils/calculations'
 import { formatCurrency, formatMonth, getCurrentMonth } from '../utils/format'
 import { useCategoriesStore } from '../stores/categoriesStore'
 import Card from '../components/ui/Card'
+import Modal from '../components/ui/Modal'
 import Input from '../components/ui/Input'
 import AnimatedNumber from '../components/ui/AnimatedNumber'
 import ProgressBar from '../components/ui/ProgressBar'
-import { ChevronLeft, ChevronRight, Wallet, TrendingDown, AlertTriangle, CheckCircle2, ArrowUpDown, ToggleLeft, ToggleRight, Send } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Wallet, TrendingDown, AlertTriangle, CheckCircle2, ArrowUpDown, ToggleLeft, ToggleRight, Send, Pencil } from 'lucide-react'
 import { addMonths, subMonths, format } from 'date-fns'
 import { createNotification } from '../lib/notifications'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
@@ -31,6 +32,8 @@ export default function MonthlyPage() {
 
   const [currentMonth, setCurrentMonth] = useState(() => getCurrentMonth())
   const [chargePayerFilter, setChargePayerFilter] = useState(null) // null = all, 'common', 'person_a', 'person_b'
+  const [editingCharge, setEditingCharge] = useState(null) // { id, name, amount }
+  const [editAmount, setEditAmount] = useState('')
   const touchStartX = useRef(null)
 
   const entry = entries[currentMonth] || null
@@ -231,41 +234,27 @@ export default function MonthlyPage() {
                         <div key={charge.id} className={`flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0 ${charge.isDisabledThisMonth ? 'opacity-40' : ''}`}>
                           <div className="flex items-center gap-2 flex-1 min-w-0 pl-3.5">
                             <span className="text-sm text-text-secondary truncate">{charge.name}</span>
-                            {household?.personBName && (
-                              <span
-                                className="text-[9px] px-1.5 py-0.5 rounded-full flex-shrink-0"
-                                style={charge.payer === 'common'
-                                  ? { backgroundColor: 'rgba(255,255,255,0.06)', color: 'var(--color-text-muted)' }
-                                  : { backgroundColor: `${charge.payer === 'person_a' ? household.personAColor : household.personBColor}15`, color: charge.payer === 'person_a' ? household.personAColor : household.personBColor }
-                                }
-                              >
-                                {charge.payer === 'common' ? t('common.common') : charge.payer === 'person_a' ? household.personAName : household.personBName}
-                              </span>
-                            )}
                           </div>
-                          <div className="flex items-center gap-1.5">
-                            {charge.type === 'fixed' && !charge.isDisabledThisMonth && (
-                              <div className="flex items-center gap-1">
-                                <input
-                                  type="number"
-                                  value={String(
-                                    entry?.variableOverrides?.[charge.id] !== undefined
+                          <div className="flex items-center gap-2">
+                            {charge.isDisabledThisMonth ? (
+                              <span className="text-xs text-text-muted italic">{t('monthly.disabled')}</span>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  if (charge.type === 'fixed') {
+                                    const currentVal = entry?.variableOverrides?.[charge.id] !== undefined
                                       ? entry.variableOverrides[charge.id]
                                       : charge.originalAmount
-                                  )}
-                                  onChange={(e) =>
-                                    updateVariable(currentMonth, charge.id, parseFloat(e.target.value) || 0)
+                                    setEditingCharge({ id: charge.id, name: charge.name, amount: currentVal })
+                                    setEditAmount(String(currentVal))
                                   }
-                                  className="w-24 text-right bg-white/[0.04] border border-white/[0.08] rounded-lg px-2 py-1 text-base text-text-primary focus:outline-none focus:ring-1 focus:ring-brand/50"
-                                />
-                                <span className="text-xs text-text-muted">€</span>
-                              </div>
-                            )}
-                            {charge.type !== 'fixed' && (
-                              <span className="text-sm font-medium tabular-nums">{formatCurrency(charge.amount)}</span>
-                            )}
-                            {charge.isDisabledThisMonth && charge.type === 'fixed' && (
-                              <span className="text-xs text-text-muted italic">{t('monthly.disabled')}</span>
+                                }}
+                                className={`flex items-center gap-1.5 ${charge.type === 'fixed' ? 'cursor-pointer hover:text-brand transition-colors' : ''}`}
+                                disabled={charge.type !== 'fixed'}
+                              >
+                                <span className="text-sm font-medium tabular-nums">{formatCurrency(charge.amount)}</span>
+                                {charge.type === 'fixed' && <Pencil size={12} className="text-text-muted" />}
+                              </button>
                             )}
                             {charge.type === 'fixed' && (
                               <button
@@ -353,21 +342,60 @@ export default function MonthlyPage() {
         <Card>
           <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">{t('monthly.distribution')}</h2>
           <div className="space-y-2 text-sm">
+            {/* Charges communes */}
             <div className="flex justify-between text-text-muted">
               <span>{t('monthly.commonCharges')}</span>
               <span className="tabular-nums">{formatCurrency(result.totalCommon)}</span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between pl-3">
               <span style={{ color: household?.personAColor }}>
                 {t('monthly.share', { name: household.personAName, percent: Math.round((result.ratio || 0.5) * 100) })}
               </span>
               <span className="tabular-nums">{formatCurrency(result.shareA)}</span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between pl-3">
               <span style={{ color: household?.personBColor }}>
                 {t('monthly.share', { name: household.personBName, percent: Math.round((1 - (result.ratio || 0.5)) * 100) })}
               </span>
               <span className="tabular-nums">{formatCurrency(result.shareB)}</span>
+            </div>
+
+            {/* Charges perso */}
+            {(result.personalACharges > 0 || result.personalBCharges > 0) && (
+              <>
+                <div className="border-t border-white/[0.06] pt-2 mt-2" />
+                {result.personalACharges > 0 && (
+                  <div className="flex justify-between">
+                    <span style={{ color: household?.personAColor }}>
+                      {t('monthly.personalChargesOf', { name: household.personAName })}
+                    </span>
+                    <span className="tabular-nums">{formatCurrency(result.personalACharges)}</span>
+                  </div>
+                )}
+                {result.personalBCharges > 0 && (
+                  <div className="flex justify-between">
+                    <span style={{ color: household?.personBColor }}>
+                      {t('monthly.personalChargesOf', { name: household.personBName })}
+                    </span>
+                    <span className="tabular-nums">{formatCurrency(result.personalBCharges)}</span>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Total par personne */}
+            <div className="border-t border-white/[0.06] pt-2 mt-2" />
+            <div className="flex justify-between font-semibold">
+              <span style={{ color: household?.personAColor }}>
+                {t('monthly.totalChargesOf', { name: household.personAName })}
+              </span>
+              <span className="tabular-nums">{formatCurrency(result.shareA + result.personalACharges)}</span>
+            </div>
+            <div className="flex justify-between font-semibold">
+              <span style={{ color: household?.personBColor }}>
+                {t('monthly.totalChargesOf', { name: household.personBName })}
+              </span>
+              <span className="tabular-nums">{formatCurrency(result.shareB + result.personalBCharges)}</span>
             </div>
           </div>
         </Card>
@@ -485,6 +513,36 @@ export default function MonthlyPage() {
           })()}
         </Card>
       )}
+
+      {/* Edit charge amount modal */}
+      <Modal
+        isOpen={!!editingCharge}
+        onClose={() => setEditingCharge(null)}
+        title={editingCharge?.name || t('monthly.editAmount')}
+      >
+        <div className="space-y-4">
+          <Input
+            label={t('common.amount')}
+            type="number"
+            inputMode="decimal"
+            value={editAmount}
+            onChange={(e) => setEditAmount(e.target.value)}
+            suffix="€"
+            autoFocus
+          />
+          <button
+            onClick={() => {
+              if (editingCharge) {
+                updateVariable(currentMonth, editingCharge.id, parseFloat(editAmount) || 0)
+                setEditingCharge(null)
+              }
+            }}
+            className="w-full py-3 rounded-2xl text-sm font-semibold bg-brand hover:bg-brand-dark text-white shadow-lg shadow-brand/25 transition-all cursor-pointer"
+          >
+            {t('common.save')}
+          </button>
+        </div>
+      </Modal>
     </div>
   )
 }

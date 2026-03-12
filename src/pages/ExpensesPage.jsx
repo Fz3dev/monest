@@ -34,6 +34,7 @@ export default function ExpensesPage() {
 
   const [currentMonth, setCurrentMonth] = useState(() => getCurrentMonth())
   const [activeCategory, setActiveCategory] = useState(null)
+  const [payerFilter, setPayerFilter] = useState(null) // null = all, 'common', 'person_a', 'person_b'
   const [editingExpense, setEditingExpense] = useState(null)
   const [editForm, setEditForm] = useState({ note: '', amount: '', category: '', date: '' })
   const touchStartX = useRef(null)
@@ -54,32 +55,40 @@ export default function ExpensesPage() {
     if (Math.abs(diff) > 60) navigateMonth(diff > 0 ? 'next' : 'prev')
   }
 
-  const monthTotal = getTotalByMonth(currentMonth)
-
   const monthExpenses = useMemo(
     () => expenses.filter((e) => e.date?.startsWith(currentMonth)),
     [expenses, currentMonth]
   )
 
+  const payerFilteredExpenses = useMemo(
+    () => payerFilter ? monthExpenses.filter((e) => e.payer === payerFilter) : monthExpenses,
+    [monthExpenses, payerFilter]
+  )
+
+  const monthTotalAll = getTotalByMonth(currentMonth)
+  const monthTotal = payerFilter
+    ? payerFilteredExpenses.reduce((sum, e) => sum + e.amount, 0)
+    : monthTotalAll
+
   const filteredExpenses = useMemo(
     () =>
       activeCategory
-        ? monthExpenses.filter((e) => (e.category || 'autre') === activeCategory)
-        : monthExpenses,
-    [monthExpenses, activeCategory]
+        ? payerFilteredExpenses.filter((e) => (e.category || 'autre') === activeCategory)
+        : payerFilteredExpenses,
+    [payerFilteredExpenses, activeCategory]
   )
 
-  // Category breakdown for pills
+  // Category breakdown for pills (respects payer filter)
   const categoryBreakdown = useMemo(() => {
     const cats = {}
-    monthExpenses.forEach((e) => {
+    payerFilteredExpenses.forEach((e) => {
       const key = e.category || 'autre'
       cats[key] = (cats[key] || 0) + e.amount
     })
     return Object.entries(cats)
       .sort(([, a], [, b]) => b - a)
       .map(([category, total]) => ({ category, total }))
-  }, [monthExpenses])
+  }, [payerFilteredExpenses])
 
   // Group expenses by date
   const groupedExpenses = useMemo(() => {
@@ -201,9 +210,35 @@ export default function ExpensesPage() {
           />
         </div>
         <p className="text-xs text-text-muted mt-1">
-          {t('expenses.expenseCount', { count: monthExpenses.length })}
+          {t('expenses.expenseCount', { count: payerFilteredExpenses.length })}
         </p>
       </Card>
+
+      {/* Payer filter pills — couple mode only */}
+      {household?.personBName && (
+        <div className="flex gap-1.5 flex-wrap">
+          {[
+            { value: null, label: t('common.all') },
+            { value: 'common', label: t('common.common') },
+            { value: 'person_a', label: household.personAName },
+            { value: 'person_b', label: household.personBName },
+          ].map((opt) => (
+            <button
+              key={opt.value ?? 'all'}
+              onClick={() => setPayerFilter(payerFilter === opt.value ? null : opt.value)}
+              className={`text-[11px] px-2.5 py-1 rounded-full transition-colors ${
+                payerFilter === opt.value
+                  ? 'bg-brand/15 text-brand border border-brand/30'
+                  : 'bg-white/[0.04] text-text-muted border border-white/[0.08]'
+              }`}
+              style={payerFilter === opt.value && opt.value === 'person_a' ? { backgroundColor: `${household.personAColor}15`, color: household.personAColor, borderColor: `${household.personAColor}40` } :
+                     payerFilter === opt.value && opt.value === 'person_b' ? { backgroundColor: `${household.personBColor}15`, color: household.personBColor, borderColor: `${household.personBColor}40` } : undefined}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Category breakdown pills */}
       {categoryBreakdown.length > 0 && (

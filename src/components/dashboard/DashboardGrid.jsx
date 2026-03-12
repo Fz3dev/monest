@@ -2,8 +2,8 @@ import { useCallback, useMemo, useRef, useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Responsive, useContainerWidth } from 'react-grid-layout'
 import { motion, AnimatePresence } from 'motion/react'
-import { GripHorizontal, Check, RotateCcw, LayoutGrid } from 'lucide-react'
-import { useDashboardLayoutStore, DEFAULT_LAYOUTS } from '../../stores/dashboardLayoutStore'
+import { GripHorizontal, Check, RotateCcw, LayoutGrid, Maximize2 } from 'lucide-react'
+import { useDashboardLayoutStore, DEFAULT_LAYOUTS, WIDGET_CONSTRAINTS } from '../../stores/dashboardLayoutStore'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 
@@ -27,7 +27,8 @@ export function EditModeButton() {
   )
 }
 
-export default function DashboardGrid({ widgets }) {
+// flowWidgetIds: widget IDs rendered outside the grid with natural height on desktop
+export default function DashboardGrid({ widgets, flowWidgetIds = [] }) {
   const { t } = useTranslation()
   const { width, containerRef, mounted } = useContainerWidth()
   const layouts = useDashboardLayoutStore((s) => s.layouts)
@@ -60,22 +61,44 @@ export default function DashboardGrid({ widgets }) {
     }
   }, [])
 
-  const visibleIds = useMemo(() => Object.keys(widgets), [widgets])
+  const allIds = useMemo(() => Object.keys(widgets), [widgets])
+  const flowSet = useMemo(() => new Set(flowWidgetIds), [flowWidgetIds])
+  const visibleIds = useMemo(() => allIds.filter((id) => !flowSet.has(id)), [allIds, flowSet])
+  const flowIds = useMemo(() => flowWidgetIds.filter((id) => allIds.includes(id)), [flowWidgetIds, allIds])
 
-  // Sort mobile widgets by sm layout y position
+  // Custom resize handle component
+  const resizeHandle = useMemo(() => {
+    if (!isEditMode) return undefined
+    return (axis, ref) => (
+      <div
+        ref={ref}
+        className={`react-resizable-handle react-resizable-handle-${axis} !w-5 !h-5 !bottom-1 !right-1 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity`}
+      >
+        <Maximize2 size={10} className="text-brand rotate-90" />
+      </div>
+    )
+  }, [isEditMode])
+
+  // Sort mobile widgets by sm layout y position (include flow widgets)
   const mobileOrder = useMemo(() => {
     const smLayout = layouts.sm || DEFAULT_LAYOUTS.sm
-    return [...visibleIds].sort((a, b) => {
+    return [...allIds].sort((a, b) => {
       const ay = smLayout.find((l) => l.i === a)?.y ?? 999
       const by = smLayout.find((l) => l.i === b)?.y ?? 999
       return ay - by
     })
-  }, [visibleIds, layouts.sm])
+  }, [allIds, layouts.sm])
 
   const filteredLayouts = useMemo(() => {
     const filtered = {}
     for (const [bp, items] of Object.entries(layouts)) {
-      filtered[bp] = items.filter((item) => visibleIds.includes(item.i))
+      filtered[bp] = items
+        .filter((item) => visibleIds.includes(item.i))
+        .map((item) => ({
+          ...item,
+          // Always inject min/max constraints so resize respects them
+          ...(WIDGET_CONSTRAINTS[item.i] || {}),
+        }))
     }
     for (const [bp, items] of Object.entries(filtered)) {
       const existing = new Set(items.map((item) => item.i))
@@ -195,31 +218,47 @@ export default function DashboardGrid({ widgets }) {
         <Responsive
           width={width}
           layouts={filteredLayouts}
-          breakpoints={{ lg: 1024, md: 0 }}
+          breakpoints={{ lg: 900, md: 0 }}
           cols={{ lg: 3, md: 2 }}
           rowHeight={50}
           dragConfig={{ enabled: isEditMode, handle: '.widget-drag-handle' }}
-          resizeConfig={{ enabled: false }}
+          resizeConfig={{
+            enabled: isEditMode,
+            handles: ['se'],
+            handleComponent: resizeHandle,
+          }}
           compactType="vertical"
           margin={[16, 16]}
           containerPadding={[0, 0]}
           onLayoutChange={handleLayoutChange}
         >
           {visibleIds.map((id) => (
-            <div key={id} className="overflow-hidden">
-              <div className={`h-full flex flex-col ${isEditMode ? 'ring-1 ring-brand/20 rounded-2xl' : ''}`}>
+            <div key={id} className={`group ${isEditMode ? '' : 'overflow-hidden'}`}>
+              <div className={`h-full flex flex-col ${isEditMode ? 'ring-1 ring-brand/20 rounded-2xl bg-white/[0.02]' : ''}`}>
                 {isEditMode && (
-                  <div className="widget-drag-handle flex justify-center py-1 cursor-grab active:cursor-grabbing shrink-0">
-                    <GripHorizontal size={14} className="text-text-muted" />
+                  <div className="widget-drag-handle flex items-center justify-center gap-2 py-1.5 cursor-grab active:cursor-grabbing shrink-0 border-b border-brand/10">
+                    <GripHorizontal size={14} className="text-brand/40" />
+                    <span className="text-[9px] font-semibold text-brand/40 uppercase tracking-widest">
+                      {t(`dashboardGrid.widget_${id}`, { defaultValue: id })}
+                    </span>
                   </div>
                 )}
-                <div className="flex-1 min-h-0 overflow-y-auto">
+                <div className={`flex-1 min-h-0 ${isEditMode ? 'overflow-hidden opacity-80 pointer-events-none' : 'overflow-hidden'}`}>
                   {widgets[id]}
                 </div>
               </div>
             </div>
           ))}
         </Responsive>
+      )}
+
+      {/* Flow widgets — natural height, outside the grid */}
+      {flowIds.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+          {flowIds.map((id) => (
+            <div key={id}>{widgets[id]}</div>
+          ))}
+        </div>
       )}
 
       <AnimatePresence>

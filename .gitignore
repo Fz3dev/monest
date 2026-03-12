@@ -29,3 +29,12 @@ dist-ssr
 .env.*.local
 .vercel
 supabase/.temp/
+
+# Claude & Playwright
+.claude/
+.playwright-mcp/
+# Test screenshots (root level)
+/*-page.png
+/*-desktop.png
+/*-mode.png
+/*-detail.png

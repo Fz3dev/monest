@@ -4,28 +4,35 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase'
 
 export const ALL_WIDGETS = ['hero', 'persons', 'quickLinks', 'streakBadges', 'savings', 'insights', 'categories', 'trend', 'chargesDetail']
 
+// Min/max constraints per widget
+export const WIDGET_CONSTRAINTS = {
+  hero:         { minW: 2, maxW: 3, minH: 7, maxH: 12 },
+  persons:      { minW: 2, maxW: 3, minH: 4, maxH: 10 },
+  quickLinks:   { minW: 1, maxW: 3, minH: 2, maxH: 4 },
+  streakBadges: { minW: 1, maxW: 2, minH: 3, maxH: 6 },
+  savings:      { minW: 1, maxW: 2, minH: 3, maxH: 6 },
+  insights:     { minW: 1, maxW: 2, minH: 3, maxH: 8 },
+  trend:        { minW: 1, maxW: 3, minH: 5, maxH: 10 },
+}
+
 export const DEFAULT_LAYOUTS = {
   lg: [
-    { i: 'hero', x: 0, y: 0, w: 2, h: 7 },
-    { i: 'savings', x: 2, y: 0, w: 1, h: 3 },
-    { i: 'insights', x: 2, y: 3, w: 1, h: 4 },
-    { i: 'persons', x: 0, y: 7, w: 2, h: 5 },
-    { i: 'categories', x: 2, y: 7, w: 1, h: 7 },
-    { i: 'quickLinks', x: 0, y: 12, w: 2, h: 2 },
-    { i: 'streakBadges', x: 0, y: 14, w: 1, h: 4 },
-    { i: 'trend', x: 0, y: 18, w: 1, h: 6 },
-    { i: 'chargesDetail', x: 1, y: 14, w: 2, h: 10 },
+    { i: 'hero', x: 0, y: 0, w: 2, h: 7, ...WIDGET_CONSTRAINTS.hero },
+    { i: 'insights', x: 2, y: 0, w: 1, h: 4, ...WIDGET_CONSTRAINTS.insights },
+    { i: 'streakBadges', x: 2, y: 4, w: 1, h: 3, ...WIDGET_CONSTRAINTS.streakBadges },
+    { i: 'persons', x: 0, y: 7, w: 2, h: 5, ...WIDGET_CONSTRAINTS.persons },
+    { i: 'savings', x: 2, y: 7, w: 1, h: 4, ...WIDGET_CONSTRAINTS.savings },
+    { i: 'trend', x: 2, y: 11, w: 1, h: 5, ...WIDGET_CONSTRAINTS.trend },
+    { i: 'quickLinks', x: 0, y: 12, w: 2, h: 2, ...WIDGET_CONSTRAINTS.quickLinks },
   ],
   md: [
-    { i: 'hero', x: 0, y: 0, w: 2, h: 7 },
-    { i: 'persons', x: 0, y: 7, w: 2, h: 5 },
-    { i: 'quickLinks', x: 0, y: 12, w: 2, h: 2 },
-    { i: 'streakBadges', x: 0, y: 14, w: 1, h: 4 },
-    { i: 'savings', x: 1, y: 14, w: 1, h: 3 },
-    { i: 'insights', x: 1, y: 17, w: 1, h: 4 },
-    { i: 'categories', x: 0, y: 21, w: 1, h: 7 },
-    { i: 'trend', x: 1, y: 21, w: 1, h: 6 },
-    { i: 'chargesDetail', x: 0, y: 28, w: 2, h: 10 },
+    { i: 'hero', x: 0, y: 0, w: 2, h: 7, ...WIDGET_CONSTRAINTS.hero },
+    { i: 'persons', x: 0, y: 7, w: 2, h: 5, ...WIDGET_CONSTRAINTS.persons },
+    { i: 'quickLinks', x: 0, y: 12, w: 2, h: 2, ...WIDGET_CONSTRAINTS.quickLinks },
+    { i: 'streakBadges', x: 0, y: 14, w: 1, h: 4, ...WIDGET_CONSTRAINTS.streakBadges },
+    { i: 'savings', x: 1, y: 14, w: 1, h: 4, ...WIDGET_CONSTRAINTS.savings },
+    { i: 'insights', x: 0, y: 18, w: 1, h: 4, ...WIDGET_CONSTRAINTS.insights },
+    { i: 'trend', x: 1, y: 18, w: 1, h: 5, ...WIDGET_CONSTRAINTS.trend },
   ],
   sm: [
     { i: 'hero', x: 0, y: 0, w: 1, h: 6 },
@@ -38,6 +45,14 @@ export const DEFAULT_LAYOUTS = {
     { i: 'trend', x: 0, y: 26, w: 1, h: 5 },
     { i: 'chargesDetail', x: 0, y: 31, w: 1, h: 5 },
   ],
+}
+
+// One-time migration: clear stale layout from localStorage
+const LAYOUT_VERSION_KEY = 'monest-dashboard-layout-v'
+const CURRENT_LAYOUT_VERSION = 8
+if (typeof window !== 'undefined' && localStorage.getItem(LAYOUT_VERSION_KEY) !== String(CURRENT_LAYOUT_VERSION)) {
+  localStorage.removeItem('monest-dashboard-layout')
+  localStorage.setItem(LAYOUT_VERSION_KEY, String(CURRENT_LAYOUT_VERSION))
 }
 
 // Debounce timer for saving layout to Supabase
@@ -62,6 +77,7 @@ export const useDashboardLayoutStore = create(
               user_id: userId,
               household_id: householdId,
               dashboard_layout: layouts,
+              dashboard_layout_version: CURRENT_LAYOUT_VERSION,
               updated_at: new Date().toISOString(),
             },
             { onConflict: 'user_id,household_id' }
@@ -77,14 +93,19 @@ export const useDashboardLayoutStore = create(
         try {
           const { data } = await supabase
             .from('user_preferences')
-            .select('dashboard_layout, updated_at')
+            .select('dashboard_layout, dashboard_layout_version, updated_at')
             .eq('user_id', userId)
             .eq('household_id', householdId)
             .single()
 
+          // Only use DB layout if version matches — stale layouts are discarded
           if (data?.dashboard_layout && Object.keys(data.dashboard_layout).length > 0) {
-            // Use DB layout — it's the cross-device source of truth
-            set({ layouts: data.dashboard_layout })
+            if (data.dashboard_layout_version === CURRENT_LAYOUT_VERSION) {
+              set({ layouts: data.dashboard_layout })
+            } else {
+              // DB layout is stale — overwrite with current defaults
+              get().saveToDB(userId, householdId)
+            }
           }
         } catch (err) {
           // No row found is fine — first time user, keep localStorage layout
@@ -105,13 +126,10 @@ export const useDashboardLayoutStore = create(
     }),
     {
       name: 'monest-dashboard-layout',
-      version: 4,
-      migrate: (state) => {
-        // Ensure layouts always has all required breakpoints
-        if (state && !state.layouts?.sm) {
-          state.layouts = DEFAULT_LAYOUTS
-        }
-        return state
+      version: 8,
+      migrate: () => {
+        // Always reset to default layouts on version change
+        return { layouts: DEFAULT_LAYOUTS, isEditMode: false }
       },
     }
   )

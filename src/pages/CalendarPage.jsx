@@ -19,6 +19,7 @@ export default function CalendarPage() {
   const plannedExpenses = useChargesStore((s) => s.plannedExpenses)
   const entries = useMonthlyStore((s) => s.entries)
   const [selectedMonth, setSelectedMonth] = useState(null)
+  const [calPayerFilter, setCalPayerFilter] = useState(null)
 
   const months = useMemo(() => {
     const current = getCurrentMonth()
@@ -189,38 +190,98 @@ export default function CalendarPage() {
                 )}
               </div>
 
-              {selected.catBreakdown.length > 0 && (
-                <div className="border-t border-white/[0.06] pt-3 mb-3">
-                  <div className="text-[10px] text-text-muted uppercase tracking-wider mb-2">{t('calendar.byCategory')}</div>
-                  <div className="space-y-2">
-                    {selected.catBreakdown.map((cat) => (
-                      <div key={cat.name}>
-                        <div className="flex justify-between text-xs mb-0.5">
-                          <span className="text-text-secondary">{cat.label}</span>
-                          <span className="tabular-nums text-text-muted">{formatCurrency(cat.value)}</span>
-                        </div>
-                        <ProgressBar value={cat.value} max={selected.totalCharges} color="#6C63FF" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {selected.result.charges.length > 0 && (
-                <div className="border-t border-white/[0.06] pt-3">
-                  <div className="text-[10px] text-text-muted uppercase tracking-wider mb-2">{t('calendar.chargesLabel')}</div>
-                  {selected.result.charges.map((c) => (
-                    <div key={c.id} className="flex justify-between text-sm py-1">
-                      <span className="text-text-secondary truncate">
-                        {c.name}
-                        {c.type === 'installment' && <span className="text-[9px] text-brand ml-1">{t('calendar.installmentBadge')}</span>}
-                        {c.type === 'planned' && <span className="text-[9px] text-warning ml-1">{t('calendar.plannedBadge')}</span>}
-                      </span>
-                      <span className="tabular-nums ml-2">{formatCurrency(c.amount)}</span>
-                    </div>
+              {/* Payer filter — couple mode */}
+              {household?.personBName && (
+                <div className="flex gap-1.5 mb-3 flex-wrap">
+                  {[
+                    { value: null, label: t('common.all') },
+                    { value: 'common', label: t('common.common') },
+                    { value: 'person_a', label: household.personAName },
+                    { value: 'person_b', label: household.personBName },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value ?? 'all'}
+                      onClick={() => setCalPayerFilter(calPayerFilter === opt.value ? null : opt.value)}
+                      className={`text-[11px] px-2.5 py-1 rounded-full transition-colors ${
+                        calPayerFilter === opt.value
+                          ? 'bg-brand/15 text-brand border border-brand/30'
+                          : 'bg-white/[0.04] text-text-muted border border-white/[0.08]'
+                      }`}
+                      style={calPayerFilter === opt.value && opt.value === 'person_a' ? { backgroundColor: `${household.personAColor}15`, color: household.personAColor, borderColor: `${household.personAColor}40` } :
+                             calPayerFilter === opt.value && opt.value === 'person_b' ? { backgroundColor: `${household.personBColor}15`, color: household.personBColor, borderColor: `${household.personBColor}40` } : undefined}
+                    >
+                      {opt.label}
+                    </button>
                   ))}
                 </div>
               )}
+
+              {(() => {
+                const filteredCharges = calPayerFilter
+                  ? selected.result.charges.filter((c) => c.payer === calPayerFilter)
+                  : selected.result.charges
+                const filteredTotal = filteredCharges.reduce((s, c) => s + c.amount, 0)
+                const filteredCats = {}
+                filteredCharges.forEach((c) => {
+                  const key = c.category || 'autre'
+                  filteredCats[key] = (filteredCats[key] || 0) + c.amount
+                })
+                const catList = Object.entries(filteredCats)
+                  .map(([name, value]) => ({ name, label: getCategoryLabel(name), value }))
+                  .sort((a, b) => b.value - a.value)
+
+                return (
+                  <>
+                    {catList.length > 0 && (
+                      <div className="border-t border-white/[0.06] pt-3 mb-3">
+                        <div className="text-[10px] text-text-muted uppercase tracking-wider mb-2">{t('calendar.byCategory')}</div>
+                        <div className="space-y-2">
+                          {catList.map((cat) => (
+                            <div key={cat.name}>
+                              <div className="flex justify-between text-xs mb-0.5">
+                                <span className="text-text-secondary">{cat.label}</span>
+                                <span className="tabular-nums text-text-muted">{formatCurrency(cat.value)}</span>
+                              </div>
+                              <ProgressBar value={cat.value} max={filteredTotal} color="#6C63FF" />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {filteredCharges.length > 0 && (
+                      <div className="border-t border-white/[0.06] pt-3">
+                        <div className="text-[10px] text-text-muted uppercase tracking-wider mb-2">{t('calendar.chargesLabel')}</div>
+                        {filteredCharges.map((c) => (
+                          <div key={c.id} className="flex justify-between text-sm py-1">
+                            <span className="text-text-secondary truncate">
+                              {c.name}
+                              {household?.personBName && (
+                                <span
+                                  className="text-[9px] px-1.5 py-0.5 rounded-full ml-1.5"
+                                  style={c.payer === 'common'
+                                    ? { backgroundColor: 'rgba(255,255,255,0.06)', color: 'var(--color-text-muted)' }
+                                    : { backgroundColor: `${c.payer === 'person_a' ? household.personAColor : household.personBColor}15`, color: c.payer === 'person_a' ? household.personAColor : household.personBColor }
+                                  }
+                                >
+                                  {c.payer === 'common' ? t('common.common') : c.payer === 'person_a' ? household.personAName : household.personBName}
+                                </span>
+                              )}
+                              {c.type === 'installment' && <span className="text-[9px] text-brand ml-1">{t('calendar.installmentBadge')}</span>}
+                              {c.type === 'planned' && <span className="text-[9px] text-warning ml-1">{t('calendar.plannedBadge')}</span>}
+                            </span>
+                            <span className="tabular-nums ml-2">{formatCurrency(c.amount)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {filteredCharges.length === 0 && calPayerFilter && (
+                      <p className="text-sm text-text-muted text-center py-4">{t('charges.noResults')}</p>
+                    )}
+                  </>
+                )
+              })()}
             </Card>
           </motion.div>
         )}

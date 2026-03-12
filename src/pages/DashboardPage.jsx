@@ -113,24 +113,9 @@ export default function DashboardPage() {
     return <ArrowDownRight size={14} className="text-danger" />
   }
 
-  const categoryData = useMemo(() => {
-    const cats = {}
-    result.charges.forEach((c) => {
-      const key = c.category || 'autre'
-      cats[key] = (cats[key] || 0) + c.amount
-    })
-    return Object.entries(cats)
-      .map(([name, value]) => ({
-        name,
-        label: getCategoryLabel(name),
-        value,
-        color: getCategoryColor(name),
-      }))
-      .sort((a, b) => b.value - a.value)
-  }, [result.charges, getCategoryColor])
-
   const [selectedChargeId, setSelectedChargeId] = useState(null)
   const [chargePayerFilter, setChargePayerFilter] = useState(null)
+  const [catPayerFilter, setCatPayerFilter] = useState(null)
 
   const totalSaved = savingsGoals.reduce((sum, g) => sum + g.currentAmount, 0)
   const totalTarget = savingsGoals.reduce((sum, g) => sum + g.targetAmount, 0)
@@ -425,17 +410,61 @@ export default function DashboardPage() {
 
   // Categories — conditional
   if (result.charges.length > 0) {
+    const filteredCatCharges = catPayerFilter
+      ? result.charges.filter((c) => c.payer === catPayerFilter)
+      : result.charges
+    const filteredCatData = (() => {
+      const cats = {}
+      filteredCatCharges.forEach((c) => {
+        const key = c.category || 'autre'
+        cats[key] = (cats[key] || 0) + c.amount
+      })
+      return Object.entries(cats)
+        .map(([name, value]) => ({
+          name,
+          label: getCategoryLabel(name),
+          value,
+          color: getCategoryColor(name),
+        }))
+        .sort((a, b) => b.value - a.value)
+    })()
+    const filteredCatTotal = filteredCatCharges.reduce((s, c) => s + c.amount, 0)
+
     widgets.categories = (
       <Card animate={false}>
         <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">
           {t('dashboard.categoryBreakdown')}
         </div>
-        {categoryData.length > 1 && (
+        {household?.personBName && (
+          <div className="flex gap-1.5 mb-3 flex-wrap">
+            {[
+              { value: null, label: t('common.all') },
+              { value: 'common', label: t('common.common') },
+              { value: 'person_a', label: household.personAName },
+              { value: 'person_b', label: household.personBName },
+            ].map((opt) => (
+              <button
+                key={opt.value ?? 'all'}
+                onClick={() => setCatPayerFilter(catPayerFilter === opt.value ? null : opt.value)}
+                className={`text-[11px] px-2.5 py-1 rounded-full transition-colors ${
+                  catPayerFilter === opt.value
+                    ? 'bg-brand/15 text-brand border border-brand/30'
+                    : 'bg-white/[0.04] text-text-muted border border-white/[0.08]'
+                }`}
+                style={catPayerFilter === opt.value && opt.value === 'person_a' ? { backgroundColor: `${household.personAColor}15`, color: household.personAColor, borderColor: `${household.personAColor}40` } :
+                       catPayerFilter === opt.value && opt.value === 'person_b' ? { backgroundColor: `${household.personBColor}15`, color: household.personBColor, borderColor: `${household.personBColor}40` } : undefined}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        )}
+        {filteredCatData.length > 1 && (
           <div className="flex justify-center mb-4">
             <ResponsiveContainer width={140} height={140}>
               <PieChart>
-                <Pie data={categoryData} cx="50%" cy="50%" innerRadius={40} outerRadius={65} dataKey="value" stroke="none">
-                  {categoryData.map((entry, i) => (
+                <Pie data={filteredCatData} cx="50%" cy="50%" innerRadius={40} outerRadius={65} dataKey="value" stroke="none">
+                  {filteredCatData.map((entry, i) => (
                     <Cell key={i} fill={entry.color} />
                   ))}
                 </Pie>
@@ -443,20 +472,24 @@ export default function DashboardPage() {
             </ResponsiveContainer>
           </div>
         )}
-        <div className="space-y-3">
-          {categoryData.map((cat) => (
-            <div key={cat.name}>
-              <div className="flex justify-between items-center text-sm mb-1">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
-                  <span className="text-text-secondary">{cat.label}</span>
+        {filteredCatData.length === 0 ? (
+          <p className="text-sm text-text-muted text-center py-4">{t('charges.noResults')}</p>
+        ) : (
+          <div className="space-y-3">
+            {filteredCatData.map((cat) => (
+              <div key={cat.name}>
+                <div className="flex justify-between items-center text-sm mb-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
+                    <span className="text-text-secondary">{cat.label}</span>
+                  </div>
+                  <span className="font-medium tabular-nums">{formatCurrency(cat.value)}</span>
                 </div>
-                <span className="font-medium tabular-nums">{formatCurrency(cat.value)}</span>
+                <ProgressBar value={cat.value} max={filteredCatTotal} color={cat.color} />
               </div>
-              <ProgressBar value={cat.value} max={totalCharges} color={cat.color} />
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </Card>
     )
   }
@@ -639,7 +672,7 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      <DashboardGrid widgets={widgets} />
+      <DashboardGrid widgets={widgets} flowWidgetIds={['categories', 'chargesDetail']} />
     </div>
   )
 }

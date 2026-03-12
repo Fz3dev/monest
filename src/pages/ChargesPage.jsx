@@ -11,8 +11,9 @@ import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Select from '../components/ui/Select'
 import Modal from '../components/ui/Modal'
-import { Plus, Trash2, ToggleLeft, ToggleRight, Edit3, Search, ArrowUpDown } from 'lucide-react'
+import { Plus, Trash2, ToggleLeft, ToggleRight, Edit3, Search, ArrowUpDown, Upload } from 'lucide-react'
 import { toast } from 'sonner'
+import { Link } from 'react-router-dom'
 
 const EMPTY_ACTIONS = []
 
@@ -380,9 +381,14 @@ export default function ChargesPage() {
             {t('charges.title')}
           </motion.h1>
         </div>
-        <Button size="sm" onClick={() => setModal({ type: tab })}>
-          <Plus size={14} className="inline mr-1" /> {t('common.add')}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Link to="/import" className="lg:hidden inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium bg-card-bg border border-border-default text-text-secondary hover:text-brand transition-colors">
+            <Upload size={13} /> {t('charges.import')}
+          </Link>
+          <Button size="sm" onClick={() => setModal({ type: tab })}>
+            <Plus size={14} className="inline mr-1" /> {t('common.add')}
+          </Button>
+        </div>
       </div>
 
       {/* Monthly total summary */}

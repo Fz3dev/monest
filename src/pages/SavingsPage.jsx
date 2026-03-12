@@ -312,8 +312,8 @@ export default function SavingsPage() {
 
   const [modal, setModal] = useState(null)
 
-  const totalSaved = useMemo(() => goals.reduce((s, g) => s + g.saved, 0), [goals])
-  const totalTarget = useMemo(() => goals.reduce((s, g) => s + g.target, 0), [goals])
+  const totalSaved = useMemo(() => goals.reduce((s, g) => s + g.currentAmount, 0), [goals])
+  const totalTarget = useMemo(() => goals.reduce((s, g) => s + g.targetAmount, 0), [goals])
   const overallPct = totalTarget > 0 ? (totalSaved / totalTarget) * 100 : 0
 
   const handleAddGoal = useCallback((data) => {
