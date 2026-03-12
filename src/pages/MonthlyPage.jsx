@@ -122,6 +122,38 @@ export default function MonthlyPage() {
                 suffix="€"
               />
             )}
+            {/* Other income */}
+            <div className="border-t border-white/[0.06] pt-3 mt-1">
+              <h3 className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-2">{t('monthly.otherIncome')}</h3>
+              <div className="space-y-3">
+                <Input
+                  label={t('monthly.otherIncomeCommon')}
+                  type="number"
+                  value={entry?.otherIncomeCommon || ''}
+                  onChange={(e) => handleIncomeChange('otherIncomeCommon', e.target.value)}
+                  placeholder="0"
+                  suffix="€"
+                />
+                <Input
+                  label={t('monthly.otherIncomePersonal', { name: household?.personAName || t('common.personA') })}
+                  type="number"
+                  value={entry?.otherIncomeA || ''}
+                  onChange={(e) => handleIncomeChange('otherIncomeA', e.target.value)}
+                  placeholder="0"
+                  suffix="€"
+                />
+                {household?.personBName && (
+                  <Input
+                    label={t('monthly.otherIncomePersonal', { name: household.personBName })}
+                    type="number"
+                    value={entry?.otherIncomeB || ''}
+                    onChange={(e) => handleIncomeChange('otherIncomeB', e.target.value)}
+                    placeholder="0"
+                    suffix="€"
+                  />
+                )}
+              </div>
+            </div>
           </div>
         </Card>
 
@@ -347,6 +379,18 @@ export default function MonthlyPage() {
               <span>{t('monthly.commonCharges')}</span>
               <span className="tabular-nums">{formatCurrency(result.totalCommon)}</span>
             </div>
+            {result.otherIncomeCommon > 0 && (
+              <>
+                <div className="flex justify-between pl-3 text-success text-xs">
+                  <span>- {t('monthly.otherIncomeCommon')}</span>
+                  <span className="tabular-nums">-{formatCurrency(result.otherIncomeCommon)}</span>
+                </div>
+                <div className="flex justify-between pl-3 text-text-muted text-xs font-medium">
+                  <span>= Net à partager</span>
+                  <span className="tabular-nums">{formatCurrency(result.netCommonCharges)}</span>
+                </div>
+              </>
+            )}
             <div className="flex justify-between pl-3">
               <span style={{ color: household?.personAColor }}>
                 {t('monthly.share', { name: household.personAName, percent: Math.round((result.ratio || 0.5) * 100) })}

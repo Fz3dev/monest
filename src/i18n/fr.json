@@ -184,6 +184,9 @@
   "monthly": {
     "income": "Revenus",
     "salary": "Salaire {{name}}",
+    "otherIncome": "Autres revenus",
+    "otherIncomeCommon": "Commun (CAF, APL...)",
+    "otherIncomePersonal": "Autre revenu {{name}}",
     "balanceBefore": "Solde avant salaire",
     "balanceBeforeHint": "Si votre compte est \u00e0 d\u00e9couvert avant de recevoir le salaire, entrez le montant n\u00e9gatif (ex: -200).",
     "balanceBeforeHintMobile": "Si votre compte est \u00e0 d\u00e9couvert avant le salaire, entrez un montant n\u00e9gatif.",

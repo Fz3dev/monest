@@ -54,6 +54,9 @@ export function computeMonth(month, household, fixedCharges, installments, plann
   const incomeB = entry.incomeB || 0
   const startingBalanceA = entry.startingBalanceA || 0
   const startingBalanceB = entry.startingBalanceB || 0
+  const otherIncomeCommon = entry.otherIncomeCommon || 0
+  const otherIncomeA = entry.otherIncomeA || 0
+  const otherIncomeB = entry.otherIncomeB || 0
   const variableOverrides = entry.variableOverrides || {}
   const disabledCharges = new Set(entry.disabledCharges || [])
 
@@ -117,10 +120,12 @@ export function computeMonth(month, household, fixedCharges, installments, plann
     ratio = incomeA / (incomeA + incomeB)
   }
 
-  const shareA = Math.round(commonCharges * ratio * 100) / 100
-  const shareB = Math.round(commonCharges * (1 - ratio) * 100) / 100
-  const resteA = Math.round((incomeA + startingBalanceA - shareA - personalACharges) * 100) / 100
-  const resteB = Math.round((incomeB + startingBalanceB - shareB - personalBCharges) * 100) / 100
+  // Common other income (CAF, APL...) reduces the amount to split
+  const netCommonCharges = Math.max(0, Math.round((commonCharges - otherIncomeCommon) * 100) / 100)
+  const shareA = Math.round(netCommonCharges * ratio * 100) / 100
+  const shareB = Math.round(netCommonCharges * (1 - ratio) * 100) / 100
+  const resteA = Math.round((incomeA + otherIncomeA + startingBalanceA - shareA - personalACharges) * 100) / 100
+  const resteB = Math.round((incomeB + otherIncomeB + startingBalanceB - shareB - personalBCharges) * 100) / 100
   const resteFoyer = Math.round((resteA + resteB) * 100) / 100
 
   return {
@@ -128,10 +133,14 @@ export function computeMonth(month, household, fixedCharges, installments, plann
     incomeB,
     startingBalanceA,
     startingBalanceB,
+    otherIncomeCommon,
+    otherIncomeA,
+    otherIncomeB,
     resteA,
     resteB,
     resteFoyer,
     totalCommon: commonCharges,
+    netCommonCharges,
     shareA,
     shareB,
     personalACharges,
