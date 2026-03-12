@@ -14,6 +14,7 @@ import './index.css'
   }
 })()
 import './i18n'
+import './stores/uiStore' // init confidential mode class on <body> before first paint
 import App from './App'
 
 // ?reset in URL → nuke service worker + caches and reload clean

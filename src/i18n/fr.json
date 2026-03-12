@@ -490,8 +490,19 @@
     "customizeTitle": "Notifications",
     "weeklyTitle": "Rappel hebdomadaire",
     "weeklyHint": "Un rappel chaque semaine pour vérifier votre budget",
-    "engagementTitle": "Alertes d'engagement",
-    "engagementHint": "Soyez prévenu 3 mois avant la fin d'un engagement"
+    "engagementTitle": "Fin d'engagement",
+    "engagementHint": "Soyez prévenu 3 mois avant la fin d'un engagement",
+    "sectionReminders": "Rappels",
+    "sectionAlerts": "Alertes",
+    "sectionPartner": "Activité partenaire",
+    "budgetAlertTitle": "Budget serré",
+    "budgetAlertHint": "Alerte quand votre reste à vivre passe sous un seuil critique",
+    "monthlySummaryTitle": "Résumé mensuel",
+    "monthlySummaryHint": "Recevez un bilan de vos finances en début de mois",
+    "partnerExpenseTitle": "Nouvelle dépense",
+    "partnerExpenseHint": "Quand votre partenaire ajoute une dépense commune",
+    "partnerChargeTitle": "Charge modifiée",
+    "partnerChargeHint": "Quand votre partenaire ajoute ou modifie une charge"
   },
   "insights": {
     "lowChargesRate": "Vos charges ne repr\u00e9sentent que {{rate}}% de vos revenus. Confortable !",

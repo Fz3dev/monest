@@ -66,7 +66,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex flex-col sm:items-center sm:justify-center">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center sm:justify-center">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -74,8 +74,6 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
             className="fixed inset-0 bg-black/70"
             onClick={onClose}
           />
-          {/* Mobile: spacer pushes modal to bottom */}
-          <div className="flex-1 sm:hidden" onClick={onClose} />
           <motion.div
             ref={dialogRef}
             initial={{ opacity: 0, y: 100 }}
@@ -99,12 +97,10 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
               </button>
             </div>
             {/* Body — scrolls with hidden scrollbar */}
-            <div className="flex-1 overflow-y-auto overscroll-contain p-5 scrollbar-hide">
+            <div className="flex-1 overflow-y-auto overscroll-contain p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] scrollbar-hide">
               {children}
             </div>
           </motion.div>
-          {/* Mobile: background fill below modal covering safe area + home indicator */}
-          <div className="sm:hidden bg-bg-primary w-full safe-area-bottom" />
         </div>
       )}
     </AnimatePresence>

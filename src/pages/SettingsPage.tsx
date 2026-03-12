@@ -79,6 +79,10 @@ export default function SettingsPage({ session, saveHousehold, createInvite }: S
   const [notificationsOn, setNotificationsOn] = useState(() => isNotificationEnabled())
   const [notifWeekly, setNotifWeekly] = useState(() => localStorage.getItem('monest-notif-weekly') !== 'false')
   const [notifEngagement, setNotifEngagement] = useState(() => localStorage.getItem('monest-notif-engagement') !== 'false')
+  const [notifBudgetAlert, setNotifBudgetAlert] = useState(() => localStorage.getItem('monest-notif-budget-alert') !== 'false')
+  const [notifPartnerExpense, setNotifPartnerExpense] = useState(() => localStorage.getItem('monest-notif-partner-expense') !== 'false')
+  const [notifPartnerCharge, setNotifPartnerCharge] = useState(() => localStorage.getItem('monest-notif-partner-charge') !== 'false')
+  const [notifMonthlySummary, setNotifMonthlySummary] = useState(() => localStorage.getItem('monest-notif-monthly-summary') !== 'false')
   const [notifModalOpen, setNotifModalOpen] = useState(false)
 
   // Theme
@@ -728,59 +732,185 @@ export default function SettingsPage({ session, saveHousehold, createInvite }: S
 
       {/* Notification preferences modal */}
       <Modal isOpen={notifModalOpen} onClose={() => setNotifModalOpen(false)} title={t('notifications.customizeTitle')}>
-        <div className="space-y-4">
-          {/* Weekly reminder */}
-          <div className="flex items-center justify-between">
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-text-primary">{t('notifications.weeklyTitle')}</p>
-              <p className="text-xs text-text-muted mt-0.5">{t('notifications.weeklyHint')}</p>
+        <div className="space-y-5">
+          {/* Section: Rappels */}
+          <div>
+            <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">{t('notifications.sectionReminders')}</p>
+            <div className="space-y-4">
+              {/* Weekly reminder */}
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-text-primary">{t('notifications.weeklyTitle')}</p>
+                  <p className="text-xs text-text-muted mt-0.5">{t('notifications.weeklyHint')}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    const next = !notifWeekly
+                    setNotifWeekly(next)
+                    localStorage.setItem('monest-notif-weekly', String(next))
+                  }}
+                  className={`relative ml-3 flex-shrink-0 w-11 h-6 rounded-full transition-colors cursor-pointer ${
+                    notifWeekly ? 'bg-brand' : 'bg-white/[0.12] border border-black/[0.08]'
+                  }`}
+                  role="switch"
+                  aria-checked={notifWeekly}
+                  aria-label={t('notifications.weeklyTitle')}
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                      notifWeekly ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+              {/* Monthly summary */}
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-text-primary">{t('notifications.monthlySummaryTitle')}</p>
+                  <p className="text-xs text-text-muted mt-0.5">{t('notifications.monthlySummaryHint')}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    const next = !notifMonthlySummary
+                    setNotifMonthlySummary(next)
+                    localStorage.setItem('monest-notif-monthly-summary', String(next))
+                  }}
+                  className={`relative ml-3 flex-shrink-0 w-11 h-6 rounded-full transition-colors cursor-pointer ${
+                    notifMonthlySummary ? 'bg-brand' : 'bg-white/[0.12] border border-black/[0.08]'
+                  }`}
+                  role="switch"
+                  aria-checked={notifMonthlySummary}
+                  aria-label={t('notifications.monthlySummaryTitle')}
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                      notifMonthlySummary ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
             </div>
-            <button
-              onClick={() => {
-                const next = !notifWeekly
-                setNotifWeekly(next)
-                localStorage.setItem('monest-notif-weekly', String(next))
-              }}
-              className={`relative ml-3 flex-shrink-0 w-11 h-6 rounded-full transition-colors cursor-pointer ${
-                notifWeekly ? 'bg-brand' : 'bg-white/[0.12] border border-black/[0.08]'
-              }`}
-              role="switch"
-              aria-checked={notifWeekly}
-              aria-label={t('notifications.weeklyTitle')}
-            >
-              <span
-                className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
-                  notifWeekly ? 'translate-x-5' : 'translate-x-0'
-                }`}
-              />
-            </button>
           </div>
-          {/* Engagement alerts */}
-          <div className="flex items-center justify-between">
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-text-primary">{t('notifications.engagementTitle')}</p>
-              <p className="text-xs text-text-muted mt-0.5">{t('notifications.engagementHint')}</p>
+
+          {/* Section: Alertes */}
+          <div>
+            <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">{t('notifications.sectionAlerts')}</p>
+            <div className="space-y-4">
+              {/* Budget alert */}
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-text-primary">{t('notifications.budgetAlertTitle')}</p>
+                  <p className="text-xs text-text-muted mt-0.5">{t('notifications.budgetAlertHint')}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    const next = !notifBudgetAlert
+                    setNotifBudgetAlert(next)
+                    localStorage.setItem('monest-notif-budget-alert', String(next))
+                  }}
+                  className={`relative ml-3 flex-shrink-0 w-11 h-6 rounded-full transition-colors cursor-pointer ${
+                    notifBudgetAlert ? 'bg-brand' : 'bg-white/[0.12] border border-black/[0.08]'
+                  }`}
+                  role="switch"
+                  aria-checked={notifBudgetAlert}
+                  aria-label={t('notifications.budgetAlertTitle')}
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                      notifBudgetAlert ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+              {/* Engagement alerts */}
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-text-primary">{t('notifications.engagementTitle')}</p>
+                  <p className="text-xs text-text-muted mt-0.5">{t('notifications.engagementHint')}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    const next = !notifEngagement
+                    setNotifEngagement(next)
+                    localStorage.setItem('monest-notif-engagement', String(next))
+                  }}
+                  className={`relative ml-3 flex-shrink-0 w-11 h-6 rounded-full transition-colors cursor-pointer ${
+                    notifEngagement ? 'bg-brand' : 'bg-white/[0.12] border border-black/[0.08]'
+                  }`}
+                  role="switch"
+                  aria-checked={notifEngagement}
+                  aria-label={t('notifications.engagementTitle')}
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                      notifEngagement ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
             </div>
-            <button
-              onClick={() => {
-                const next = !notifEngagement
-                setNotifEngagement(next)
-                localStorage.setItem('monest-notif-engagement', String(next))
-              }}
-              className={`relative ml-3 flex-shrink-0 w-11 h-6 rounded-full transition-colors cursor-pointer ${
-                notifEngagement ? 'bg-brand' : 'bg-white/[0.12] border border-black/[0.08]'
-              }`}
-              role="switch"
-              aria-checked={notifEngagement}
-              aria-label={t('notifications.engagementTitle')}
-            >
-              <span
-                className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
-                  notifEngagement ? 'translate-x-5' : 'translate-x-0'
-                }`}
-              />
-            </button>
           </div>
+
+          {/* Section: Activité partenaire (couple only) */}
+          {household?.configModel !== 'solo' && (
+            <div>
+              <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">{t('notifications.sectionPartner')}</p>
+              <div className="space-y-4">
+                {/* Partner expense */}
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-text-primary">{t('notifications.partnerExpenseTitle')}</p>
+                    <p className="text-xs text-text-muted mt-0.5">{t('notifications.partnerExpenseHint')}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const next = !notifPartnerExpense
+                      setNotifPartnerExpense(next)
+                      localStorage.setItem('monest-notif-partner-expense', String(next))
+                    }}
+                    className={`relative ml-3 flex-shrink-0 w-11 h-6 rounded-full transition-colors cursor-pointer ${
+                      notifPartnerExpense ? 'bg-brand' : 'bg-white/[0.12] border border-black/[0.08]'
+                    }`}
+                    role="switch"
+                    aria-checked={notifPartnerExpense}
+                    aria-label={t('notifications.partnerExpenseTitle')}
+                  >
+                    <span
+                      className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                        notifPartnerExpense ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+                {/* Partner charge change */}
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-text-primary">{t('notifications.partnerChargeTitle')}</p>
+                    <p className="text-xs text-text-muted mt-0.5">{t('notifications.partnerChargeHint')}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const next = !notifPartnerCharge
+                      setNotifPartnerCharge(next)
+                      localStorage.setItem('monest-notif-partner-charge', String(next))
+                    }}
+                    className={`relative ml-3 flex-shrink-0 w-11 h-6 rounded-full transition-colors cursor-pointer ${
+                      notifPartnerCharge ? 'bg-brand' : 'bg-white/[0.12] border border-black/[0.08]'
+                    }`}
+                    role="switch"
+                    aria-checked={notifPartnerCharge}
+                    aria-label={t('notifications.partnerChargeTitle')}
+                  >
+                    <span
+                      className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                        notifPartnerCharge ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </Modal>
 
