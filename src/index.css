@@ -92,6 +92,11 @@ input[type="number"] {
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* Sonner toast: push below safe area on PWA */
+[data-sonner-toaster][data-y-position="top"] {
+  top: env(safe-area-inset-top, 0px) !important;
+}
+
 /* react-grid-layout overrides */
 .react-grid-item.react-grid-placeholder {
   background: var(--color-brand) !important;
