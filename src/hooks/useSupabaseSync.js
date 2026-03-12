@@ -124,9 +124,13 @@ export function useSupabaseSync(session) {
             incomeB: Number(entry.incomeB) || 0,
             startingBalanceA: Number(entry.startingBalanceA) || 0,
             startingBalanceB: Number(entry.startingBalanceB) || 0,
+            otherIncomeCommon: Number(entry.otherIncomeCommon) || 0,
+            otherIncomeA: Number(entry.otherIncomeA) || 0,
+            otherIncomeB: Number(entry.otherIncomeB) || 0,
             transferredA: Number(entry.transferredA) || 0,
             transferredB: Number(entry.transferredB) || 0,
             variableOverrides: entry.variableOverrides || {},
+            disabledCharges: entry.disabledCharges || [],
           }
         })
         useMonthlyStore.setState({ entries })
@@ -242,9 +246,13 @@ export function useSupabaseSync(session) {
     const FIELD_MAP = {
       incomeA: 'income_a', incomeB: 'income_b',
       startingBalanceA: 'starting_balance_a', startingBalanceB: 'starting_balance_b',
+      otherIncomeCommon: 'other_income_common', otherIncomeA: 'other_income_a', otherIncomeB: 'other_income_b',
       transferredA: 'transferred_a', transferredB: 'transferred_b',
       variableOverrides: 'variable_overrides',
+      disabledCharges: 'disabled_charges',
     }
+
+    const JSON_FIELDS = new Set(['variableOverrides', 'disabledCharges'])
 
     // Field-level UPDATE when we know which fields changed (prevents overwriting partner's data)
     if (changedFields && changedFields.size > 0) {
@@ -252,7 +260,9 @@ export function useSupabaseSync(session) {
       for (const field of changedFields) {
         const col = FIELD_MAP[field]
         if (col) {
-          update[col] = field === 'variableOverrides' ? (entry[field] || {}) : (entry[field] || 0)
+          if (field === 'variableOverrides') update[col] = entry[field] || {}
+          else if (field === 'disabledCharges') update[col] = entry[field] || []
+          else update[col] = entry[field] || 0
         }
       }
 
@@ -272,9 +282,13 @@ export function useSupabaseSync(session) {
           income_b: entry.incomeB || 0,
           starting_balance_a: entry.startingBalanceA || 0,
           starting_balance_b: entry.startingBalanceB || 0,
+          other_income_common: entry.otherIncomeCommon || 0,
+          other_income_a: entry.otherIncomeA || 0,
+          other_income_b: entry.otherIncomeB || 0,
           transferred_a: entry.transferredA || 0,
           transferred_b: entry.transferredB || 0,
           variable_overrides: entry.variableOverrides || {},
+          disabled_charges: entry.disabledCharges || [],
         }, { onConflict: 'household_id,month' })
       }
     } else {
@@ -286,9 +300,13 @@ export function useSupabaseSync(session) {
         income_b: entry.incomeB || 0,
         starting_balance_a: entry.startingBalanceA || 0,
         starting_balance_b: entry.startingBalanceB || 0,
+        other_income_common: entry.otherIncomeCommon || 0,
+        other_income_a: entry.otherIncomeA || 0,
+        other_income_b: entry.otherIncomeB || 0,
         transferred_a: entry.transferredA || 0,
         transferred_b: entry.transferredB || 0,
         variable_overrides: entry.variableOverrides || {},
+        disabled_charges: entry.disabledCharges || [],
       }, { onConflict: 'household_id,month' })
     }
   }, [householdId])
