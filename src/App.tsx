@@ -188,9 +188,13 @@ function AppContent({ session }: AppContentProps) {
 export default function App() {
   const [session, setSession] = useState<Session | null>(null)
   const [authLoading, setAuthLoading] = useState(() => isSupabaseConfigured())
-  const [passwordRecovery, setPasswordRecovery] = useState(
-    () => window.location.hash.includes('type=recovery')
-  )
+  const [passwordRecovery, setPasswordRecovery] = useState(() => {
+    if (window.location.hash.includes('type=recovery')) {
+      sessionStorage.setItem('monest-password-recovery', '1')
+      return true
+    }
+    return sessionStorage.getItem('monest-password-recovery') === '1'
+  })
 
   useEffect(() => {
     if (!isSupabaseConfigured() || !supabase) return
@@ -201,8 +205,18 @@ export default function App() {
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+      // In recovery mode, only accept the recovery session — ignore other events
+      // that would auto-login with the existing browser session
+      if (sessionStorage.getItem('monest-password-recovery') === '1') {
+        if (_event === 'PASSWORD_RECOVERY') {
+          setSession(s)
+          setPasswordRecovery(true)
+        }
+        return
+      }
       setSession(s)
       if (_event === 'PASSWORD_RECOVERY') {
+        sessionStorage.setItem('monest-password-recovery', '1')
         setPasswordRecovery(true)
       }
     })
@@ -222,7 +236,10 @@ export default function App() {
     return (
       <ErrorBoundary>
         <BrowserRouter>
-          <ResetPasswordPage onComplete={() => setPasswordRecovery(false)} />
+          <ResetPasswordPage onComplete={() => {
+            sessionStorage.removeItem('monest-password-recovery')
+            setPasswordRecovery(false)
+          }} />
           <Toaster theme="dark" position="top-center" richColors />
         </BrowserRouter>
       </ErrorBoundary>
