@@ -83,7 +83,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
             role="dialog"
             aria-modal="true"
             aria-label={title}
-            className="relative bg-bg-primary border border-white/[0.08] rounded-t-3xl sm:rounded-3xl w-full sm:max-w-lg max-h-[85vh] flex flex-col overflow-hidden"
+            className="relative bg-bg-primary border border-white/[0.08] rounded-t-3xl sm:rounded-3xl w-full sm:max-w-lg max-h-[85dvh] flex flex-col overflow-hidden"
           >
             {/* Header — fixed at top */}
             <div className="flex-shrink-0 bg-bg-primary border-b border-white/[0.06] px-5 py-4 flex items-center justify-between">

@@ -51,8 +51,14 @@ html.light .glass {
 
 html.light ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); }
 
-html.light input, html.light select {
+html.light input, html.light select, html.light textarea {
   color-scheme: light;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  background: rgba(0, 0, 0, 0.03) !important;
+}
+
+html.light input:focus, html.light select:focus, html.light textarea:focus {
+  border-color: transparent !important;
 }
 
 .glass {
