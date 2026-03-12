@@ -12,6 +12,7 @@ import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Select from '../components/ui/Select'
+import Modal from '../components/ui/Modal'
 import { Download, Upload, Trash2, User, Database, LogOut, Users, Share2, Copy, Check, Loader2, UserPlus, Tag, Plus, X, RotateCcw, Bell, Sun, Moon, Monitor, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import {
