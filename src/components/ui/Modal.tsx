@@ -16,11 +16,13 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
   const { t } = useTranslation()
   const dialogRef = useRef<HTMLDivElement>(null)
   const previousFocus = useRef<HTMLElement | null>(null)
+  const onCloseRef = useRef(onClose)
+  useEffect(() => { onCloseRef.current = onClose })
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose()
+        onCloseRef.current()
         return
       }
       // Focus trap: Tab cycles within the modal
@@ -38,7 +40,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
         }
       }
     },
-    [onClose]
+    []
   )
 
   useEffect(() => {

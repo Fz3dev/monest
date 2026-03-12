@@ -35,6 +35,7 @@ function snakeToCamel<T = Record<string, unknown>>(obj: Record<string, unknown>)
 
 export function useSupabaseSync(session: Session | null) {
   const [householdId, setHouseholdId] = useState<string | null>(null)
+  const [memberRole, setMemberRole] = useState<string | null>(null)
   const [memberCount, setMemberCount] = useState(0)
 
   const loadFromSupabase = useCallback(async () => {
@@ -43,13 +44,15 @@ export function useSupabaseSync(session: Session | null) {
     try {
       const { data: memberships } = await supabase
         .from('household_members')
-        .select('household_id')
+        .select('household_id, role')
         .eq('user_id', session.user.id)
 
       if (!memberships?.length) return null
 
       const hId = memberships[0].household_id as string
+      const role = memberships[0].role as string
       setHouseholdId(hId)
+      setMemberRole(role)
 
       const { count } = await supabase
         .from('household_members')
@@ -300,9 +303,12 @@ export function useSupabaseSync(session: Session | null) {
     if (!isSupabaseConfigured() || !householdId) return
     setSyncFunctions(syncItem, deleteItem, syncMonthlyEntry)
     const household = useHouseholdStore.getState().household
+    const fallbackName = memberRole === 'member'
+      ? household?.personBName
+      : household?.personAName
     const userName = session?.user?.user_metadata?.name
       || session?.user?.user_metadata?.full_name
-      || household?.personAName
+      || fallbackName
       || session?.user?.email?.split('@')[0]
       || 'Quelqu\'un'
     setUserInfo(session?.user?.id ?? '', userName as string, householdId)
@@ -315,7 +321,7 @@ export function useSupabaseSync(session: Session | null) {
       setSyncFunctions(null as unknown as Parameters<typeof setSyncFunctions>[0], null as unknown as Parameters<typeof setSyncFunctions>[1])
       setUserInfo('', '', '')
     }
-  }, [syncItem, deleteItem, syncMonthlyEntry, householdId, session])
+  }, [syncItem, deleteItem, syncMonthlyEntry, householdId, memberRole, session])
 
   useEffect(() => {
     if (!isSupabaseConfigured() || !supabase || !householdId || !session?.user) return
