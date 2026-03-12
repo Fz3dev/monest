@@ -95,6 +95,14 @@ input[type="number"] {
 }
 .react-grid-item > .react-resizable-handle { display: none; }
 
+/* Confidential mode — blur all amounts */
+body.confidential .tabular-nums,
+body.confidential [data-amount] {
+  filter: blur(8px);
+  user-select: none;
+  transition: filter 0.2s ease;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
