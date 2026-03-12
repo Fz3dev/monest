@@ -35,8 +35,8 @@ export default memo(function SavingsWidget({
         <div className="flex items-center gap-3">
           <div className="flex-1">
             <div className="flex justify-between text-sm mb-1.5">
-              <span className="text-text-secondary">{formatCurrency(totalSaved)}</span>
-              <span className="text-text-muted">{formatCurrency(totalTarget)}</span>
+              <span className="text-text-secondary tabular-nums">{formatCurrency(totalSaved)}</span>
+              <span className="text-text-muted tabular-nums">{formatCurrency(totalTarget)}</span>
             </div>
             <ProgressBar value={totalSaved} max={totalTarget} color="#6C63FF" />
           </div>

@@ -25,7 +25,7 @@ const CustomTooltip = memo(function CustomTooltip({ active, payload, label }: Cu
       {payload.map((p: TooltipPayloadItem) => (
         <div key={p.dataKey} className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.fill || p.color }} />
-          <span className="text-text-primary font-medium">{formatCurrency(p.value)}</span>
+          <span className="text-text-primary font-medium tabular-nums">{formatCurrency(p.value)}</span>
         </div>
       ))}
     </div>

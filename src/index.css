@@ -98,7 +98,7 @@ input[type="number"] {
 /* Confidential mode — blur all amounts */
 body.confidential .tabular-nums,
 body.confidential [data-amount] {
-  filter: blur(8px);
+  filter: blur(5px);
   user-select: none;
   transition: filter 0.2s ease;
 }

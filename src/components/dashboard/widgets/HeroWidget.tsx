@@ -44,7 +44,7 @@ export default memo(function HeroWidget({
         <div className="text-[11px] text-text-muted mt-2 lg:text-sm">{t('dashboard.toSpendThisMonth')}</div>
         {flexNumber > 0 && (
           <div className="text-sm text-text-secondary mt-1 lg:text-base">
-            <span className="font-semibold">{formatCurrency(Math.round(flexNumber / Math.max(daysLeft, 1)))}</span>
+            <span className="font-semibold tabular-nums">{formatCurrency(Math.round(flexNumber / Math.max(daysLeft, 1)))}</span>
             <span className="text-text-muted"> / {t('dashboard.day')}</span>
           </div>
         )}
@@ -55,7 +55,7 @@ export default memo(function HeroWidget({
               <Wallet size={11} className="text-brand" />
               <span>{t('dashboard.income')}</span>
             </div>
-            <span className="text-sm font-semibold lg:text-base">{formatCurrency(totalIncome)}</span>
+            <span className="text-sm font-semibold tabular-nums lg:text-base">{formatCurrency(totalIncome)}</span>
           </div>
           <div className="w-px h-8 bg-white/[0.08]" />
           <div className="text-center">
@@ -63,7 +63,7 @@ export default memo(function HeroWidget({
               <TrendingDown size={11} className="text-danger" />
               <span>{t('dashboard.charges')}</span>
             </div>
-            <span className="text-sm font-semibold lg:text-base">{formatCurrency(totalCharges)}</span>
+            <span className="text-sm font-semibold tabular-nums lg:text-base">{formatCurrency(totalCharges)}</span>
           </div>
           <div className="w-px h-8 bg-white/[0.08]" />
           <div className="text-center">
@@ -71,7 +71,7 @@ export default memo(function HeroWidget({
               <ShoppingBag size={11} className="text-warning" />
               <span>{t('dashboard.expense')}</span>
             </div>
-            <span className="text-sm font-semibold lg:text-base">{formatCurrency(monthExpenses)}</span>
+            <span className="text-sm font-semibold tabular-nums lg:text-base">{formatCurrency(monthExpenses)}</span>
           </div>
         </div>
 

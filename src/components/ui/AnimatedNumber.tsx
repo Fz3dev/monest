@@ -32,5 +32,5 @@ export default function AnimatedNumber({ value, format, className = '' }: Animat
     return () => cancelAnimationFrame(frameId)
   }, [value])
 
-  return <span className={className}>{format ? format(display) : Math.round(display)}</span>
+  return <span className={className} data-amount>{format ? format(display) : Math.round(display)}</span>
 }
