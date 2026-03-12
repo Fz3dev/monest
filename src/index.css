@@ -26,9 +26,33 @@ html {
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
   margin: 0;
-  background: #0B0B0F;
-  color: #E8E8ED;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Light mode overrides */
+html.light {
+  --color-bg-primary: #F5F5F7;
+  --color-bg-surface: #FFFFFF;
+  --color-bg-elevated: #FFFFFF;
+  --color-text-primary: #1C1C1E;
+  --color-text-secondary: #636366;
+  --color-text-muted: #AEAEB2;
+  --color-success: #34C759;
+  --color-warning: #FF9F0A;
+  --color-danger: #FF3B30;
+}
+
+html.light .glass {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); }
+
+html.light input, html.light select {
+  color-scheme: light;
 }
 
 .glass {

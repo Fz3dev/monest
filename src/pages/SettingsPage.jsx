@@ -12,7 +12,7 @@ import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Select from '../components/ui/Select'
-import { Download, Upload, Trash2, User, Database, LogOut, Users, Share2, Copy, Check, Loader2, UserPlus, Tag, Plus, X, RotateCcw, Bell } from 'lucide-react'
+import { Download, Upload, Trash2, User, Database, LogOut, Users, Share2, Copy, Check, Loader2, UserPlus, Tag, Plus, X, RotateCcw, Bell, Sun, Moon, Monitor, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   isNotificationSupported,
@@ -54,6 +54,24 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
   const [notificationsOn, setNotificationsOn] = useState(() => isNotificationEnabled())
   const [notifWeekly, setNotifWeekly] = useState(() => localStorage.getItem('monest-notif-weekly') !== 'false')
   const [notifEngagement, setNotifEngagement] = useState(() => localStorage.getItem('monest-notif-engagement') !== 'false')
+  const [notifModalOpen, setNotifModalOpen] = useState(false)
+
+  // Theme
+  const [theme, setTheme] = useState(() => localStorage.getItem('monest-theme') || 'dark')
+  const applyTheme = (value) => {
+    setTheme(value)
+    localStorage.setItem('monest-theme', value)
+    const root = document.documentElement
+    if (value === 'light') {
+      root.classList.add('light')
+    } else if (value === 'dark') {
+      root.classList.remove('light')
+    } else {
+      // system
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      root.classList.toggle('light', !prefersDark)
+    }
+  }
 
   const handleToggleNotifications = async () => {
     if (notificationsOn) {
@@ -585,6 +603,34 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
         </Button>
       )}
 
+      {/* Theme */}
+      <Card>
+        <div className="flex items-center gap-2 mb-3">
+          <Sun size={14} className="text-brand" />
+          <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">{t('settings.theme')}</h2>
+        </div>
+        <div className="flex gap-2">
+          {[
+            { value: 'dark', label: t('settings.themeDark'), icon: Moon },
+            { value: 'light', label: t('settings.themeLight'), icon: Sun },
+            { value: 'system', label: t('settings.themeSystem'), icon: Monitor },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => applyTheme(opt.value)}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+                theme === opt.value
+                  ? 'bg-brand/15 text-brand border border-brand/30'
+                  : 'bg-white/[0.04] text-text-muted border border-white/[0.08] hover:text-text-secondary'
+              }`}
+            >
+              <opt.icon size={13} />
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </Card>
+
       {/* Notifications */}
       {isNotificationSupported() && (
         <Card>
@@ -614,65 +660,76 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
               />
             </button>
           </div>
-          {/* Sub-toggles when enabled */}
+          {/* Customize button */}
           {notificationsOn && (
-            <div className="mt-3 pt-3 border-t border-white/[0.06] space-y-3">
-              {/* Weekly reminder */}
-              <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-text-primary">{t('notifications.weeklyTitle')}</p>
-                  <p className="text-xs text-text-muted mt-0.5">{t('notifications.weeklyHint')}</p>
-                </div>
-                <button
-                  onClick={() => {
-                    const next = !notifWeekly
-                    setNotifWeekly(next)
-                    localStorage.setItem('monest-notif-weekly', String(next))
-                  }}
-                  className={`relative ml-3 flex-shrink-0 w-11 h-6 rounded-full transition-colors cursor-pointer ${
-                    notifWeekly ? 'bg-brand' : 'bg-white/[0.12]'
-                  }`}
-                  role="switch"
-                  aria-checked={notifWeekly}
-                  aria-label={t('notifications.weeklyTitle')}
-                >
-                  <span
-                    className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
-                      notifWeekly ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-              </div>
-              {/* Engagement alerts */}
-              <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-text-primary">{t('notifications.engagementTitle')}</p>
-                  <p className="text-xs text-text-muted mt-0.5">{t('notifications.engagementHint')}</p>
-                </div>
-                <button
-                  onClick={() => {
-                    const next = !notifEngagement
-                    setNotifEngagement(next)
-                    localStorage.setItem('monest-notif-engagement', String(next))
-                  }}
-                  className={`relative ml-3 flex-shrink-0 w-11 h-6 rounded-full transition-colors cursor-pointer ${
-                    notifEngagement ? 'bg-brand' : 'bg-white/[0.12]'
-                  }`}
-                  role="switch"
-                  aria-checked={notifEngagement}
-                  aria-label={t('notifications.engagementTitle')}
-                >
-                  <span
-                    className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
-                      notifEngagement ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
+            <button
+              onClick={() => setNotifModalOpen(true)}
+              className="mt-3 w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+            >
+              <span>{t('notifications.customize')}</span>
+              <ChevronRight size={14} className="text-text-muted" />
+            </button>
           )}
         </Card>
       )}
+
+      {/* Notification preferences modal */}
+      <Modal isOpen={notifModalOpen} onClose={() => setNotifModalOpen(false)} title={t('notifications.customizeTitle')}>
+        <div className="space-y-4">
+          {/* Weekly reminder */}
+          <div className="flex items-center justify-between">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-text-primary">{t('notifications.weeklyTitle')}</p>
+              <p className="text-xs text-text-muted mt-0.5">{t('notifications.weeklyHint')}</p>
+            </div>
+            <button
+              onClick={() => {
+                const next = !notifWeekly
+                setNotifWeekly(next)
+                localStorage.setItem('monest-notif-weekly', String(next))
+              }}
+              className={`relative ml-3 flex-shrink-0 w-11 h-6 rounded-full transition-colors cursor-pointer ${
+                notifWeekly ? 'bg-brand' : 'bg-white/[0.12]'
+              }`}
+              role="switch"
+              aria-checked={notifWeekly}
+              aria-label={t('notifications.weeklyTitle')}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                  notifWeekly ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+          {/* Engagement alerts */}
+          <div className="flex items-center justify-between">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-text-primary">{t('notifications.engagementTitle')}</p>
+              <p className="text-xs text-text-muted mt-0.5">{t('notifications.engagementHint')}</p>
+            </div>
+            <button
+              onClick={() => {
+                const next = !notifEngagement
+                setNotifEngagement(next)
+                localStorage.setItem('monest-notif-engagement', String(next))
+              }}
+              className={`relative ml-3 flex-shrink-0 w-11 h-6 rounded-full transition-colors cursor-pointer ${
+                notifEngagement ? 'bg-brand' : 'bg-white/[0.12]'
+              }`}
+              role="switch"
+              aria-checked={notifEngagement}
+              aria-label={t('notifications.engagementTitle')}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                  notifEngagement ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Reset */}
       <div className="pt-4 border-t border-white/[0.06]">

@@ -1,6 +1,18 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+
+// Apply saved theme before first paint to avoid flash
+;(() => {
+  const saved = localStorage.getItem('monest-theme') || 'dark'
+  if (saved === 'light') {
+    document.documentElement.classList.add('light')
+  } else if (saved === 'system') {
+    if (!window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.documentElement.classList.add('light')
+    }
+  }
+})()
 import './i18n'
 import App from './App.jsx'
 
