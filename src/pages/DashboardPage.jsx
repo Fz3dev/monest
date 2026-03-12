@@ -19,7 +19,7 @@ import DashboardGrid, { EditModeButton } from '../components/dashboard/Dashboard
 import { subMonths, format, getDaysInMonth, getDate } from 'date-fns'
 import {
   AlertTriangle, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight,
-  Wallet, PiggyBank, Lightbulb, ShieldCheck, ShieldAlert,
+  Wallet, Lightbulb, ShieldCheck, ShieldAlert,
   Target, ChevronRight, ShoppingBag,
 } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, Tooltip } from 'recharts'

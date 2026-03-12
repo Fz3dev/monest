@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink } from 'react-router-dom'
-import { Home, Receipt, CreditCard, PiggyBank, Calendar, Settings, ShoppingBag, Bell, Check, CreditCard as ChargeIcon, Wallet, Trash2, UserPlus, TrendingUp, WifiOff } from 'lucide-react'
+import { Home, CreditCard, PiggyBank, Settings, ShoppingBag, Bell, CreditCard as ChargeIcon, Wallet, Trash2, UserPlus, TrendingUp, WifiOff } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'

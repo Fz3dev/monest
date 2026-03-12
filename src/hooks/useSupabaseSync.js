@@ -252,7 +252,6 @@ export function useSupabaseSync(session) {
       disabledCharges: 'disabled_charges',
     }
 
-    const JSON_FIELDS = new Set(['variableOverrides', 'disabledCharges'])
 
     // Field-level UPDATE when we know which fields changed (prevents overwriting partner's data)
     if (changedFields && changedFields.size > 0) {
