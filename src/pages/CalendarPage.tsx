@@ -47,10 +47,14 @@ export default function CalendarPage() {
       const m = format(addMonths(new Date(current + '-01'), i), 'yyyy-MM')
       const entry = entries[m] || null
       const result = computeMonth(m, household, fixedCharges, installmentPayments, plannedExpenses, entry)
-      const totalCharges = result.totalCommon + result.personalACharges + result.personalBCharges
+
+      const filtered = calPayerFilter
+        ? result.charges.filter((c) => c.payer === calPayerFilter)
+        : result.charges
+      const totalCharges = filtered.reduce((s, c) => s + c.amount, 0)
 
       const catBreakdown: Record<string, number> = {}
-      result.charges.forEach((c) => {
+      filtered.forEach((c) => {
         const key = c.category || 'autre'
         catBreakdown[key] = (catBreakdown[key] || 0) + c.amount
       })
@@ -60,7 +64,7 @@ export default function CalendarPage() {
         label: formatMonthShort(m),
         result,
         totalCharges,
-        hasSpecial: result.charges.some((c) => c.type === 'installment' || c.type === 'planned'),
+        hasSpecial: filtered.some((c) => c.type === 'installment' || c.type === 'planned'),
         catBreakdown: Object.entries(catBreakdown)
           .map(([name, value]) => ({ name, label: getCategoryLabel(name), value }))
           .sort((a, b) => b.value - a.value),
@@ -76,7 +80,7 @@ export default function CalendarPage() {
       else if (m.totalCharges > baseCharges * 1.1) status = 'red'
       return { ...m, status }
     })
-  }, [household, fixedCharges, installmentPayments, plannedExpenses, entries])
+  }, [household, fixedCharges, installmentPayments, plannedExpenses, entries, calPayerFilter])
 
   const selected: MonthData | null = selectedMonth ? months.find((m) => m.month === selectedMonth) ?? null : null
 
@@ -111,6 +115,32 @@ export default function CalendarPage() {
       >
         {t('calendar.title')}
       </motion.h1>
+
+      {/* Payer filter — couple mode */}
+      {household?.personBName && (
+        <div className="flex gap-1.5 flex-wrap">
+          {([
+            { value: null, label: t('common.all') },
+            { value: PAYER.Common, label: t('common.common') },
+            { value: PAYER.PersonA, label: household.personAName },
+            { value: PAYER.PersonB, label: household.personBName },
+          ] satisfies { value: Payer | null; label: string }[]).map((opt) => (
+            <button
+              key={opt.value ?? 'all'}
+              onClick={() => setCalPayerFilter(calPayerFilter === opt.value ? null : opt.value)}
+              className={`text-[11px] px-2.5 py-1 rounded-full transition-colors ${
+                calPayerFilter === opt.value
+                  ? 'bg-brand/15 text-brand border border-brand/30'
+                  : 'bg-white/[0.04] text-text-muted border border-white/[0.08]'
+              }`}
+              style={calPayerFilter === opt.value && opt.value === 'person_a' ? { backgroundColor: `${household.personAColor}15`, color: household.personAColor, borderColor: `${household.personAColor}40` } :
+                     calPayerFilter === opt.value && opt.value === 'person_b' ? { backgroundColor: `${household.personBColor}15`, color: household.personBColor, borderColor: `${household.personBColor}40` } : undefined}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="grid grid-cols-4 gap-2 lg:grid-cols-6 lg:gap-3">
         {months.map((m, i) => {
@@ -198,32 +228,6 @@ export default function CalendarPage() {
                   </div>
                 )}
               </div>
-
-              {/* Payer filter — couple mode */}
-              {household?.personBName && (
-                <div className="flex gap-1.5 mb-3 flex-wrap">
-                  {([
-                    { value: null, label: t('common.all') },
-                    { value: PAYER.Common, label: t('common.common') },
-                    { value: PAYER.PersonA, label: household.personAName },
-                    { value: PAYER.PersonB, label: household.personBName },
-                  ] satisfies { value: Payer | null; label: string }[]).map((opt) => (
-                    <button
-                      key={opt.value ?? 'all'}
-                      onClick={() => setCalPayerFilter(calPayerFilter === opt.value ? null : opt.value)}
-                      className={`text-[11px] px-2.5 py-1 rounded-full transition-colors ${
-                        calPayerFilter === opt.value
-                          ? 'bg-brand/15 text-brand border border-brand/30'
-                          : 'bg-white/[0.04] text-text-muted border border-white/[0.08]'
-                      }`}
-                      style={calPayerFilter === opt.value && opt.value === 'person_a' ? { backgroundColor: `${household.personAColor}15`, color: household.personAColor, borderColor: `${household.personAColor}40` } :
-                             calPayerFilter === opt.value && opt.value === 'person_b' ? { backgroundColor: `${household.personBColor}15`, color: household.personBColor, borderColor: `${household.personBColor}40` } : undefined}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              )}
 
               {(() => {
                 const filteredCharges = calPayerFilter
