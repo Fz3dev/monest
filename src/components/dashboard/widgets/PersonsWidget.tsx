@@ -20,6 +20,8 @@ interface PersonsWidgetProps {
   shareB: number
   personalACharges: number
   personalBCharges: number
+  expensesA: number
+  expensesB: number
   ratio: number
   hasIncome: boolean
 }
@@ -45,6 +47,8 @@ export default memo(function PersonsWidget({
   shareB,
   personalACharges,
   personalBCharges,
+  expensesA,
+  expensesB,
   ratio,
   hasIncome,
 }: PersonsWidgetProps) {
@@ -55,10 +59,10 @@ export default memo(function PersonsWidget({
       <Card animate={false} className="h-full">
         <div className="flex items-center justify-between mb-2">
           <div className="text-xs text-text-secondary font-medium">{personAName || t('common.personA')}</div>
-          <div className="flex items-center gap-1">{getHealthIcon(resteA)}</div>
+          <div className="flex items-center gap-1">{getHealthIcon(resteA - expensesA)}</div>
         </div>
         <div className="text-2xl font-bold lg:text-3xl" style={{ color: personAColor }}>
-          <AnimatedNumber value={resteA} format={(v) => formatCurrency(Math.round(v))} />
+          <AnimatedNumber value={resteA - expensesA} format={(v) => formatCurrency(Math.round(v))} />
         </div>
         <div className="text-[10px] text-text-muted mb-2">{t('dashboard.remainingToSpend')}</div>
         {hasIncome && (
@@ -87,6 +91,12 @@ export default memo(function PersonsWidget({
                 <span className="text-danger tabular-nums">- {formatCurrency(personalACharges)}</span>
               </div>
             )}
+            {expensesA > 0 && (
+              <div className="flex justify-between text-[11px]">
+                <span className="text-text-muted">{t('dashboard.expenses')}</span>
+                <span className="text-danger tabular-nums">- {formatCurrency(expensesA)}</span>
+              </div>
+            )}
           </div>
         )}
       </Card>
@@ -94,10 +104,10 @@ export default memo(function PersonsWidget({
         <Card animate={false} className="h-full">
           <div className="flex items-center justify-between mb-2">
             <div className="text-xs text-text-secondary font-medium">{personBName}</div>
-            <div className="flex items-center gap-1">{getHealthIcon(resteB)}</div>
+            <div className="flex items-center gap-1">{getHealthIcon(resteB - expensesB)}</div>
           </div>
           <div className="text-2xl font-bold lg:text-3xl" style={{ color: personBColor }}>
-            <AnimatedNumber value={resteB} format={(v) => formatCurrency(Math.round(v))} />
+            <AnimatedNumber value={resteB - expensesB} format={(v) => formatCurrency(Math.round(v))} />
           </div>
           <div className="text-[10px] text-text-muted mb-2">{t('dashboard.remainingToSpend')}</div>
           {hasIncome && (
@@ -124,6 +134,12 @@ export default memo(function PersonsWidget({
                 <div className="flex justify-between text-[11px]">
                   <span className="text-text-muted">{t('dashboard.personalCharges')}</span>
                   <span className="text-danger tabular-nums">- {formatCurrency(personalBCharges)}</span>
+                </div>
+              )}
+              {expensesB > 0 && (
+                <div className="flex justify-between text-[11px]">
+                  <span className="text-text-muted">{t('dashboard.expenses')}</span>
+                  <span className="text-danger tabular-nums">- {formatCurrency(expensesB)}</span>
                 </div>
               )}
             </div>

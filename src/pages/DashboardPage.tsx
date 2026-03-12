@@ -53,6 +53,18 @@ export default function DashboardPage() {
     [expenses, currentMonth]
   )
 
+  const expensesByPayer = useMemo(() => {
+    const monthExp = expenses.filter((e) => e.date?.startsWith(currentMonth))
+    const common = monthExp.filter((e) => e.payer === 'common').reduce((s, e) => s + e.amount, 0)
+    const a = monthExp.filter((e) => e.payer === 'person_a').reduce((s, e) => s + e.amount, 0)
+    const b = monthExp.filter((e) => e.payer === 'person_b').reduce((s, e) => s + e.amount, 0)
+    const ratio = household?.splitRatio ?? 0.5
+    return {
+      expensesA: a + Math.round(common * ratio * 100) / 100,
+      expensesB: b + Math.round(common * (1 - ratio) * 100) / 100,
+    }
+  }, [expenses, currentMonth, household?.splitRatio])
+
   const trendData = useMemo(() => {
     const data = []
     for (let i = 5; i >= 0; i--) {
@@ -135,6 +147,8 @@ export default function DashboardPage() {
       shareB={result.shareB}
       personalACharges={result.personalACharges}
       personalBCharges={result.personalBCharges}
+      expensesA={expensesByPayer.expensesA}
+      expensesB={expensesByPayer.expensesB}
       ratio={result.ratio}
       hasIncome={hasIncome}
     />
