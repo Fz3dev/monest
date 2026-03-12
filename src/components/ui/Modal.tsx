@@ -97,7 +97,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
               </button>
             </div>
             {/* Body — scrolls with hidden scrollbar */}
-            <div className="flex-1 overflow-y-auto overscroll-contain p-5 scrollbar-hide">
+            <div className="flex-1 overflow-y-auto overscroll-contain p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] scrollbar-hide">
               {children}
             </div>
           </motion.div>

@@ -669,7 +669,7 @@ export default function SettingsPage({ session, saveHousehold, createInvite }: S
           <button
             onClick={toggleConfidentialMode}
             className={`relative ml-3 flex-shrink-0 w-11 h-6 rounded-full transition-colors cursor-pointer ${
-              confidentialMode ? 'bg-brand' : 'bg-white/[0.12]'
+              confidentialMode ? 'bg-brand' : 'bg-white/[0.12] border border-black/[0.08]'
             }`}
             role="switch"
             aria-checked={confidentialMode}
@@ -700,7 +700,7 @@ export default function SettingsPage({ session, saveHousehold, createInvite }: S
             <button
               onClick={handleToggleNotifications}
               className={`relative ml-3 flex-shrink-0 w-11 h-6 rounded-full transition-colors cursor-pointer ${
-                notificationsOn ? 'bg-brand' : 'bg-white/[0.12]'
+                notificationsOn ? 'bg-brand' : 'bg-white/[0.12] border border-black/[0.08]'
               }`}
               role="switch"
               aria-checked={notificationsOn}
@@ -742,7 +742,7 @@ export default function SettingsPage({ session, saveHousehold, createInvite }: S
                 localStorage.setItem('monest-notif-weekly', String(next))
               }}
               className={`relative ml-3 flex-shrink-0 w-11 h-6 rounded-full transition-colors cursor-pointer ${
-                notifWeekly ? 'bg-brand' : 'bg-white/[0.12]'
+                notifWeekly ? 'bg-brand' : 'bg-white/[0.12] border border-black/[0.08]'
               }`}
               role="switch"
               aria-checked={notifWeekly}
@@ -768,7 +768,7 @@ export default function SettingsPage({ session, saveHousehold, createInvite }: S
                 localStorage.setItem('monest-notif-engagement', String(next))
               }}
               className={`relative ml-3 flex-shrink-0 w-11 h-6 rounded-full transition-colors cursor-pointer ${
-                notifEngagement ? 'bg-brand' : 'bg-white/[0.12]'
+                notifEngagement ? 'bg-brand' : 'bg-white/[0.12] border border-black/[0.08]'
               }`}
               role="switch"
               aria-checked={notifEngagement}
