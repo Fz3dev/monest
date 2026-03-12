@@ -143,7 +143,22 @@
     "sortAmountAsc": "Montant \u2191",
     "sortName": "A → Z",
     "sortCategory": "Catégorie",
-    "noResults": "Aucun r\u00e9sultat avec ces filtres"
+    "noResults": "Aucun r\u00e9sultat avec ces filtres",
+    "formEndDate": "Date de fin (optionnel)",
+    "archive": "Archiver",
+    "unarchive": "Restaurer",
+    "archived": "Archivées ({{count}})",
+    "endsThisMonth": "Fin ce mois",
+    "endsAt": "Fin : {{date}}",
+    "archiveToast": "\"{{name}}\" archivée — fin ce mois",
+    "restoredToast": "\"{{name}}\" restaurée",
+    "noArchived": "Aucune charge archivée",
+    "formCommitment": "Fin d'engagement (optionnel)",
+    "commitmentFree": "Sans engagement",
+    "commitmentEnds": "Engagement → {{date}}",
+    "commitmentEndsSoon": "Engagement finit dans {{count}} mois",
+    "commitmentEndsSoon_1": "Engagement finit ce mois",
+    "commitmentEnded": "Libre d'engagement"
   },
   "expenses": {
     "prevMonth": "Mois pr\u00e9c\u00e9dent",
@@ -453,12 +468,18 @@
     "markAllRead": "Tout marquer comme lu",
     "noNotifications": "Aucune notification",
     "weeklyReminder": "Pensez à vérifier votre budget cette semaine !",
-    "askPermission": "Activez les notifications pour recevoir un rappel hebdomadaire de votre budget.",
+    "askPermission": "Activez les notifications pour ne rien manquer sur votre budget.",
     "enable": "Activer",
     "later": "Plus tard",
     "enabled": "Notifications activées",
     "disabled": "Notifications désactivées",
-    "permissionDenied": "Les notifications sont bloquées par votre navigateur. Modifiez les permissions dans les réglages."
+    "permissionDenied": "Les notifications sont bloquées par votre navigateur. Modifiez les permissions dans les réglages.",
+    "mainToggle": "Activer les notifications",
+    "mainToggleHint": "Recevez des alertes sur votre budget",
+    "weeklyTitle": "Rappel hebdomadaire",
+    "weeklyHint": "Un rappel chaque semaine pour vérifier votre budget",
+    "engagementTitle": "Alertes d'engagement",
+    "engagementHint": "Soyez prévenu 3 mois avant la fin d'un engagement"
   },
   "insights": {
     "lowChargesRate": "Vos charges ne repr\u00e9sentent que {{rate}}% de vos revenus. Confortable !",
@@ -469,7 +490,10 @@
     "chargesUp": "Charges en hausse de {{percent}}% par rapport au mois dernier (+{{amount}}).",
     "chargesDown": "Charges r\u00e9duites de {{percent}}% par rapport au mois dernier ({{amount}} \u00e9conomies).",
     "categoryUp": "{{label}} : +{{percent}}% ce mois (+{{amount}}).",
-    "heavyMonth": "Attention : {{amount}} de charges pr\u00e9vues en {{month}}."
+    "heavyMonth": "Attention : {{amount}} de charges pr\u00e9vues en {{month}}.",
+    "commitmentEndingSoon": "{{name}} : engagement se termine dans {{count}} mois — pensez à comparer les offres !",
+    "commitmentEndingSoon_1": "{{name}} : engagement se termine ce mois-ci — vous pouvez résilier sans frais !",
+    "commitmentEnded": "{{name}} : engagement terminé ! Vous pouvez résilier sans frais."
   },
   "offline": {
     "banner": "Mode hors ligne",

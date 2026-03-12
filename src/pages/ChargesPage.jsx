@@ -11,7 +11,7 @@ import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Select from '../components/ui/Select'
 import Modal from '../components/ui/Modal'
-import { Plus, Trash2, ToggleLeft, ToggleRight, Edit3, Search, ArrowUpDown, Upload } from 'lucide-react'
+import { Plus, Trash2, ToggleLeft, ToggleRight, Edit3, Search, ArrowUpDown, Upload, Archive, ArchiveRestore, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { Link } from 'react-router-dom'
 
@@ -74,6 +74,8 @@ function ChargeForm({ initialValues, onSubmit, onCancel, household, t }) {
         startMonth: String(initialValues.startMonth ?? 1),
         dayOfMonth: String(initialValues.dayOfMonth ?? 1),
         paymentDelayMonths: String(initialValues.paymentDelayMonths ?? 0),
+        endsAt: initialValues.endsAt || '',
+        commitmentEndsAt: initialValues.commitmentEndsAt || '',
       }
     }
     return {
@@ -85,6 +87,8 @@ function ChargeForm({ initialValues, onSubmit, onCancel, household, t }) {
       dayOfMonth: '1',
       category: 'autre',
       paymentDelayMonths: '0',
+      endsAt: '',
+      commitmentEndsAt: '',
     }
   })
   const [submitting, setSubmitting] = useState(false)
@@ -95,7 +99,7 @@ function ChargeForm({ initialValues, onSubmit, onCancel, household, t }) {
   const handleSubmit = () => {
     if (submitting) return
     setSubmitting(true)
-    onSubmit({ ...form, amount: parseFloat(form.amount) || 0, startMonth: parseInt(form.startMonth) || 1, dayOfMonth: parseInt(form.dayOfMonth) || 1, paymentDelayMonths: parseInt(form.paymentDelayMonths) || 0 })
+    onSubmit({ ...form, amount: parseFloat(form.amount) || 0, startMonth: parseInt(form.startMonth) || 1, dayOfMonth: parseInt(form.dayOfMonth) || 1, paymentDelayMonths: parseInt(form.paymentDelayMonths) || 0, endsAt: form.endsAt || null, commitmentEndsAt: form.commitmentEndsAt || null })
     setTimeout(() => setSubmitting(false), 200)
   }
 
@@ -118,6 +122,8 @@ function ChargeForm({ initialValues, onSubmit, onCancel, household, t }) {
       <Input label={t('charges.formDayOfMonth')} type="number" min="1" max="31" value={form.dayOfMonth} onChange={(e) => update('dayOfMonth', e.target.value)} />
       <Select label={t('charges.formCategory')} value={form.category} onChange={(e) => update('category', e.target.value)} options={categories} />
       <Input label={t('charges.formPaymentDelay')} type="number" min="0" value={form.paymentDelayMonths} onChange={(e) => update('paymentDelayMonths', e.target.value)} />
+      <Input label={t('charges.formEndDate')} type="month" value={form.endsAt} onChange={(e) => update('endsAt', e.target.value)} />
+      <Input label={t('charges.formCommitment')} type="month" value={form.commitmentEndsAt} onChange={(e) => update('commitmentEndsAt', e.target.value)} />
       <div className="flex gap-3 pt-2">
         <Button variant="secondary" onClick={onCancel} className="flex-1">{t('common.cancel')}</Button>
         <Button onClick={handleSubmit} disabled={!form.name.trim() || !form.amount || submitting} className="flex-1">
@@ -260,6 +266,8 @@ export default function ChargesPage() {
   const updatePlannedExpense = useChargesStore((s) => s.updatePlannedExpense)
   const removePlannedExpense = useChargesStore((s) => s.removePlannedExpense)
 
+  const currentMonth = new Date().toISOString().slice(0, 7)
+
   const [modal, setModal] = useState(null)
   const [tab, setTab] = useState('fixed')
   const [searchQuery, setSearchQuery] = useState('')
@@ -267,6 +275,7 @@ export default function ChargesPage() {
   const [filterCategory, setFilterCategory] = useState(null)
   const [filterActive, setFilterActive] = useState(null) // null = all, true = active, false = inactive
   const [sortBy, setSortBy] = useState('default') // 'default' | 'amount_desc' | 'amount_asc' | 'name' | 'category'
+  const [showArchived, setShowArchived] = useState(false)
 
   const SORT_MODES = ['default', 'amount_desc', 'amount_asc', 'name', 'category']
   const cycleSortBy = () => {
@@ -308,13 +317,46 @@ export default function ChargesPage() {
   const filteredInstallments = useMemo(() => sortItems(filterItems(installmentPayments)), [installmentPayments, filterItems, sortItems])
   const filteredPlanned = useMemo(() => sortItems(filterItems(plannedExpenses)), [plannedExpenses, filterItems, sortItems])
 
+  // Split fixed charges into active and archived
+  const activeFixed = useMemo(() =>
+    filteredFixed.filter((c) => !c.endsAt || c.endsAt >= currentMonth),
+    [filteredFixed, currentMonth]
+  )
+  const archivedFixed = useMemo(() =>
+    filteredFixed.filter((c) => c.endsAt && c.endsAt < currentMonth),
+    [filteredFixed, currentMonth]
+  )
+
+  const monthDiff = useCallback((a, b) => {
+    const [yA, mA] = a.split('-').map(Number)
+    const [yB, mB] = b.split('-').map(Number)
+    return (yA - yB) * 12 + (mA - mB)
+  }, [])
+
+  const formatMonthLabel = useCallback((monthStr) => {
+    if (!monthStr) return ''
+    const [year, month] = monthStr.split('-')
+    const monthNames = t('months.short', { returnObjects: true })
+    return `${monthNames[parseInt(month) - 1]} ${year}`
+  }, [t])
+
+  const handleArchive = useCallback((id, name) => {
+    updateFixedCharge(id, { endsAt: currentMonth })
+    toast.success(t('charges.archiveToast', { name }))
+  }, [updateFixedCharge, currentMonth, t])
+
+  const handleRestore = useCallback((id, name) => {
+    updateFixedCharge(id, { endsAt: null })
+    toast.success(t('charges.restoredToast', { name }))
+  }, [updateFixedCharge, t])
+
   const tabs = [
     { id: 'fixed', label: t('charges.fixedTab'), count: filteredFixed.length },
     { id: 'installment', label: t('charges.installmentTab'), count: filteredInstallments.length },
     { id: 'planned', label: t('charges.plannedTab'), count: filteredPlanned.length },
   ]
 
-  const totalMonthly = filteredFixed
+  const totalMonthly = activeFixed
     .filter((c) => c.active)
     .reduce((sum, c) => {
       if (c.frequency === 'monthly') return sum + c.amount
@@ -518,10 +560,10 @@ export default function ChargesPage() {
       <AnimatePresence mode="wait">
         {tab === 'fixed' && (
           <motion.div key="fixed" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-2">
-            {filteredFixed.length === 0 && (
+            {activeFixed.length === 0 && archivedFixed.length === 0 && (
               <Card><p className="text-center text-text-muted py-6 text-sm">{hasFilters ? t('charges.noResults') : t('charges.noFixed')}</p></Card>
             )}
-            {filteredFixed.map((charge) => (
+            {activeFixed.map((charge) => (
               <SwipeableCard
                 key={charge.id}
                 actions={[
@@ -530,6 +572,12 @@ export default function ChargesPage() {
                     color: '#6C63FF',
                     label: t('common.edit'),
                     onClick: () => setModal({ type: 'fixed', editId: charge.id }),
+                  },
+                  {
+                    icon: Archive,
+                    color: '#F59E0B',
+                    label: t('charges.archive'),
+                    onClick: () => handleArchive(charge.id, charge.name),
                   },
                   {
                     icon: Trash2,
@@ -558,6 +606,37 @@ export default function ChargesPage() {
                             {getCategoryLabel(charge.category)}
                           </span>
                         )}
+                        {charge.endsAt && (
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                            charge.endsAt === currentMonth
+                              ? 'bg-amber-500/20 text-amber-400'
+                              : 'bg-white/[0.08] text-text-muted'
+                          }`}>
+                            {charge.endsAt === currentMonth
+                              ? t('charges.endsThisMonth')
+                              : t('charges.endsAt', { date: formatMonthLabel(charge.endsAt) })}
+                          </span>
+                        )}
+                        {charge.commitmentEndsAt && (() => {
+                          const remaining = monthDiff(charge.commitmentEndsAt, currentMonth)
+                          if (remaining <= 0) return (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full flex-shrink-0 bg-emerald-500/20 text-emerald-400">
+                              {t('charges.commitmentEnded')}
+                            </span>
+                          )
+                          if (remaining <= 3) return (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full flex-shrink-0 bg-amber-500/20 text-amber-400">
+                              {remaining === 1
+                                ? t('charges.commitmentEndsSoon_1')
+                                : t('charges.commitmentEndsSoon', { count: remaining })}
+                            </span>
+                          )
+                          return (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full flex-shrink-0 bg-white/[0.06] text-text-muted">
+                              {t('charges.commitmentEnds', { date: formatMonthLabel(charge.commitmentEndsAt) })}
+                            </span>
+                          )
+                        })()}
                       </div>
                       <div className="text-xs text-text-muted mt-1">
                         {formatCurrency(charge.amount)} · {getPayerLabel(charge.payer)} · {getFrequencyLabel(charge.frequency)}
@@ -571,7 +650,7 @@ export default function ChargesPage() {
                     >
                       {charge.active ? <ToggleRight size={24} className="text-success" /> : <ToggleLeft size={24} />}
                     </button>
-                    {/* Desktop: toggle + edit + delete inline */}
+                    {/* Desktop: toggle + archive + edit + delete inline */}
                     <div className="hidden lg:flex items-center gap-2">
                       <button
                         onClick={() => toggleFixedCharge(charge.id)}
@@ -579,6 +658,13 @@ export default function ChargesPage() {
                         aria-label={charge.active ? t('charges.deactivate') : t('charges.activate')}
                       >
                         {charge.active ? <ToggleRight size={28} className="text-success" /> : <ToggleLeft size={28} />}
+                      </button>
+                      <button
+                        onClick={() => handleArchive(charge.id, charge.name)}
+                        className="p-1.5 rounded-lg text-text-muted hover:text-amber-400 transition-colors"
+                        aria-label={t('charges.archive')}
+                      >
+                        <Archive size={14} />
                       </button>
                       <button
                         onClick={() => setModal({ type: 'fixed', editId: charge.id })}
@@ -599,6 +685,89 @@ export default function ChargesPage() {
                 </Card>
               </SwipeableCard>
             ))}
+
+            {/* Archived charges section */}
+            {archivedFixed.length > 0 && (
+              <div className="pt-2">
+                <button
+                  onClick={() => setShowArchived(!showArchived)}
+                  className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-medium text-text-muted hover:text-white bg-white/[0.03] border border-white/[0.06] transition-all cursor-pointer"
+                >
+                  <Archive size={13} className="text-amber-400/60" />
+                  <span>{t('charges.archived', { count: archivedFixed.length })}</span>
+                  <ChevronDown size={13} className={`ml-auto transition-transform ${showArchived ? 'rotate-180' : ''}`} />
+                </button>
+                <AnimatePresence>
+                  {showArchived && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="space-y-2 pt-2 overflow-hidden"
+                    >
+                      {archivedFixed.map((charge) => (
+                        <SwipeableCard
+                          key={charge.id}
+                          actions={[
+                            {
+                              icon: ArchiveRestore,
+                              color: '#4ADE80',
+                              label: t('charges.unarchive'),
+                              onClick: () => handleRestore(charge.id, charge.name),
+                            },
+                            {
+                              icon: Trash2,
+                              color: '#F87171',
+                              label: t('common.delete'),
+                              onClick: () => handleDelete('fixed', charge.id, charge.name),
+                            },
+                          ]}
+                        >
+                          <Card className="opacity-50" animate={false}>
+                            <div className="flex items-center gap-3">
+                              <div
+                                role="button"
+                                tabIndex={0}
+                                className="flex-1 min-w-0 lg:cursor-pointer"
+                                onClick={() => setModal({ type: 'fixed', editId: charge.id })}
+                                onKeyDown={(e) => { if (e.key === 'Enter') setModal({ type: 'fixed', editId: charge.id }) }}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-sm truncate">{charge.name}</span>
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded-full flex-shrink-0 bg-amber-500/15 text-amber-400/70">
+                                    {t('charges.endsAt', { date: formatMonthLabel(charge.endsAt) })}
+                                  </span>
+                                </div>
+                                <div className="text-xs text-text-muted mt-1">
+                                  {formatCurrency(charge.amount)} · {getPayerLabel(charge.payer)} · {getFrequencyLabel(charge.frequency)}
+                                </div>
+                              </div>
+                              {/* Desktop: restore + delete inline */}
+                              <div className="hidden lg:flex items-center gap-2">
+                                <button
+                                  onClick={() => handleRestore(charge.id, charge.name)}
+                                  className="p-1.5 rounded-lg text-text-muted hover:text-success transition-colors"
+                                  aria-label={t('charges.unarchive')}
+                                >
+                                  <ArchiveRestore size={14} />
+                                </button>
+                                <button
+                                  onClick={() => handleDelete('fixed', charge.id, charge.name)}
+                                  className="p-1.5 rounded-lg text-text-muted hover:text-danger transition-colors"
+                                  aria-label={t('common.delete')}
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          </Card>
+                        </SwipeableCard>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
           </motion.div>
         )}
 

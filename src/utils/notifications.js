@@ -147,6 +147,7 @@ export function checkAndShowWeeklyNotification() {
   if (!isNotificationSupported()) return
   if (!isNotificationEnabled()) return
   if (Notification.permission !== 'granted') return
+  if (localStorage.getItem('monest-notif-weekly') === 'false') return
 
   const lastNotif = localStorage.getItem(STORAGE_KEY_LAST_NOTIF)
   const weekAgo = Date.now() - WEEK_MS

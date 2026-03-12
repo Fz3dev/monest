@@ -112,5 +112,28 @@ export function generateInsights(currentMonth, household, fixedCharges, installm
     }
   }
 
-  return insights.slice(0, 3)
+  // Engagement expiry warnings
+  const commitmentCharges = fixedCharges.filter((c) => c.active && c.commitmentEndsAt)
+  for (const charge of commitmentCharges) {
+    if (insights.length >= 4) break
+    const [yA, mA] = charge.commitmentEndsAt.split('-').map(Number)
+    const [yB, mB] = currentMonth.split('-').map(Number)
+    const remaining = (yA - yB) * 12 + (mA - mB)
+
+    if (remaining <= 0) {
+      insights.push({
+        type: 'positive',
+        message: i18n.t('insights.commitmentEnded', { name: charge.name }),
+      })
+    } else if (remaining <= 3) {
+      insights.push({
+        type: 'warning',
+        message: remaining === 1
+          ? i18n.t('insights.commitmentEndingSoon_1', { name: charge.name })
+          : i18n.t('insights.commitmentEndingSoon', { name: charge.name, count: remaining }),
+      })
+    }
+  }
+
+  return insights.slice(0, 4)
 }

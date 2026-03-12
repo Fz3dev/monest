@@ -52,6 +52,8 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
   })
   const fileInputRef = useRef(null)
   const [notificationsOn, setNotificationsOn] = useState(() => isNotificationEnabled())
+  const [notifWeekly, setNotifWeekly] = useState(() => localStorage.getItem('monest-notif-weekly') !== 'false')
+  const [notifEngagement, setNotifEngagement] = useState(() => localStorage.getItem('monest-notif-engagement') !== 'false')
 
   const handleToggleNotifications = async () => {
     if (notificationsOn) {
@@ -590,10 +592,11 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
             <Bell size={14} className="text-brand" />
             <h2 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">{t('settings.notifications')}</h2>
           </div>
+          {/* Main toggle */}
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-text-primary">{t('settings.weeklyReminder')}</p>
-              <p className="text-xs text-text-muted mt-0.5">{t('settings.weeklyReminderHint')}</p>
+              <p className="text-sm text-text-primary">{t('notifications.mainToggle')}</p>
+              <p className="text-xs text-text-muted mt-0.5">{t('notifications.mainToggleHint')}</p>
             </div>
             <button
               onClick={handleToggleNotifications}
@@ -602,7 +605,7 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
               }`}
               role="switch"
               aria-checked={notificationsOn}
-              aria-label={t('settings.weeklyReminder')}
+              aria-label={t('notifications.mainToggle')}
             >
               <span
                 className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
@@ -611,6 +614,63 @@ export default function SettingsPage({ session, saveHousehold, createInvite }) {
               />
             </button>
           </div>
+          {/* Sub-toggles when enabled */}
+          {notificationsOn && (
+            <div className="mt-3 pt-3 border-t border-white/[0.06] space-y-3">
+              {/* Weekly reminder */}
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-text-primary">{t('notifications.weeklyTitle')}</p>
+                  <p className="text-xs text-text-muted mt-0.5">{t('notifications.weeklyHint')}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    const next = !notifWeekly
+                    setNotifWeekly(next)
+                    localStorage.setItem('monest-notif-weekly', String(next))
+                  }}
+                  className={`relative ml-3 flex-shrink-0 w-11 h-6 rounded-full transition-colors cursor-pointer ${
+                    notifWeekly ? 'bg-brand' : 'bg-white/[0.12]'
+                  }`}
+                  role="switch"
+                  aria-checked={notifWeekly}
+                  aria-label={t('notifications.weeklyTitle')}
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                      notifWeekly ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+              {/* Engagement alerts */}
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-text-primary">{t('notifications.engagementTitle')}</p>
+                  <p className="text-xs text-text-muted mt-0.5">{t('notifications.engagementHint')}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    const next = !notifEngagement
+                    setNotifEngagement(next)
+                    localStorage.setItem('monest-notif-engagement', String(next))
+                  }}
+                  className={`relative ml-3 flex-shrink-0 w-11 h-6 rounded-full transition-colors cursor-pointer ${
+                    notifEngagement ? 'bg-brand' : 'bg-white/[0.12]'
+                  }`}
+                  role="switch"
+                  aria-checked={notifEngagement}
+                  aria-label={t('notifications.engagementTitle')}
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                      notifEngagement ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          )}
         </Card>
       )}
 
