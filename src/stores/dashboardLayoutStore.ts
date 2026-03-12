@@ -109,7 +109,7 @@ export const useDashboardLayoutStore = create<DashboardLayoutState>()(
             .select('dashboard_layout, dashboard_layout_version, updated_at')
             .eq('user_id', userId)
             .eq('household_id', householdId)
-            .single()
+            .maybeSingle()
 
           // Only use DB layout if version matches — stale layouts are discarded
           if (data?.dashboard_layout && Object.keys(data.dashboard_layout as Record<string, unknown>).length > 0) {
