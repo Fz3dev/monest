@@ -83,7 +83,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
             role="dialog"
             aria-modal="true"
             aria-label={title}
-            className="relative bg-bg-primary border border-white/[0.08] rounded-t-3xl sm:rounded-3xl w-full sm:max-w-lg max-h-[85dvh] flex flex-col overflow-hidden"
+            className="relative bg-bg-primary border border-white/[0.08] border-b-0 sm:border-b rounded-t-3xl sm:rounded-3xl w-full sm:max-w-lg max-h-[85dvh] flex flex-col overflow-hidden"
           >
             {/* Header — fixed at top */}
             <div className="flex-shrink-0 bg-bg-primary border-b border-white/[0.06] px-5 py-4 flex items-center justify-between">
@@ -100,6 +100,8 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
             <div className="flex-1 overflow-y-auto overscroll-contain p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] scrollbar-hide">
               {children}
             </div>
+            {/* Safe-area fill on mobile to cover home indicator area */}
+            <div className="sm:hidden bg-bg-primary h-[env(safe-area-inset-bottom)]" />
           </motion.div>
         </div>
       )}
