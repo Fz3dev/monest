@@ -4,7 +4,7 @@ import { motion } from 'motion/react'
 import Card from '../../ui/Card'
 import { formatCurrency } from '../../../utils/format'
 import { ArrowUpRight } from 'lucide-react'
-import { PAYER } from '../../../types'
+import { PAYER, PAYER_ORDER } from '../../../types'
 import type { Payer, ChargeDetail } from '../../../types'
 
 interface ChargesDetailWidgetProps {
@@ -41,6 +41,10 @@ export default memo(function ChargesDetailWidget({
       const cat = charge.category || 'autre'
       if (!g[cat]) g[cat] = []
       g[cat].push(charge)
+    }
+    // Sort charges within each category: common → person_a → person_b
+    for (const cat of Object.keys(g)) {
+      g[cat].sort((a, b) => (PAYER_ORDER[a.payer] ?? 9) - (PAYER_ORDER[b.payer] ?? 9) || b.amount - a.amount)
     }
     return Object.entries(g)
       .sort(([, a], [, b]) => {

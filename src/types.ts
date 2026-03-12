@@ -2,6 +2,7 @@
 
 export const PAYER = { Common: 'common', PersonA: 'person_a', PersonB: 'person_b' } as const
 export type Payer = typeof PAYER[keyof typeof PAYER]
+export const PAYER_ORDER: Record<string, number> = { [PAYER.Common]: 0, [PAYER.PersonA]: 1, [PAYER.PersonB]: 2 }
 
 export const FREQUENCY = { Monthly: 'monthly', Bimonthly: 'bimonthly', Quarterly: 'quarterly', Annual: 'annual' } as const
 export type Frequency = typeof FREQUENCY[keyof typeof FREQUENCY]

@@ -7,7 +7,7 @@ import { useMonthlyStore } from '../stores/monthlyStore'
 import { computeMonth } from '../utils/calculations'
 import { formatCurrency, formatMonth, getCurrentMonth } from '../utils/format'
 import { useCategoriesStore } from '../stores/categoriesStore'
-import { PAYER } from '../types'
+import { PAYER, PAYER_ORDER } from '../types'
 import type { Payer, ChargeDetail } from '../types'
 import Card from '../components/ui/Card'
 import Modal from '../components/ui/Modal'
@@ -246,6 +246,10 @@ export default function MonthlyPage() {
               if (filtered.length === 0) return (
                 <p className="text-sm text-text-muted text-center py-4">{t('charges.noResults')}</p>
               )
+              // Sort charges within each category: common → person_a → person_b
+              for (const cat of Object.keys(groups)) {
+                groups[cat].sort((a, b) => (PAYER_ORDER[a.payer] ?? 9) - (PAYER_ORDER[b.payer] ?? 9) || b.amount - a.amount)
+              }
               // Sort groups by total amount (descending)
               const sorted = Object.entries(groups).sort(([, a], [, b]) => {
                 const totalA = a.reduce((s: number, c) => s + (c.isDisabledThisMonth ? 0 : c.amount), 0)

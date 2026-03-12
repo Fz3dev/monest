@@ -6,7 +6,7 @@ import { useChargesStore } from '../stores/chargesStore'
 import { useMonthlyStore } from '../stores/monthlyStore'
 import { computeMonth } from '../utils/calculations'
 import { formatCurrency, formatMonthShort, getCurrentMonth, getCategoryLabel } from '../utils/format'
-import { PAYER } from '../types'
+import { PAYER, PAYER_ORDER } from '../types'
 import type { Payer, ComputeMonthResult } from '../types'
 import Card from '../components/ui/Card'
 import ProgressBar from '../components/ui/ProgressBar'
@@ -271,7 +271,7 @@ export default function CalendarPage() {
                     {filteredCharges.length > 0 && (
                       <div className="border-t border-white/[0.06] pt-3">
                         <div className="text-[10px] text-text-muted uppercase tracking-wider mb-2">{t('calendar.chargesLabel')}</div>
-                        {filteredCharges.map((c) => (
+                        {[...filteredCharges].sort((a, b) => (PAYER_ORDER[a.payer] ?? 9) - (PAYER_ORDER[b.payer] ?? 9) || b.amount - a.amount).map((c) => (
                           <div key={c.id} className="flex justify-between text-sm py-1">
                             <span className="text-text-secondary truncate">
                               {c.name}
