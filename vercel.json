@@ -78,6 +78,12 @@
       "has": [{ "type": "host", "value": "monest.vercel.app" }],
       "destination": "https://monest.dev/$1",
       "permanent": true
+    },
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "mones.dev" }],
+      "destination": "https://monest.dev/$1",
+      "permanent": true
     }
   ],
   "rewrites": [
