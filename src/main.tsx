@@ -1,6 +1,30 @@
+// Polyfill ReadableStream async iterator for iOS Safari < 26.4
+// Must run before ANY library import (pdfjs uses for-await-of on ReadableStream)
+if (typeof ReadableStream !== 'undefined' &&
+    typeof Symbol.asyncIterator !== 'undefined' &&
+    !(Symbol.asyncIterator in ReadableStream.prototype)) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(ReadableStream.prototype as any)[Symbol.asyncIterator] = async function* () {
+    const reader = this.getReader()
+    try {
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) return
+        yield value
+      }
+    } finally {
+      reader.releaseLock()
+    }
+  }
+}
+
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { initSentry } from './lib/sentry'
 import './index.css'
+
+// Init Sentry before anything else
+initSentry()
 
 // Apply saved theme before first paint to avoid flash
 ;(() => {

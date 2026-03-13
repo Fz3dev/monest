@@ -13,7 +13,7 @@ import type { Payer } from '../types'
 import { PAYER } from '../types'
 import Modal from './ui/Modal'
 import Button from './ui/Button'
-import { FileSpreadsheet, FileText, Download, Loader2, Check, Lock } from 'lucide-react'
+import { FileSpreadsheet, FileText, Download, Loader2, Check, Archive } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface ExportModalProps {
@@ -219,7 +219,7 @@ export default function ExportModal({ isOpen, onClose }: ExportModalProps) {
                         : 'bg-white/[0.06] text-text-muted hover:text-white'
                     }`}
                   >
-                    {isPast && !isActive && <Lock size={10} className="opacity-50" />}
+                    {isPast && !isActive && <Archive size={10} className="opacity-50" />}
                     {getMonthLabel(m)}
                   </button>
                 )
@@ -227,7 +227,7 @@ export default function ExportModal({ isOpen, onClose }: ExportModalProps) {
             </div>
             {!isCurrentMonth && (
               <div className="mt-1.5 text-[10px] text-text-muted flex items-center gap-1">
-                <Lock size={10} />
+                <Archive size={10} />
                 {t('export.snapshotDate', { date: getMonthFullLabel(selectedMonth, t) })}
               </div>
             )}

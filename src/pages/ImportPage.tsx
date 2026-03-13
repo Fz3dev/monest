@@ -1,9 +1,10 @@
-import { useState, useRef, useMemo, useCallback } from 'react'
+import { useState, useRef, useMemo, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
 import { useChargesStore } from '../stores/chargesStore'
 import { parseCSV, detectColumns, detectRecurring } from '../utils/csvParser'
 import { parsePDF } from '../utils/pdfParser'
+import { captureError } from '../lib/sentry'
 import { formatCurrency, getTranslatedCategories } from '../utils/format'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
@@ -58,17 +59,45 @@ export default function ImportPage() {
     return null
   }, [normalize, existingNormalized])
 
-  const [status, setStatus] = useState<'idle' | 'parsing' | 'detected' | 'error'>('idle')
-  const [suggestions, setSuggestions] = useState<EnrichedSuggestion[]>([])
-  const [dismissed, setDismissed] = useState<Set<string>>(new Set())
-  const [added, setAdded] = useState<Set<string>>(new Set())
+  // Restore import session from sessionStorage on mount
+  const SESSION_KEY = 'monest-import-session'
+  const savedSession = useMemo(() => {
+    try {
+      const raw = sessionStorage.getItem(SESSION_KEY)
+      return raw ? JSON.parse(raw) : null
+    } catch { return null }
+  }, [])
+
+  const [status, setStatus] = useState<'idle' | 'parsing' | 'detected' | 'error'>(savedSession?.status === 'detected' ? 'detected' : 'idle')
+  const [parseStep, setParseStep] = useState(0)
+  const [suggestions, setSuggestions] = useState<EnrichedSuggestion[]>(savedSession?.suggestions || [])
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set(savedSession?.dismissed || []))
+  const [added, setAdded] = useState<Set<string>>(new Set(savedSession?.added || []))
   const [error, setError] = useState<string | null>(null)
-  const [stats, setStats] = useState<ImportStats | null>(null)
-  const [categoryOverrides, setCategoryOverrides] = useState<Record<string, string>>({})
-  const [nameOverrides, setNameOverrides] = useState<Record<string, string>>({})
-  const [amountOverrides, setAmountOverrides] = useState<Record<string, number>>({})
+  const [stats, setStats] = useState<ImportStats | null>(savedSession?.stats || null)
+  const [categoryOverrides, setCategoryOverrides] = useState<Record<string, string>>(savedSession?.categoryOverrides || {})
+  const [nameOverrides, setNameOverrides] = useState<Record<string, string>>(savedSession?.nameOverrides || {})
+  const [amountOverrides, setAmountOverrides] = useState<Record<string, number>>(savedSession?.amountOverrides || {})
   const [editing, setEditing] = useState<string | null>(null)
   const [confirmDuplicate, setConfirmDuplicate] = useState<DuplicateInfo | null>(null)
+
+  // Persist import session to sessionStorage on every change
+  useEffect(() => {
+    if (status !== 'detected' || suggestions.length === 0) {
+      sessionStorage.removeItem(SESSION_KEY)
+      return
+    }
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+      status,
+      suggestions,
+      dismissed: [...dismissed],
+      added: [...added],
+      stats,
+      categoryOverrides,
+      nameOverrides,
+      amountOverrides,
+    }))
+  }, [status, suggestions, dismissed, added, stats, categoryOverrides, nameOverrides, amountOverrides])
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -81,18 +110,31 @@ export default function ImportPage() {
     }
 
     setStatus('parsing')
+    setParseStep(0)
     setError(null)
     setSuggestions([])
     setDismissed(new Set())
     setAdded(new Set())
     setCategoryOverrides({})
 
+    const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
+    const isPDF = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf'
+
     try {
-      const isPDF = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf'
+      // Step 1: Reading file
+      setParseStep(1)
+      await wait(800)
+
+      // Step 2: Parsing
+      setParseStep(2)
+      await wait(600)
       const result = isPDF ? await parsePDF(file) : await parseCSV(file)
 
       if (!result.data || result.data.length === 0) throw new Error(t('import.emptyFile'))
 
+      // Step 3: Detecting columns
+      setParseStep(3)
+      await wait(900)
       const headers = result.meta.fields || Object.keys(result.data[0])
       const columns = detectColumns(headers)
 
@@ -100,6 +142,9 @@ export default function ImportPage() {
         throw new Error(t('import.columnsNotDetected'))
       }
 
+      // Step 4: Finding recurring charges
+      setParseStep(4)
+      await wait(1200)
       const recurring = detectRecurring(result.data, columns)
 
       const enriched: EnrichedSuggestion[] = recurring.map((s) => ({
@@ -113,6 +158,16 @@ export default function ImportPage() {
       toast.success(t('import.recurringDetected', { count: enriched.length }))
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
+      // Log ALL import errors to Sentry with full context
+      captureError(err, {
+        phase: 'import-file',
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        isPDF,
+        errorMsg: msg,
+        userAgent: navigator.userAgent,
+      })
       if (msg === 'NO_TRANSACTIONS') {
         setError(t('import.noTransactionsInPDF'))
       } else if (msg === 'PDF_SCANNED') {
@@ -215,9 +270,34 @@ export default function ImportPage() {
 
       {status === 'parsing' && (
         <Card>
-          <div className="flex items-center justify-center gap-3 py-4">
-            <Loader2 size={20} className="animate-spin text-brand" />
-            <span className="text-text-secondary text-sm">{t('import.analyzing')}</span>
+          <div className="py-3 space-y-3">
+            {[
+              { step: 1, label: t('import.stepReading') },
+              { step: 2, label: t('import.stepParsing') },
+              { step: 3, label: t('import.stepColumns') },
+              { step: 4, label: t('import.stepRecurring') },
+            ].map(({ step, label }) => {
+              const done = parseStep > step
+              const active = parseStep === step
+              return (
+                <motion.div
+                  key={step}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: step * 0.1 }}
+                  className="flex items-center gap-3"
+                >
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
+                    done ? 'bg-success/20 text-success' : active ? 'bg-brand/20 text-brand' : 'bg-white/[0.06] text-text-muted'
+                  }`}>
+                    {done ? <Check size={12} /> : active ? <Loader2 size={12} className="animate-spin" /> : <span className="text-[10px]">{step}</span>}
+                  </div>
+                  <span className={`text-sm ${done ? 'text-success' : active ? 'text-text-primary' : 'text-text-muted'}`}>
+                    {label}
+                  </span>
+                </motion.div>
+              )
+            })}
           </div>
         </Card>
       )}
@@ -300,7 +380,7 @@ export default function ImportPage() {
                         </div>
                         <div className="flex gap-2 pt-1">
                           <Button size="sm" onClick={() => handleAdd(s)}>
-                            <Check size={12} className="mr-1" /> {t('common.add')}
+                            <Check size={12} /> {t('common.add')}
                           </Button>
                           <Button size="sm" variant="ghost" onClick={() => setEditing(null)}>
                             {t('common.cancel')}
@@ -308,7 +388,7 @@ export default function ImportPage() {
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-medium text-sm">{getName(s)}</span>
@@ -340,7 +420,7 @@ export default function ImportPage() {
                             <Pencil size={12} />
                           </Button>
                           <Button size="sm" onClick={() => handleAdd(s)}>
-                            <Check size={12} className="mr-1" /> {t('common.add')}
+                            <Check size={12} /> {t('common.add')}
                           </Button>
                           <Button size="sm" variant="ghost" onClick={() => handleDismiss(s.suggestedName)}>
                             <X size={12} />

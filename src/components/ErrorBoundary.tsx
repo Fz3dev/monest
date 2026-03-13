@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
+import { captureError } from '../lib/sentry'
 
 interface ErrorBoundaryProps {
   children: ReactNode
@@ -20,9 +21,8 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log for debugging — chunk errors are handled by lazyRetry() in App.jsx
-    // before they reach ErrorBoundary, so no auto-recovery needed here
     console.error('ErrorBoundary caught:', error, errorInfo)
+    captureError(error, { componentStack: errorInfo.componentStack })
   }
 
   render() {

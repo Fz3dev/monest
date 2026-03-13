@@ -87,6 +87,7 @@
     }
   ],
   "rewrites": [
+    { "source": "/sw.js", "destination": "/sw.js" },
     { "source": "/reset.html", "destination": "/reset.html" },
     { "source": "/robots.txt", "destination": "/robots.txt" },
     { "source": "/sitemap.xml", "destination": "/sitemap.xml" },

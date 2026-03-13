@@ -68,6 +68,19 @@ src/
 - Wording: "reste à vivre" (PAS "reste à dépenser"), "en solo ou en couple" (PAS "familial")
 - GitHub repo privé — ne PAS afficher de lien GitHub public
 
+## PDF Import (pdfjs-dist)
+- Version: **v5.4.624** — NE PAS upgrader au-delà (v5.5.207 casse iOS Safari < 26.4)
+- Build: **legacy** (`pdfjs-dist/legacy/build/pdf.mjs`) pour compatibilité iOS
+- Worker: fichier statique `public/pdf.worker.min.mjs` (copié du legacy build)
+- Polyfill `ReadableStream[Symbol.asyncIterator]` dans `main.tsx` (iOS Safari < 26.4)
+- Si upgrade: `cp node_modules/pdfjs-dist/legacy/build/pdf.worker.min.mjs public/pdf.worker.min.mjs`
+- Fallback worker: statique → CDN → sans worker (main thread)
+
+## Monitoring
+- Sentry: projet `javascript-react`, DSN dans env var `VITE_SENTRY_DSN`
+- Init dans `src/lib/sentry.ts`, appelé dans `main.tsx`
+- `captureError()` pour les erreurs handled, `setSentryUser()` après auth
+
 ## Deployment
 - Vercel: https://monest.dev
 - GitHub: Fz3dev/monest

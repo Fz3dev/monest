@@ -488,7 +488,7 @@ export default function ChargesPage() {
             <Download size={13} />
             <span className="hidden sm:inline">{t('export.buttonLabel')}</span>
           </button>
-          <Link to="/import" className="lg:hidden inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium bg-card-bg border border-border-default text-text-secondary hover:text-brand transition-colors">
+          <Link to="/import" className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium bg-card-bg border border-border-default text-text-secondary hover:text-brand transition-colors">
             <Upload size={13} /> {t('charges.import')}
           </Link>
           <Button size="sm" onClick={() => setModal({ type: tab })}>

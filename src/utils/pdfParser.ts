@@ -1,7 +1,33 @@
-import * as pdfjsLib from 'pdfjs-dist'
-import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
+// Polyfill ReadableStream async iterator for iOS Safari < 26.4
+if (typeof ReadableStream !== 'undefined' &&
+    typeof Symbol.asyncIterator !== 'undefined' &&
+    !(Symbol.asyncIterator in ReadableStream.prototype)) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(ReadableStream.prototype as any)[Symbol.asyncIterator] = async function* () {
+    const reader = this.getReader()
+    try {
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) return
+        yield value
+      }
+    } finally {
+      reader.releaseLock()
+    }
+  }
+}
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl
+// Use legacy build for iOS Safari compatibility
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs'
+import { captureError } from '../lib/sentry'
+
+// Static legacy worker from public/ — compatible with all browsers including mobile Safari
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
+
+// CDN fallback URL (same version, legacy build)
+const WORKER_CDN = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/legacy/build/pdf.worker.min.mjs`
+
+let workerFailed = false
 
 // ─── Regex patterns ─────────────────────────────────────────────────────────
 
@@ -406,16 +432,47 @@ function findAmountForFormat(row: Row, fmt: TableFormat): AmountResult | null {
 
 // ─── Main parser ────────────────────────────────────────────────────────────
 
+async function loadPDF(data: Uint8Array): Promise<pdfjsLib.PDFDocumentProxy> {
+  // Strategy: try 3 worker sources, from most optimal to least
+  const strategies: Array<{ name: string; setup: () => void; opts?: Record<string, unknown> }> = [
+    {
+      name: 'static',
+      setup: () => { /* already set to /pdf.worker.min.mjs */ },
+    },
+    {
+      name: 'cdn',
+      setup: () => { pdfjsLib.GlobalWorkerOptions.workerSrc = WORKER_CDN },
+    },
+    {
+      name: 'no-worker',
+      setup: () => { pdfjsLib.GlobalWorkerOptions.workerSrc = '' },
+      opts: { isEvalSupported: false },
+    },
+  ]
+
+  // If we already know local workers fail, skip the first strategy
+  const start = workerFailed ? 1 : 0
+
+  for (let i = start; i < strategies.length; i++) {
+    const s = strategies[i]
+    s.setup()
+    try {
+      const doc = await pdfjsLib.getDocument({ data, ...s.opts }).promise
+      if (i > 0) workerFailed = true // remember for next calls
+      return doc
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      if (/password/i.test(msg)) throw new Error('PDF_PASSWORD_PROTECTED')
+      captureError(err, { phase: `pdf-worker-${s.name}`, errorMsg: msg })
+    }
+  }
+
+  throw new Error('PDF_LOAD_FAILED')
+}
+
 export async function parsePDF(file: File): Promise<ParsePDFResult> {
   const buffer = await file.arrayBuffer()
-  let pdf: pdfjsLib.PDFDocumentProxy
-  try {
-    pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err)
-    if (/password/i.test(msg)) throw new Error('PDF_PASSWORD_PROTECTED')
-    throw new Error('PDF_LOAD_FAILED')
-  }
+  const pdf = await loadPDF(new Uint8Array(buffer))
 
   // ── Phase 1: Try structured parsing (known formats) ───────────────────
 

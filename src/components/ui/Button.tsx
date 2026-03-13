@@ -34,7 +34,7 @@ export default function Button({
   return (
     <motion.button
       whileTap={{ scale: 0.97 }}
-      className={`rounded-xl font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer ${variants[variant]} ${sizes[size]} ${className}`}
+      className={`inline-flex items-center justify-center gap-1 rounded-xl font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer ${variants[variant]} ${sizes[size]} ${className}`}
       disabled={disabled}
       {...props}
     >

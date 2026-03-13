@@ -9,6 +9,7 @@ import OnboardingWizard from './components/onboarding/OnboardingWizard'
 import AuthPage from './components/auth/AuthPage'
 import ResetPasswordPage from './components/auth/ResetPasswordPage'
 import { Toaster, toast } from 'sonner'
+import { setSentryUser } from './lib/sentry'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import { DashboardSkeleton, ExpensesSkeleton, ChargesSkeleton, MonthlySkeleton, SavingsSkeleton } from './components/ui/Skeleton'
@@ -205,6 +206,7 @@ export default function App() {
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+      setSentryUser(s?.user?.id ?? null, s?.user?.email ?? undefined)
       // In recovery mode, only accept the recovery session — ignore other events
       // that would auto-login with the existing browser session
       if (sessionStorage.getItem('monest-password-recovery') === '1') {
