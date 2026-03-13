@@ -471,7 +471,7 @@
   "quickAdd": {
     "title": "Nouvelle d\u00e9pense",
     "addExpense": "Ajouter une d\u00e9pense",
-    "paidBy": "Pay\u00e9 par",
+    "paidBy": "R\u00e9gl\u00e9 par",
     "notePlaceholder": "Note (optionnel)",
     "submit": "Ajouter",
     "categories": {
@@ -561,7 +561,7 @@
     "pdfDesc": "Document stylisé",
     "csvDesc": "Tableur / Excel",
     "chargeTypes": "Types de charges",
-    "payerFilter": "Personnes",
+    "payerFilter": "R\u00e9gl\u00e9 par",
     "preview": "Aperçu",
     "charges": "charges",
     "download": "Télécharger en {{format}}",
@@ -574,7 +574,7 @@
     "colAmount": "Montant",
     "colFrequency": "Fréquence",
     "colCategory": "Catégorie",
-    "colPayer": "Par",
+    "colPayer": "R\u00e9gl\u00e9 par",
     "pdfTitle": "Mes charges",
     "pdfPayerFilter": "Pour",
     "pdfGenerated": "Généré le"
