@@ -80,21 +80,22 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
   ]
 
   return (
-    <div className="min-h-screen bg-bg-primary flex items-center justify-center px-4">
+    <div className="min-h-screen bg-bg-primary flex items-start sm:items-center justify-center px-4 pt-12 sm:pt-0">
       <div className="w-full max-w-md">
         <motion.div
-          className="text-center mb-8"
+          className="text-center mb-6"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-brand to-brand-light bg-clip-text text-transparent">
+          <img src="/logo-crown.png" alt="" className="w-14 h-14 mx-auto mb-2" />
+          <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-brand to-brand-light bg-clip-text text-transparent">
             Monest
           </h1>
           <p className="text-text-secondary text-sm">{t('onboarding.setupBudget')}</p>
         </motion.div>
 
         {/* Progress */}
-        <div className="flex gap-2 mb-8">
+        <div className="flex gap-2 mb-6">
           {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
             <motion.div
               key={s}
@@ -129,12 +130,12 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
               />
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-2">{t('onboarding.yourColor')}</label>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-3">
                   {COLORS.map((c) => (
                     <button
                       key={c.value}
                       onClick={() => update('personAColor', c.value)}
-                      className={`w-10 h-10 rounded-full transition-all cursor-pointer ${
+                      className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-all cursor-pointer ${
                         form.personAColor === c.value
                           ? 'ring-2 ring-white ring-offset-2 ring-offset-bg-primary scale-110'
                           : 'hover:scale-105'
@@ -212,30 +213,32 @@ export default function OnboardingWizard({ onComplete }: OnboardingWizardProps) 
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="space-y-4 overflow-hidden"
+                    className="overflow-hidden"
                   >
-                    <Input
-                      label={t('onboarding.partnerFirstName')}
-                      value={form.personBName}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => update('personBName', e.target.value)}
-                      placeholder="Ex: Carla"
-                    />
-                    <div>
-                      <label className="block text-xs font-medium text-text-secondary mb-2">{t('onboarding.partnerColor')}</label>
-                      <div className="flex gap-3">
-                        {COLORS.map((c) => (
-                          <button
-                            key={c.value}
-                            onClick={() => update('personBColor', c.value)}
-                            className={`w-10 h-10 rounded-full transition-all cursor-pointer ${
-                              form.personBColor === c.value
-                                ? 'ring-2 ring-white ring-offset-2 ring-offset-bg-primary scale-110'
-                                : 'hover:scale-105'
-                            }`}
-                            style={{ backgroundColor: c.value }}
-                            aria-label={c.label}
-                          />
-                        ))}
+                    <div className="space-y-4 pb-2">
+                      <Input
+                        label={t('onboarding.partnerFirstName')}
+                        value={form.personBName}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => update('personBName', e.target.value)}
+                        placeholder="Ex: Carla"
+                      />
+                      <div>
+                        <label className="block text-xs font-medium text-text-secondary mb-2">{t('onboarding.partnerColor')}</label>
+                        <div className="flex flex-wrap gap-3 p-1">
+                          {COLORS.map((c) => (
+                            <button
+                              key={c.value}
+                              onClick={() => update('personBColor', c.value)}
+                              className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-all cursor-pointer ${
+                                form.personBColor === c.value
+                                  ? 'ring-2 ring-white ring-offset-2 ring-offset-bg-primary scale-110'
+                                  : 'hover:scale-105'
+                              }`}
+                              style={{ backgroundColor: c.value }}
+                              aria-label={c.label}
+                            />
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </motion.div>
