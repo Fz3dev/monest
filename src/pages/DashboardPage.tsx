@@ -9,6 +9,7 @@ import { useSavingsStore } from '../stores/savingsStore'
 import { useExpenseStore } from '../stores/expenseStore'
 import { computeMonth } from '../utils/calculations'
 import { generateInsights } from '../utils/insights'
+import { generateSmartTips } from '../utils/tips'
 import { calculateStreak, calculateBadges } from '../utils/streaks'
 import { formatMonth, getCurrentMonth, formatMonthShort } from '../utils/format'
 import { useCategoriesStore } from '../stores/categoriesStore'
@@ -28,6 +29,7 @@ import InsightsWidget from '../components/dashboard/widgets/InsightsWidget'
 import CategoriesWidget from '../components/dashboard/widgets/CategoriesWidget'
 import ChargesDetailWidget from '../components/dashboard/widgets/ChargesDetailWidget'
 import HistoryWidget from '../components/dashboard/widgets/HistoryWidget'
+import SmartTips from '../components/SmartTips'
 
 export default function DashboardPage() {
   const { t } = useTranslation()
@@ -94,6 +96,11 @@ export default function DashboardPage() {
   const totalCharges = result.totalCommon + result.personalACharges + result.personalBCharges
   const hasIncome = result.incomeA > 0 || result.incomeB > 0
   const chargesRate = totalIncome > 0 ? Math.round((totalCharges / totalIncome) * 100) : 0
+
+  const smartTips = useMemo(() => {
+    return generateSmartTips(fixedCharges, installmentPayments, totalIncome, currentMonth)
+  }, [fixedCharges, installmentPayments, totalIncome, currentMonth])
+
   const badges = useMemo(
     () => calculateBadges(streak, totalCharges, totalIncome, savingsGoals),
     [streak, totalCharges, totalIncome, savingsGoals]
@@ -175,6 +182,11 @@ export default function DashboardPage() {
   // Insights — conditional
   if (insights.length > 0) {
     widgets.insights = <InsightsWidget insights={insights} />
+  }
+
+  // Smart Tips — conditional
+  if (smartTips.length > 0) {
+    widgets.smartTips = <SmartTips tips={smartTips} />
   }
 
   // Categories — conditional

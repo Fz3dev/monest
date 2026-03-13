@@ -13,7 +13,8 @@ import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Select from '../components/ui/Select'
 import Modal from '../components/ui/Modal'
-import { Plus, Trash2, ToggleLeft, ToggleRight, Edit3, Search, ArrowUpDown, Upload, Archive, ArchiveRestore, ChevronDown } from 'lucide-react'
+import { Plus, Trash2, ToggleLeft, ToggleRight, Edit3, Search, ArrowUpDown, Upload, Archive, ArchiveRestore, ChevronDown, Download } from 'lucide-react'
+import ExportModal from '../components/ExportModal'
 import { toast } from 'sonner'
 import { Link } from 'react-router-dom'
 import { PAYER } from '../types'
@@ -316,6 +317,7 @@ export default function ChargesPage() {
   const currentMonth = new Date().toISOString().slice(0, 7)
 
   const [modal, setModal] = useState<ModalState | null>(null)
+  const [showExport, setShowExport] = useState(false)
   const [tab, setTab] = useState<ChargeType>('fixed')
   const [searchQuery, setSearchQuery] = useState('')
   const [filterPayer, setFilterPayer] = useState<Payer | null>(null)
@@ -478,6 +480,14 @@ export default function ChargesPage() {
           </motion.h1>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowExport(true)}
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium bg-card-bg border border-border-default text-text-secondary hover:text-brand transition-colors cursor-pointer"
+            aria-label={t('export.title')}
+          >
+            <Download size={13} />
+            <span className="hidden sm:inline">{t('export.buttonLabel')}</span>
+          </button>
           <Link to="/import" className="lg:hidden inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium bg-card-bg border border-border-default text-text-secondary hover:text-brand transition-colors">
             <Upload size={13} /> {t('charges.import')}
           </Link>
@@ -615,7 +625,19 @@ export default function ChargesPage() {
         {tab === 'fixed' && (
           <motion.div key="fixed" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-2">
             {activeFixed.length === 0 && archivedFixed.length === 0 && (
-              <Card><p className="text-center text-text-muted py-6 text-sm">{hasFilters ? t('charges.noResults') : t('charges.noFixed')}</p></Card>
+              <Card>
+                <div className="text-center py-6">
+                  <p className="text-text-muted text-sm">{hasFilters ? t('charges.noResults') : t('charges.noFixed')}</p>
+                  {!hasFilters && (
+                    <button
+                      onClick={() => setModal({ type: 'fixed' })}
+                      className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-brand text-white shadow-lg shadow-brand/20 cursor-pointer hover:bg-brand-dark transition-colors"
+                    >
+                      <Plus size={14} /> {t('charges.addFirst')}
+                    </button>
+                  )}
+                </div>
+              </Card>
             )}
             {activeFixed.map((charge) => (
               <SwipeableCard
@@ -828,7 +850,19 @@ export default function ChargesPage() {
         {tab === 'installment' && (
           <motion.div key="installment" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-2">
             {filteredInstallments.length === 0 && (
-              <Card><p className="text-center text-text-muted py-6 text-sm">{hasFilters ? t('charges.noResults') : t('charges.noInstallment')}</p></Card>
+              <Card>
+                <div className="text-center py-6">
+                  <p className="text-text-muted text-sm">{hasFilters ? t('charges.noResults') : t('charges.noInstallment')}</p>
+                  {!hasFilters && (
+                    <button
+                      onClick={() => setModal({ type: 'installment' })}
+                      className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-brand text-white shadow-lg shadow-brand/20 cursor-pointer hover:bg-brand-dark transition-colors"
+                    >
+                      <Plus size={14} /> {t('charges.addFirst')}
+                    </button>
+                  )}
+                </div>
+              </Card>
             )}
             {filteredInstallments.map((payment) => (
               <SwipeableCard
@@ -892,7 +926,19 @@ export default function ChargesPage() {
         {tab === 'planned' && (
           <motion.div key="planned" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-2">
             {filteredPlanned.length === 0 && (
-              <Card><p className="text-center text-text-muted py-6 text-sm">{hasFilters ? t('charges.noResults') : t('charges.noPlanned')}</p></Card>
+              <Card>
+                <div className="text-center py-6">
+                  <p className="text-text-muted text-sm">{hasFilters ? t('charges.noResults') : t('charges.noPlanned')}</p>
+                  {!hasFilters && (
+                    <button
+                      onClick={() => setModal({ type: 'planned' })}
+                      className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-brand text-white shadow-lg shadow-brand/20 cursor-pointer hover:bg-brand-dark transition-colors"
+                    >
+                      <Plus size={14} /> {t('charges.addFirst')}
+                    </button>
+                  )}
+                </div>
+              </Card>
             )}
             {filteredPlanned.map((expense) => (
               <SwipeableCard
@@ -1009,6 +1055,8 @@ export default function ChargesPage() {
           t={t}
         />
       </Modal>
+
+      <ExportModal isOpen={showExport} onClose={() => setShowExport(false)} />
     </div>
   )
 }

@@ -112,10 +112,17 @@ export default function ImportPage() {
       setStatus('detected')
       toast.success(t('import.recurringDetected', { count: enriched.length }))
     } catch (err: unknown) {
-      if (err instanceof Error && err.message === 'NO_TRANSACTIONS') {
+      const msg = err instanceof Error ? err.message : String(err)
+      if (msg === 'NO_TRANSACTIONS') {
         setError(t('import.noTransactionsInPDF'))
+      } else if (msg === 'PDF_SCANNED') {
+        setError(t('import.pdfScanned'))
+      } else if (msg === 'PDF_PASSWORD_PROTECTED') {
+        setError(t('import.pdfPasswordProtected'))
+      } else if (msg === 'PDF_LOAD_FAILED') {
+        setError(t('import.pdfLoadFailed'))
       } else {
-        setError(err instanceof Error ? err.message : String(err))
+        setError(t('import.pdfGenericError'))
       }
       setStatus('error')
       toast.error(t('import.parseError'))

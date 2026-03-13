@@ -103,9 +103,10 @@
     "fixedTab": "Fixes",
     "installmentTab": "\u00c9tal\u00e9es",
     "plannedTab": "Pr\u00e9vues",
-    "noFixed": "Aucune charge fixe.",
-    "noInstallment": "Aucun paiement \u00e9tal\u00e9.",
-    "noPlanned": "Aucune d\u00e9pense planifi\u00e9e.",
+    "noFixed": "Aucune charge fixe configurée.",
+    "noInstallment": "Aucun paiement étalé configuré.",
+    "noPlanned": "Aucune dépense planifiée.",
+    "addFirst": "Ajouter ma première charge",
     "deleted": "\"{{name}}\" supprim\u00e9",
     "restored": "\"{{name}}\" restaur\u00e9",
     "added": "\"{{name}}\" ajout\u00e9e",
@@ -181,7 +182,8 @@
     "updated": "Dépense modifiée",
     "note": "Note",
     "category": "Catégorie",
-    "date": "Date"
+    "date": "Date",
+    "remainingBudget": "Reste à vivre"
   },
   "monthly": {
     "income": "Revenus",
@@ -357,7 +359,11 @@
     "editName": "Nom de la charge",
     "editAmount": "Montant mensuel",
     "parseError": "Impossible de lire ce fichier. Vérifiez qu'il vient bien de votre banque.",
-    "noTransactionsInPDF": "Aucune opération trouvée dans ce PDF. Essayez avec le relevé de compte (pas le RIB ou un résumé).",
+    "noTransactionsInPDF": "On n'a pas réussi à détecter de transactions dans ce PDF. Pas de panique ! Nous travaillons activement pour être compatibles avec toutes les banques. En attendant, essayez d'exporter votre relevé au format CSV depuis votre espace bancaire — ça fonctionne à coup sûr.",
+    "pdfScanned": "Ce PDF semble être un scan ou une image. Monest a besoin d'un relevé numérique (pas une photo/scan). Exportez votre relevé depuis votre espace bancaire en ligne au format CSV ou PDF natif.",
+    "pdfPasswordProtected": "Ce PDF est protégé par un mot de passe. Veuillez le déverrouiller avant de l'importer.",
+    "pdfLoadFailed": "Impossible d'ouvrir ce PDF. Le fichier est peut-être endommagé. Essayez de le retélécharger depuis votre banque.",
+    "pdfGenericError": "On n'a pas réussi à analyser ce fichier. Nous améliorons constamment la compatibilité avec toutes les banques. En attendant, essayez d'exporter au format CSV depuis votre espace bancaire — c'est le format le plus fiable.",
     "howToTitle": "Comment r\u00e9cup\u00e9rer le fichier ?",
     "howToSteps": [
       "Connectez-vous \u00e0 votre banque en ligne (site web)",
@@ -524,6 +530,19 @@
     "commitmentEndingSoon_1": "{{name}} : engagement se termine ce mois-ci — vous pouvez résilier sans frais !",
     "commitmentEnded": "{{name}} : engagement terminé ! Vous pouvez résilier sans frais."
   },
+  "tips": {
+    "title": "Conseils personnalisés",
+    "subscriptionCount": "Vous avez {{count}} abonnements pour un total de {{amount}}/mois. Pensez à vérifier si vous les utilisez tous.",
+    "mobileInternet": "Votre forfait mobile/internet coûte {{amount}}/mois. Les offres changent souvent — comparez pour économiser.",
+    "insurance": "Vos assurances représentent {{amount}}/mois. Pensez à les renégocier chaque année ou à comparer les offres.",
+    "energy": "Votre contrat énergie coûte {{amount}}/mois. Changez de fournisseur facilement et sans coupure pour économiser.",
+    "multipleCredits": "Vous avez {{count}} crédits en cours. Un rachat de crédit pourrait réduire vos mensualités.",
+    "streaming": "Vous avez {{count}} abonnements streaming ({{names}}). {{amount}}/mois au total — en avez-vous vraiment besoin de tous ?",
+    "transport": "Vos frais de transport s'élèvent à {{amount}}/mois. Avez-vous pensé au covoiturage ou aux transports en commun ?",
+    "chargesRatio": "Vos charges représentent plus de 70% de vos revenus. Identifiez les postes réductibles pour augmenter votre reste à vivre.",
+    "commitmentEnding": "L'engagement de « {{name}} » se termine bientôt. C'est le moment de renégocier ou de comparer les offres !",
+    "potentialSaving": "Économie potentielle : {{amount}}"
+  },
   "offline": {
     "banner": "Mode hors ligne",
     "syncPending": "Modifications en attente de synchronisation",
@@ -533,6 +552,31 @@
   "presence": {
     "online": "En ligne",
     "offline": "Hors ligne"
+  },
+  "export": {
+    "title": "Exporter mes charges",
+    "buttonLabel": "Export",
+    "format": "Format",
+    "pdfDesc": "Document stylisé",
+    "csvDesc": "Tableur / Excel",
+    "chargeTypes": "Types de charges",
+    "payerFilter": "Payeur",
+    "preview": "Aperçu",
+    "charges": "charges",
+    "download": "Télécharger en {{format}}",
+    "exporting": "Export en cours...",
+    "success": "Export téléchargé avec succès !",
+    "error": "Erreur lors de l'export. Réessayez.",
+    "noData": "Aucune charge à exporter avec ces filtres.",
+    "colType": "Type",
+    "colName": "Nom",
+    "colAmount": "Montant",
+    "colFrequency": "Fréquence",
+    "colCategory": "Catégorie",
+    "colPayer": "Payeur",
+    "pdfTitle": "Mes charges",
+    "pdfPayerFilter": "Payeurs",
+    "pdfGenerated": "Généré le"
   },
   "dashboardGrid": {
     "editLayout": "Personnaliser la disposition",
@@ -547,6 +591,7 @@
     "widget_trend": "Tendance",
     "widget_categories": "Catégories",
     "widget_chargesDetail": "Détail charges",
+    "widget_smartTips": "Conseils",
     "moveUp": "Monter",
     "moveDown": "Descendre"
   }

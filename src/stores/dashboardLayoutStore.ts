@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import type { Layouts, WidgetConstraint } from '../types'
 
-export const ALL_WIDGETS: string[] = ['hero', 'persons', 'quickLinks', 'streakBadges', 'savings', 'insights', 'categories', 'trend', 'chargesDetail']
+export const ALL_WIDGETS: string[] = ['hero', 'persons', 'quickLinks', 'streakBadges', 'savings', 'insights', 'smartTips', 'categories', 'trend', 'chargesDetail']
 
 // Min/max constraints per widget
 export const WIDGET_CONSTRAINTS: Record<string, WidgetConstraint> = {
@@ -13,6 +13,7 @@ export const WIDGET_CONSTRAINTS: Record<string, WidgetConstraint> = {
   streakBadges: { minW: 1, maxW: 2, minH: 3, maxH: 6 },
   savings:      { minW: 1, maxW: 2, minH: 3, maxH: 6 },
   insights:     { minW: 1, maxW: 2, minH: 3, maxH: 8 },
+  smartTips:    { minW: 1, maxW: 2, minH: 3, maxH: 8 },
   trend:        { minW: 1, maxW: 3, minH: 5, maxH: 10 },
 }
 
@@ -23,7 +24,8 @@ export const DEFAULT_LAYOUTS: Layouts = {
     { i: 'streakBadges', x: 2, y: 4, w: 1, h: 3, ...WIDGET_CONSTRAINTS.streakBadges },
     { i: 'persons', x: 0, y: 7, w: 2, h: 5, ...WIDGET_CONSTRAINTS.persons },
     { i: 'savings', x: 2, y: 7, w: 1, h: 4, ...WIDGET_CONSTRAINTS.savings },
-    { i: 'trend', x: 2, y: 11, w: 1, h: 5, ...WIDGET_CONSTRAINTS.trend },
+    { i: 'smartTips', x: 2, y: 11, w: 1, h: 5, ...WIDGET_CONSTRAINTS.smartTips },
+    { i: 'trend', x: 2, y: 16, w: 1, h: 5, ...WIDGET_CONSTRAINTS.trend },
     { i: 'quickLinks', x: 0, y: 12, w: 2, h: 2, ...WIDGET_CONSTRAINTS.quickLinks },
   ],
   md: [
@@ -33,7 +35,8 @@ export const DEFAULT_LAYOUTS: Layouts = {
     { i: 'streakBadges', x: 0, y: 14, w: 1, h: 4, ...WIDGET_CONSTRAINTS.streakBadges },
     { i: 'savings', x: 1, y: 14, w: 1, h: 4, ...WIDGET_CONSTRAINTS.savings },
     { i: 'insights', x: 0, y: 18, w: 1, h: 4, ...WIDGET_CONSTRAINTS.insights },
-    { i: 'trend', x: 1, y: 18, w: 1, h: 5, ...WIDGET_CONSTRAINTS.trend },
+    { i: 'smartTips', x: 1, y: 18, w: 1, h: 5, ...WIDGET_CONSTRAINTS.smartTips },
+    { i: 'trend', x: 0, y: 23, w: 1, h: 5, ...WIDGET_CONSTRAINTS.trend },
   ],
   sm: [
     { i: 'hero', x: 0, y: 0, w: 1, h: 6 },
@@ -42,15 +45,16 @@ export const DEFAULT_LAYOUTS: Layouts = {
     { i: 'streakBadges', x: 0, y: 12, w: 1, h: 3 },
     { i: 'savings', x: 0, y: 15, w: 1, h: 2 },
     { i: 'insights', x: 0, y: 17, w: 1, h: 3 },
-    { i: 'categories', x: 0, y: 20, w: 1, h: 6 },
-    { i: 'trend', x: 0, y: 26, w: 1, h: 5 },
-    { i: 'chargesDetail', x: 0, y: 31, w: 1, h: 5 },
+    { i: 'smartTips', x: 0, y: 20, w: 1, h: 4 },
+    { i: 'categories', x: 0, y: 24, w: 1, h: 6 },
+    { i: 'trend', x: 0, y: 30, w: 1, h: 5 },
+    { i: 'chargesDetail', x: 0, y: 35, w: 1, h: 5 },
   ],
 }
 
 // One-time migration: clear stale layout from localStorage
 const LAYOUT_VERSION_KEY = 'monest-dashboard-layout-v'
-const CURRENT_LAYOUT_VERSION = 8
+const CURRENT_LAYOUT_VERSION = 9
 if (typeof window !== 'undefined' && localStorage.getItem(LAYOUT_VERSION_KEY) !== String(CURRENT_LAYOUT_VERSION)) {
   localStorage.removeItem('monest-dashboard-layout')
   localStorage.setItem(LAYOUT_VERSION_KEY, String(CURRENT_LAYOUT_VERSION))
@@ -139,7 +143,7 @@ export const useDashboardLayoutStore = create<DashboardLayoutState>()(
     }),
     {
       name: 'monest-dashboard-layout',
-      version: 8,
+      version: 9,
       migrate: (): DashboardLayoutState => {
         // Always reset to default layouts on version change
         return { layouts: DEFAULT_LAYOUTS, isEditMode: false } as DashboardLayoutState

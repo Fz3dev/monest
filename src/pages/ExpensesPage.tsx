@@ -3,14 +3,17 @@ import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
 import { useExpenseStore } from '../stores/expenseStore'
 import { useHouseholdStore } from '../stores/householdStore'
+import { useChargesStore } from '../stores/chargesStore'
+import { useMonthlyStore } from '../stores/monthlyStore'
 import { useCategoriesStore } from '../stores/categoriesStore'
 import { formatCurrency, getCurrentMonth, formatMonth, getCategoryLabel } from '../utils/format'
+import { computeMonth } from '../utils/calculations'
 import { syncToSupabase } from '../lib/syncBridge'
 import Card from '../components/ui/Card'
 import Modal from '../components/ui/Modal'
 import AnimatedNumber from '../components/ui/AnimatedNumber'
 import SwipeToDelete from '../components/ui/SwipeToDelete'
-import { ChevronLeft, ChevronRight, Receipt } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Receipt, TrendingUp, TrendingDown } from 'lucide-react'
 import { addMonths, subMonths, format, isToday, isYesterday, parseISO } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { toast } from 'sonner'
@@ -33,6 +36,11 @@ export default function ExpensesPage() {
   const getTotalByMonth = useExpenseStore((s) => s.getTotalByMonth)
   const getCategoryColor = useCategoriesStore((s) => s.getCategoryColor)
   const getCategoryEmoji = useCategoriesStore((s) => s.getCategoryEmoji)
+
+  const fixedCharges = useChargesStore((s) => s.fixedCharges)
+  const installmentPayments = useChargesStore((s) => s.installmentPayments)
+  const plannedExpenses = useChargesStore((s) => s.plannedExpenses)
+  const entries = useMonthlyStore((s) => s.entries)
 
   const [currentMonth, setCurrentMonth] = useState(() => getCurrentMonth())
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
@@ -71,6 +79,14 @@ export default function ExpensesPage() {
   const monthTotal = payerFilter
     ? payerFilteredExpenses.reduce((sum, e) => sum + e.amount, 0)
     : monthTotalAll
+
+  // Reste à vivre = revenus - charges - dépenses du mois
+  const monthResult = useMemo(
+    () => computeMonth(currentMonth, household, fixedCharges, installmentPayments, plannedExpenses, entries[currentMonth] || null),
+    [currentMonth, household, fixedCharges, installmentPayments, plannedExpenses, entries]
+  )
+  const resteAVivre = monthResult.resteFoyer - monthTotalAll
+  const hasIncome = monthResult.resteFoyer > 0
 
   const filteredExpenses = useMemo(
     () =>
@@ -205,17 +221,37 @@ export default function ExpensesPage() {
         </button>
       </div>
 
-      {/* Total spent card */}
-      <Card className="glass !border-brand/20 text-center">
-        <div className="text-3xl font-bold text-danger">
-          <AnimatedNumber
-            value={monthTotal}
-            format={(v) => `- ${formatCurrency(Math.round(v))}`}
-          />
+      {/* Total spent + reste à vivre */}
+      <Card className="glass !border-brand/20">
+        <div className="text-center">
+          <div className="text-3xl font-bold text-danger">
+            <AnimatedNumber
+              value={monthTotal}
+              format={(v) => `- ${formatCurrency(Math.round(v))}`}
+            />
+          </div>
+          <p className="text-xs text-text-muted mt-1">
+            {t('expenses.expenseCount', { count: payerFilteredExpenses.length })}
+          </p>
         </div>
-        <p className="text-xs text-text-muted mt-1">
-          {t('expenses.expenseCount', { count: payerFilteredExpenses.length })}
-        </p>
+        {hasIncome && (
+          <div className={`mt-3 pt-3 border-t border-white/[0.06] flex items-center justify-between`}>
+            <div className="flex items-center gap-1.5">
+              {resteAVivre >= 0 ? (
+                <TrendingUp size={14} className="text-success" />
+              ) : (
+                <TrendingDown size={14} className="text-danger" />
+              )}
+              <span className="text-xs text-text-secondary">{t('expenses.remainingBudget')}</span>
+            </div>
+            <span className={`text-sm font-bold tabular-nums ${resteAVivre >= 0 ? 'text-success' : 'text-danger'}`}>
+              <AnimatedNumber
+                value={resteAVivre}
+                format={(v) => formatCurrency(Math.round(v))}
+              />
+            </span>
+          </div>
+        )}
       </Card>
 
       {/* Payer filter pills — couple mode only */}
