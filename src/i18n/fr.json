@@ -576,7 +576,7 @@
     "colCategory": "Catégorie",
     "colPayer": "Payeur",
     "pdfTitle": "Mes charges",
-    "pdfPayerFilter": "Payeurs",
+    "pdfPayerFilter": "Pour",
     "pdfGenerated": "Généré le"
   },
   "dashboardGrid": {

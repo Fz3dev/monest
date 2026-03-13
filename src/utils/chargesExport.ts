@@ -98,7 +98,7 @@ export async function exportCSV(opts: ExportOptions): Promise<void> {
 // ─── PDF Export ─────────────────────────────────────────────────────────────
 
 async function loadLogoBase64(): Promise<string> {
-  const response = await fetch('/logo-full.png')
+  const response = await fetch('/logo-crown-sm.png')
   const blob = await response.blob()
   return new Promise((resolve) => {
     const reader = new FileReader()
@@ -131,62 +131,66 @@ export async function exportPDF(opts: ExportOptions): Promise<void> {
     // Logo unavailable — fallback to text
   }
 
-  // ─── Draw page header (called on first page + every new page) ───────────
+  // ─── Draw page header ────────────────────────────────────────────────────
   const drawPageHeader = (isFirstPage: boolean) => {
-    // Brand bar
-    doc.setFillColor(...BRAND)
-    doc.rect(0, 0, pageW, isFirstPage ? 28 : 16, 'F')
-
     if (isFirstPage) {
-      // Logo or text fallback
+      // Crown logo (square 128x128 → 10x10mm)
       if (logoData) {
-        doc.addImage(logoData, 'PNG', 14, 6, 40, 16)
-      } else {
-        doc.setTextColor(255, 255, 255)
-        doc.setFontSize(18)
-        doc.setFont('helvetica', 'bold')
-        doc.text('Monest', 14, 18)
+        doc.addImage(logoData, 'PNG', 14, 10, 10, 10)
       }
-      // Date + household name
-      doc.setTextColor(255, 255, 255)
+      // "Monest" title next to logo
+      doc.setTextColor(...BRAND)
+      doc.setFontSize(20)
+      doc.setFont('helvetica', 'bold')
+      doc.text('Monest', logoData ? 27 : 14, 18)
+
+      // Date + household name (right side)
+      doc.setTextColor(...TEXT_MUTED)
       doc.setFontSize(9)
       doc.setFont('helvetica', 'normal')
-      doc.text(dateStr(), pageW - 14, 12, { align: 'right' })
+      doc.text(dateStr(), pageW - 14, 13, { align: 'right' })
       if (household?.name) {
+        doc.setTextColor(...TEXT_DARK)
         doc.setFontSize(10)
-        doc.text(household.name, pageW - 14, 18, { align: 'right' })
+        doc.setFont('helvetica', 'bold')
+        doc.text(household.name, pageW - 14, 19, { align: 'right' })
       }
+
+      // Subtle separator line
+      doc.setDrawColor(...BORDER)
+      doc.setLineWidth(0.4)
+      doc.line(14, 24, pageW - 14, 24)
     } else {
-      // Continuation pages: smaller bar with just "Monest" text
-      doc.setTextColor(255, 255, 255)
-      doc.setFontSize(10)
-      doc.setFont('helvetica', 'bold')
-      doc.text('Monest', 14, 11)
+      // Continuation pages: light header
+      doc.setTextColor(...TEXT_MUTED)
       doc.setFontSize(8)
       doc.setFont('helvetica', 'normal')
-      doc.text(dateStr(), pageW - 14, 11, { align: 'right' })
+      doc.text('Monest', 14, 10)
+      doc.text(dateStr(), pageW - 14, 10, { align: 'right' })
+      doc.setDrawColor(...BORDER)
+      doc.setLineWidth(0.2)
+      doc.line(14, 13, pageW - 14, 13)
     }
   }
 
   // ─── Draw first page header ─────────────────────────────────────────────
   drawPageHeader(true)
 
-  let yPos = 36
+  let yPos = 30
 
   // Subtitle
   doc.setTextColor(...TEXT_DARK)
   doc.setFontSize(14)
   doc.setFont('helvetica', 'bold')
   doc.text(t('export.pdfTitle'), 14, yPos)
-  yPos += 4
 
-  // Payer filter
+  // Payer filter (same line, right of title)
   doc.setTextColor(...TEXT_MUTED)
   doc.setFontSize(8)
   doc.setFont('helvetica', 'normal')
   const payerLabels = payers.map((p) => getPayerLabel(p, household, t))
-  doc.text(`${t('export.pdfPayerFilter')}: ${payerLabels.join(', ')}`, 14, yPos + 4)
-  yPos += 12
+  doc.text(`${t('export.pdfPayerFilter')} ${payerLabels.join(', ')}`, 14, yPos + 6)
+  yPos += 14
 
   // Track total pages created so far (to know when autoTable adds new ones)
   let lastKnownPageCount = 1
