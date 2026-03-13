@@ -69,6 +69,13 @@ export default function QuickAddExpense() {
     setIsOpen(false)
   }
 
+  // Allow external components to open the FAB via custom event
+  useEffect(() => {
+    const handler = () => handleOpen()
+    window.addEventListener('open-quick-add', handler)
+    return () => window.removeEventListener('open-quick-add', handler)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (isOpen && amountRef.current) {
       const timer = setTimeout(() => amountRef.current?.focus(), 150)

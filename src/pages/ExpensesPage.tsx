@@ -13,7 +13,7 @@ import Card from '../components/ui/Card'
 import Modal from '../components/ui/Modal'
 import AnimatedNumber from '../components/ui/AnimatedNumber'
 import SwipeToDelete from '../components/ui/SwipeToDelete'
-import { ChevronLeft, ChevronRight, Receipt, TrendingUp, TrendingDown } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Receipt, TrendingUp, TrendingDown, Plus } from 'lucide-react'
 import { addMonths, subMonths, format, isToday, isYesterday, parseISO } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { toast } from 'sonner'
@@ -341,6 +341,15 @@ export default function ExpensesPage() {
                   ? t('expenses.noExpensesInCategory')
                   : t('expenses.expensesWillAppear')}
               </p>
+              {!activeCategory && (
+                <button
+                  onClick={() => window.dispatchEvent(new Event('open-quick-add'))}
+                  className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-brand text-white shadow-lg shadow-brand/20 cursor-pointer hover:bg-brand-dark transition-colors"
+                >
+                  <Plus size={14} />
+                  {t('expenses.addFirst')}
+                </button>
+              )}
             </Card>
           </motion.div>
         ) : (

@@ -215,11 +215,6 @@ export async function exportPDF(opts: ExportOptions): Promise<void> {
         fillColor: [18, 18, 24],
       },
       margin: { left: 14, right: 14 },
-      didDrawPage: () => {
-        // Redraw dark background on new pages
-        doc.setFillColor(...DARK_BG)
-        doc.rect(0, 0, pageW, doc.internal.pageSize.getHeight(), 'F')
-      },
     })
 
     yPos = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8
