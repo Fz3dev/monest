@@ -90,8 +90,8 @@ export default function TermsPage() {
             <h2 className="text-base font-semibold text-text-primary mb-2">9. Contact</h2>
             <p>
               Pour toute question :{' '}
-              <a href="mailto:limlahi.fawsy3@gmail.com" className="text-brand hover:underline">
-                limlahi.fawsy3@gmail.com
+              <a href="mailto:contact@monest.dev" className="text-brand hover:underline">
+                contact@monest.dev
               </a>
             </p>
           </section>
