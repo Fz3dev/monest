@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://monest.vercel.app/sitemap.xml
+Sitemap: https://monest.dev/sitemap.xml

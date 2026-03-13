@@ -69,6 +69,6 @@ src/
 - GitHub repo privé — ne PAS afficher de lien GitHub public
 
 ## Deployment
-- Vercel: https://monest.vercel.app
+- Vercel: https://monest.dev
 - GitHub: Fz3dev/monest
 - Branch: claude/budget-app-mvp-VYlUe

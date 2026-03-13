@@ -72,6 +72,14 @@
       ]
     }
   ],
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "monest.vercel.app" }],
+      "destination": "https://monest.dev/$1",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     { "source": "/reset.html", "destination": "/reset.html" },
     { "source": "/robots.txt", "destination": "/robots.txt" },

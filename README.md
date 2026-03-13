@@ -4,7 +4,7 @@
 
 Application PWA de gestion de budget personnel et couple. Calcul automatique du reste a vivre, repartition des charges, import CSV bancaire, notifications push, et bien plus.
 
-**[monest.vercel.app](https://monest.vercel.app)**
+**[monest.dev](https://monest.dev)**
 
 ---
 
@@ -242,5 +242,5 @@ VAPID_PRIVATE_KEY=...
 
 ## Deploy
 
-- **Vercel** : [monest.vercel.app](https://monest.vercel.app)
+- **Vercel** : [monest.dev](https://monest.dev)
 - Push sur `main` → deploy automatique
