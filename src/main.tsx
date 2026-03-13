@@ -26,6 +26,15 @@ import './index.css'
 // Init Sentry before anything else
 initSentry()
 
+// Suppress unhandled SW registration errors (Chrome iOS / restricted browsers)
+// The app works fine without the service worker — these are noise in Sentry
+window.addEventListener('unhandledrejection', (e) => {
+  const msg = String(e.reason?.message || e.reason || '')
+  if (msg.includes('sw.js') || msg.includes('service worker') || msg.includes('ServiceWorker')) {
+    e.preventDefault()
+  }
+})
+
 // Apply saved theme before first paint to avoid flash
 ;(() => {
   const saved = localStorage.getItem('monest-theme') || 'dark'
@@ -67,15 +76,15 @@ if (new URLSearchParams(window.location.search).has('reset')) {
             })
           }
         })
-        reg.update()
+        reg.update().catch(() => {})
       })
-    })
+    }).catch(() => {})
 
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
         navigator.serviceWorker.getRegistrations().then((regs) => {
-          regs.forEach((r) => r.update())
-        })
+          regs.forEach((r) => r.update().catch(() => {}))
+        }).catch(() => {})
       }
     })
   }
