@@ -9,7 +9,7 @@ export function initSentry() {
     dsn: DSN,
     environment: import.meta.env.MODE,
     release: __APP_VERSION__,
-    sendDefaultPii: false,
+    sendDefaultPii: true,
     integrations: [
       Sentry.browserTracingIntegration(),
       Sentry.replayIntegration({ maskAllText: true, blockAllMedia: false }),
