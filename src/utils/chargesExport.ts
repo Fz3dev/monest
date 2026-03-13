@@ -25,7 +25,10 @@ function getPayerLabel(payer: Payer, household: Household | null, t: TFunction):
 }
 
 function formatAmount(amount: number): string {
-  return new Intl.NumberFormat('fr-FR', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount)
+  // Replace non-breaking spaces (U+202F, U+00A0) with regular spaces — jsPDF can't render them
+  return new Intl.NumberFormat('fr-FR', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    .format(amount)
+    .replace(/[\u00A0\u202F]/g, ' ')
 }
 
 function dateStr(): string {
@@ -120,6 +123,7 @@ export async function exportPDF(opts: ExportOptions): Promise<void> {
   const TEXT_MUTED: [number, number, number] = [120, 120, 135]
   const ROW_ALT: [number, number, number] = [248, 248, 252]
   const BORDER: [number, number, number] = [220, 220, 230]
+  const SUBTOTAL_BG: [number, number, number] = [240, 238, 255]
   const pageW = doc.internal.pageSize.getWidth()
   const pageH = doc.internal.pageSize.getHeight()
 
@@ -133,18 +137,18 @@ export async function exportPDF(opts: ExportOptions): Promise<void> {
 
   // ─── Draw page header ────────────────────────────────────────────────────
   const drawPageHeader = (isFirstPage: boolean) => {
+    // Crown logo on every page
+    if (logoData) {
+      doc.addImage(logoData, 'PNG', 14, isFirstPage ? 10 : 5, isFirstPage ? 10 : 7, isFirstPage ? 10 : 7)
+    }
+    const textX = logoData ? (isFirstPage ? 27 : 24) : 14
+
     if (isFirstPage) {
-      // Crown logo (square 128x128 → 10x10mm)
-      if (logoData) {
-        doc.addImage(logoData, 'PNG', 14, 10, 10, 10)
-      }
-      // "Monest" title next to logo
       doc.setTextColor(...BRAND)
       doc.setFontSize(20)
       doc.setFont('helvetica', 'bold')
-      doc.text('Monest', logoData ? 27 : 14, 18)
+      doc.text('Monest', textX, 18)
 
-      // Date + household name (right side)
       doc.setTextColor(...TEXT_MUTED)
       doc.setFontSize(9)
       doc.setFont('helvetica', 'normal')
@@ -156,16 +160,14 @@ export async function exportPDF(opts: ExportOptions): Promise<void> {
         doc.text(household.name, pageW - 14, 19, { align: 'right' })
       }
 
-      // Subtle separator line
       doc.setDrawColor(...BORDER)
       doc.setLineWidth(0.4)
       doc.line(14, 24, pageW - 14, 24)
     } else {
-      // Continuation pages: light header
       doc.setTextColor(...TEXT_MUTED)
       doc.setFontSize(8)
       doc.setFont('helvetica', 'normal')
-      doc.text('Monest', 14, 10)
+      doc.text('Monest', textX, 10)
       doc.text(dateStr(), pageW - 14, 10, { align: 'right' })
       doc.setDrawColor(...BORDER)
       doc.setLineWidth(0.2)
@@ -173,48 +175,42 @@ export async function exportPDF(opts: ExportOptions): Promise<void> {
     }
   }
 
-  // ─── Draw first page header ─────────────────────────────────────────────
-  drawPageHeader(true)
+  // ─── Payer ordering: common first, then person_a, then person_b ────────
+  const payerOrder: Payer[] = ['common', 'person_a', 'person_b']
+  const activePayers = payerOrder.filter((p) => payers.includes(p))
 
+  // ─── Draw first page ───────────────────────────────────────────────────
+  drawPageHeader(true)
   let yPos = 30
 
-  // Subtitle
+  // Title
   doc.setTextColor(...TEXT_DARK)
   doc.setFontSize(14)
   doc.setFont('helvetica', 'bold')
   doc.text(t('export.pdfTitle'), 14, yPos)
 
-  // Payer filter (same line, right of title)
+  // Payer info
   doc.setTextColor(...TEXT_MUTED)
   doc.setFontSize(8)
   doc.setFont('helvetica', 'normal')
-  const payerLabels = payers.map((p) => getPayerLabel(p, household, t))
+  const payerLabels = activePayers.map((p) => getPayerLabel(p, household, t))
   doc.text(`${t('export.pdfPayerFilter')} ${payerLabels.join(', ')}`, 14, yPos + 6)
   yPos += 14
 
-  // Track total pages created so far (to know when autoTable adds new ones)
   let lastKnownPageCount = 1
 
-  // ─── Section helper ─────────────────────────────────────────────────────
-  const addSection = (title: string, data: string[][], totalAmount: number) => {
-    if (!data.length) return
-
-    // Need new page?
-    if (yPos > pageH - 45) {
+  // ─── Ensure enough space or create new page ─────────────────────────────
+  const ensureSpace = (needed: number) => {
+    if (yPos > pageH - needed) {
       doc.addPage()
       drawPageHeader(false)
-      yPos = 24
+      lastKnownPageCount = doc.getNumberOfPages()
+      yPos = 20
     }
+  }
 
-    // Section title with brand accent line
-    doc.setFillColor(...BRAND_LIGHT)
-    doc.roundedRect(14, yPos - 5, pageW - 28, 8, 1, 1, 'F')
-    doc.setTextColor(...BRAND)
-    doc.setFontSize(10)
-    doc.setFont('helvetica', 'bold')
-    doc.text(title, 17, yPos)
-    yPos += 6
-
+  // ─── Table helper (no "Payeur" column — grouped by payer instead) ──────
+  const drawTable = (data: string[][]) => {
     autoTable(doc, {
       startY: yPos,
       head: [[
@@ -222,7 +218,6 @@ export async function exportPDF(opts: ExportOptions): Promise<void> {
         t('export.colAmount'),
         t('export.colFrequency'),
         t('export.colCategory'),
-        t('export.colPayer'),
       ]],
       body: data,
       theme: 'striped',
@@ -250,15 +245,13 @@ export async function exportPDF(opts: ExportOptions): Promise<void> {
         fillColor: ROW_ALT,
       },
       columnStyles: {
-        0: { cellWidth: 'auto' },                          // Name — flexible
-        1: { halign: 'right', cellWidth: 28 },             // Amount — right-aligned
-        2: { halign: 'center', cellWidth: 24 },            // Frequency — centered
-        3: { halign: 'center', cellWidth: 28 },            // Category — centered
-        4: { halign: 'center', cellWidth: 28 },            // Payer — centered
+        0: { cellWidth: 'auto' },
+        1: { halign: 'right', cellWidth: 30 },
+        2: { halign: 'center', cellWidth: 26 },
+        3: { halign: 'center', cellWidth: 30 },
       },
-      margin: { left: 14, right: 14, bottom: 18 },
+      margin: { left: 14, right: 14, top: 20, bottom: 18 },
       didDrawPage: () => {
-        // Draw header on pages auto-created by autoTable
         const currentPages = doc.getNumberOfPages()
         if (currentPages > lastKnownPageCount) {
           drawPageHeader(false)
@@ -266,66 +259,127 @@ export async function exportPDF(opts: ExportOptions): Promise<void> {
         }
       },
     })
+    yPos = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 2
+  }
 
-    yPos = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 3
-
-    // Total row (right-aligned, brand color)
+  // ─── Sub-total line ─────────────────────────────────────────────────────
+  const drawSubTotal = (label: string, amount: number) => {
+    doc.setFillColor(...SUBTOTAL_BG)
+    doc.roundedRect(14, yPos - 1, pageW - 28, 7, 1, 1, 'F')
     doc.setTextColor(...BRAND)
-    doc.setFontSize(9)
+    doc.setFontSize(8)
     doc.setFont('helvetica', 'bold')
-    doc.text(`Total : ${formatAmount(totalAmount)} \u20AC`, pageW - 14, yPos, { align: 'right' })
+    doc.text(label, 17, yPos + 3.5)
+    doc.text(`${formatAmount(amount)} \u20AC`, pageW - 17, yPos + 3.5, { align: 'right' })
     yPos += 10
   }
 
-  // ─── Sections ───────────────────────────────────────────────────────────
+  // ─── Grand total line ──────────────────────────────────────────────────
+  const drawGrandTotal = (amount: number) => {
+    doc.setDrawColor(...BRAND)
+    doc.setLineWidth(0.5)
+    doc.line(pageW - 80, yPos - 2, pageW - 14, yPos - 2)
+    doc.setTextColor(...BRAND)
+    doc.setFontSize(10)
+    doc.setFont('helvetica', 'bold')
+    doc.text(`Total : ${formatAmount(amount)} \u20AC`, pageW - 14, yPos + 3, { align: 'right' })
+    yPos += 12
+  }
+
+  // ─── Section: grouped by payer, sorted by amount desc ──────────────────
+  type ChargeItem = { name: string; amount: number; payer: Payer; cols: string[] }
+
+  const addGroupedSection = (title: string, items: ChargeItem[]) => {
+    if (!items.length) return
+
+    ensureSpace(45)
+
+    // Section header
+    doc.setFillColor(...BRAND_LIGHT)
+    doc.roundedRect(14, yPos - 5, pageW - 28, 8, 1, 1, 'F')
+    doc.setTextColor(...BRAND)
+    doc.setFontSize(10)
+    doc.setFont('helvetica', 'bold')
+    doc.text(title, 17, yPos)
+    yPos += 6
+
+    let grandTotal = 0
+
+    for (const payer of activePayers) {
+      const group = items
+        .filter((item) => item.payer === payer)
+        .sort((a, b) => b.amount - a.amount)
+      if (!group.length) continue
+
+      const groupTotal = group.reduce((sum, item) => sum + item.amount, 0)
+      grandTotal += groupTotal
+
+      // Payer sub-header
+      ensureSpace(30)
+      const payerLabel = getPayerLabel(payer, household, t)
+      doc.setTextColor(...TEXT_DARK)
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'bold')
+      doc.text(`${payerLabel} (${group.length})`, 16, yPos)
+      yPos += 3
+
+      // Table rows
+      drawTable(group.map((item) => item.cols))
+
+      // Sub-total
+      drawSubTotal(`Sous-total ${payerLabel}`, groupTotal)
+    }
+
+    // Grand total for the section
+    drawGrandTotal(grandTotal)
+  }
+
+  // ─── Fixed charges ──────────────────────────────────────────────────────
   if (chargeTypes.includes('fixed')) {
-    const filtered = fixedCharges.filter((c) => payers.includes(c.payer) && c.active)
-    const data = filtered.map((c) => [
-      c.name,
-      `${formatAmount(c.amount)} \u20AC`,
-      getFrequencyLabel(c.frequency),
-      getCategoryLabel(c.category),
-      getPayerLabel(c.payer, household, t),
-    ])
-    const total = filtered.reduce((sum, c) => sum + c.amount, 0)
-    addSection(`${t('charges.fixedTab')} (${filtered.length})`, data, total)
+    const items: ChargeItem[] = fixedCharges
+      .filter((c) => activePayers.includes(c.payer) && c.active)
+      .map((c) => ({
+        name: c.name,
+        amount: c.amount,
+        payer: c.payer,
+        cols: [c.name, `${formatAmount(c.amount)} \u20AC`, getFrequencyLabel(c.frequency), getCategoryLabel(c.category)],
+      }))
+    addGroupedSection(`${t('charges.fixedTab')} (${items.length})`, items)
   }
 
+  // ─── Installment payments ───────────────────────────────────────────────
   if (chargeTypes.includes('installment')) {
-    const filtered = installmentPayments.filter((c) => payers.includes(c.payer))
-    const data = filtered.map((c) => [
-      c.name,
-      `${formatAmount(c.installmentAmount)} \u20AC`,
-      `${c.installmentCount}x`,
-      '-',
-      getPayerLabel(c.payer, household, t),
-    ])
-    const total = filtered.reduce((sum, c) => sum + c.installmentAmount, 0)
-    addSection(`${t('charges.installmentTab')} (${filtered.length})`, data, total)
+    const items: ChargeItem[] = installmentPayments
+      .filter((c) => activePayers.includes(c.payer))
+      .map((c) => ({
+        name: c.name,
+        amount: c.installmentAmount,
+        payer: c.payer,
+        cols: [c.name, `${formatAmount(c.installmentAmount)} \u20AC`, `${c.installmentCount}x`, '-'],
+      }))
+    addGroupedSection(`${t('charges.installmentTab')} (${items.length})`, items)
   }
 
+  // ─── Planned expenses ──────────────────────────────────────────────────
   if (chargeTypes.includes('planned')) {
-    const filtered = plannedExpenses.filter((c) => payers.includes(c.payer))
-    const data = filtered.map((c) => [
-      c.name,
-      `${formatAmount(c.estimatedAmount)} \u20AC`,
-      c.targetMonth,
-      '-',
-      getPayerLabel(c.payer, household, t),
-    ])
-    const total = filtered.reduce((sum, c) => sum + c.estimatedAmount, 0)
-    addSection(`${t('charges.plannedTab')} (${filtered.length})`, data, total)
+    const items: ChargeItem[] = plannedExpenses
+      .filter((c) => activePayers.includes(c.payer))
+      .map((c) => ({
+        name: c.name,
+        amount: c.estimatedAmount,
+        payer: c.payer,
+        cols: [c.name, `${formatAmount(c.estimatedAmount)} \u20AC`, c.targetMonth, '-'],
+      }))
+    addGroupedSection(`${t('charges.plannedTab')} (${items.length})`, items)
   }
 
   // ─── Footer on every page ──────────────────────────────────────────────
   const totalPages = doc.getNumberOfPages()
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i)
-    // Thin separator line
     doc.setDrawColor(...BORDER)
     doc.setLineWidth(0.3)
     doc.line(14, pageH - 12, pageW - 14, pageH - 12)
-    // Footer text
     doc.setTextColor(...TEXT_MUTED)
     doc.setFontSize(7)
     doc.setFont('helvetica', 'normal')

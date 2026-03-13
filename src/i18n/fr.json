@@ -561,7 +561,7 @@
     "pdfDesc": "Document stylisé",
     "csvDesc": "Tableur / Excel",
     "chargeTypes": "Types de charges",
-    "payerFilter": "Payeur",
+    "payerFilter": "Personnes",
     "preview": "Aperçu",
     "charges": "charges",
     "download": "Télécharger en {{format}}",
@@ -574,7 +574,7 @@
     "colAmount": "Montant",
     "colFrequency": "Fréquence",
     "colCategory": "Catégorie",
-    "colPayer": "Payeur",
+    "colPayer": "Par",
     "pdfTitle": "Mes charges",
     "pdfPayerFilter": "Pour",
     "pdfGenerated": "Généré le"
