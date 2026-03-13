@@ -24,10 +24,10 @@ self.addEventListener('push', (event) => {
   try {
     data = event.data.json()
   } catch {
-    data = { title: 'Monest', body: event.data.text() }
+    data = { title: 'Notification', body: event.data.text() }
   }
 
-  const { title = 'Monest', body, icon, url, tag } = data
+  const { title = 'Notification', body, icon, url, tag } = data
 
   event.waitUntil(
     self.registration.showNotification(title, {
@@ -65,7 +65,7 @@ self.addEventListener('notificationclick', (event) => {
 self.addEventListener('periodicsync', (event) => {
   if (event.tag === 'weekly-reminder') {
     event.waitUntil(
-      self.registration.showNotification('Monest', {
+      self.registration.showNotification('Rappel budget', {
         body: 'Pensez a verifier votre budget cette semaine !',
         icon: '/pwa-192.png',
         badge: '/favicon.png',

@@ -160,7 +160,7 @@ export function checkAndShowWeeklyNotification(): void {
   const formatted = formatCurrency(dailyAmount)
 
   try {
-    new Notification('Monest', {
+    new Notification('Budget du jour', {
       body: `Il vous reste ${formatted} par jour ce mois-ci`,
       icon: '/logo-crown.png',
     })
