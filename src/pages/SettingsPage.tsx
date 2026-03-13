@@ -269,7 +269,26 @@ export default function SettingsPage({ session, saveHousehold, createInvite }: S
         return
       }
       const url = `${window.location.origin}?invite=${code}`
-      await navigator.clipboard.writeText(url)
+      // navigator.clipboard.writeText fails on some mobile browsers
+      // fallback to execCommand('copy') with a temporary textarea
+      let copied = false
+      if (navigator.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(url)
+          copied = true
+        } catch { /* fallback below */ }
+      }
+      if (!copied) {
+        const ta = document.createElement('textarea')
+        ta.value = url
+        ta.style.position = 'fixed'
+        ta.style.opacity = '0'
+        document.body.appendChild(ta)
+        ta.focus()
+        ta.select()
+        document.execCommand('copy')
+        document.body.removeChild(ta)
+      }
       setCopied(true)
       toast.success(t('settings.inviteCopied'))
       setTimeout(() => setCopied(false), 3000)

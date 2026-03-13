@@ -186,9 +186,31 @@ function AppContent({ session }: AppContentProps) {
   )
 }
 
+// Capture invite code from URL immediately (before any routing loses the query param)
+function captureInviteCode(): string | null {
+  const params = new URLSearchParams(window.location.search)
+  const fromUrl = params.get('invite')
+  if (fromUrl) {
+    localStorage.setItem('monest-invite-code', fromUrl)
+    // Clean the invite param from URL so it's not visible in history
+    params.delete('invite')
+    const clean = params.toString()
+    window.history.replaceState({}, '', window.location.pathname + (clean ? `?${clean}` : ''))
+    return fromUrl
+  }
+  return localStorage.getItem('monest-invite-code') || null
+}
+
+function isPWAStandalone(): boolean {
+  return window.matchMedia('(display-mode: standalone)').matches ||
+    (navigator as unknown as { standalone?: boolean }).standalone === true
+}
+
 export default function App() {
   const [session, setSession] = useState<Session | null>(null)
   const [authLoading, setAuthLoading] = useState(() => isSupabaseConfigured())
+  const [initialInviteCode] = useState(captureInviteCode)
+  const [isPWA] = useState(isPWAStandalone)
   const [passwordRecovery, setPasswordRecovery] = useState(() => {
     if (window.location.hash.includes('type=recovery')) {
       sessionStorage.setItem('monest-password-recovery', '1')
@@ -254,10 +276,16 @@ export default function App() {
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={
-              session ? <Navigate to="/dashboard" replace /> : <LandingPage lang="fr" />
+              session ? <Navigate to="/dashboard" replace />
+                : initialInviteCode ? <Navigate to="/signup" replace />
+                : isPWA ? <Navigate to="/login" replace />
+                : <LandingPage lang="fr" />
             } />
             <Route path="/en" element={
-              session ? <Navigate to="/dashboard" replace /> : <LandingPage lang="en" />
+              session ? <Navigate to="/dashboard" replace />
+                : initialInviteCode ? <Navigate to="/signup" replace />
+                : isPWA ? <Navigate to="/login" replace />
+                : <LandingPage lang="en" />
             } />
             <Route path="/confidentialite" element={<PrivacyPage />} />
             <Route path="/conditions" element={<TermsPage />} />
