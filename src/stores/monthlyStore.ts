@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { format } from 'date-fns'
 import { syncMonthlyEntryToSupabase } from '../lib/syncBridge'
-import type { MonthlyEntry } from '../types'
+import type { MonthlyEntry, ChargeSnapshotData } from '../types'
 
 interface MonthlyState {
   entries: Record<string, MonthlyEntry>
@@ -11,6 +11,7 @@ interface MonthlyState {
   setEntry: (month: string, data: Partial<MonthlyEntry>) => void
   updateVariable: (month: string, chargeId: string, amount: number) => void
   toggleChargeForMonth: (month: string, chargeId: string) => void
+  setSnapshot: (month: string, snapshot: ChargeSnapshotData) => void
 }
 
 export const useMonthlyStore = create<MonthlyState>()(
@@ -61,6 +62,19 @@ export const useMonthlyStore = create<MonthlyState>()(
           entries: { ...state.entries, [month]: updated },
         }))
         syncMonthlyEntryToSupabase(month, updated, ['disabledCharges'])
+      },
+
+      setSnapshot: (month: string, snapshot: ChargeSnapshotData) => {
+        const entry = get().entries[month] || ({ month } as MonthlyEntry)
+        const updated: MonthlyEntry = {
+          ...entry,
+          chargeSnapshot: snapshot,
+          snapshottedAt: new Date().toISOString(),
+        }
+        set((state) => ({
+          entries: { ...state.entries, [month]: updated },
+        }))
+        syncMonthlyEntryToSupabase(month, updated, ['chargeSnapshot', 'snapshottedAt'])
       },
     }),
     {

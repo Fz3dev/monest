@@ -70,6 +70,16 @@ export interface PlannedExpense {
   updatedAt: string
 }
 
+export interface ChargeSnapshotData {
+  charges: ChargeDetail[]
+  totalCommon: number
+  personalACharges: number
+  personalBCharges: number
+  incomeA: number
+  incomeB: number
+  resteFoyer: number
+}
+
 export interface MonthlyEntry {
   month: string
   incomeA: number
@@ -83,6 +93,8 @@ export interface MonthlyEntry {
   transferredB: number
   variableOverrides: Record<string, number>
   disabledCharges: string[]
+  chargeSnapshot?: ChargeSnapshotData | null
+  snapshottedAt?: string | null
 }
 
 export interface ChargeDetail {

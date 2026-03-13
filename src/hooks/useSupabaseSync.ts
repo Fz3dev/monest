@@ -126,6 +126,8 @@ export function useSupabaseSync(session: Session | null) {
             transferredB: Number(entry.transferredB) || 0,
             variableOverrides: entry.variableOverrides || {},
             disabledCharges: entry.disabledCharges || [],
+            chargeSnapshot: entry.chargeSnapshot || null,
+            snapshottedAt: entry.snapshottedAt || null,
           }
         })
         useMonthlyStore.setState({ entries })
@@ -240,6 +242,8 @@ export function useSupabaseSync(session: Session | null) {
     transferredA: 'transferred_a', transferredB: 'transferred_b',
     variableOverrides: 'variable_overrides',
     disabledCharges: 'disabled_charges',
+    chargeSnapshot: 'charge_snapshot',
+    snapshottedAt: 'snapshotted_at',
   }
 
   const syncMonthlyEntry = useCallback(async (month: string, entry: Partial<MonthlyEntry>, changedFields: Set<string> | null = null) => {
@@ -253,6 +257,8 @@ export function useSupabaseSync(session: Session | null) {
           const val = (entry as Record<string, unknown>)[field]
           if (field === 'variableOverrides') update[col] = val || {}
           else if (field === 'disabledCharges') update[col] = val || []
+          else if (field === 'chargeSnapshot') update[col] = val || null
+          else if (field === 'snapshottedAt') update[col] = val || null
           else update[col] = val || 0
         }
       }
@@ -278,6 +284,8 @@ export function useSupabaseSync(session: Session | null) {
           transferred_b: entry.transferredB || 0,
           variable_overrides: entry.variableOverrides || {},
           disabled_charges: entry.disabledCharges || [],
+          charge_snapshot: entry.chargeSnapshot || null,
+          snapshotted_at: entry.snapshottedAt || null,
         }, { onConflict: 'household_id,month' })
       }
     } else {
@@ -295,6 +303,8 @@ export function useSupabaseSync(session: Session | null) {
         transferred_b: entry.transferredB || 0,
         variable_overrides: entry.variableOverrides || {},
         disabled_charges: entry.disabledCharges || [],
+        charge_snapshot: entry.chargeSnapshot || null,
+        snapshotted_at: entry.snapshottedAt || null,
       }, { onConflict: 'household_id,month' })
     }
   }, [householdId])

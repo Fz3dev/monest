@@ -1,21 +1,40 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
+import { format } from 'date-fns'
 import { useHouseholdStore } from '../stores/householdStore'
 import { useChargesStore } from '../stores/chargesStore'
+import { useMonthlyStore } from '../stores/monthlyStore'
+import { useChargeSnapshots } from '../hooks/useChargeSnapshots'
 import { formatCurrency } from '../utils/format'
-import { exportCSV, exportPDF } from '../utils/chargesExport'
+import { exportCSV, exportPDF, exportMonthCSV, exportMonthPDF } from '../utils/chargesExport'
 import type { ExportFormat, ChargeTypeFilter } from '../utils/chargesExport'
 import type { Payer } from '../types'
 import { PAYER } from '../types'
 import Modal from './ui/Modal'
 import Button from './ui/Button'
-import { FileSpreadsheet, FileText, Download, Loader2, Check } from 'lucide-react'
+import { FileSpreadsheet, FileText, Download, Loader2, Check, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface ExportModalProps {
   isOpen: boolean
   onClose: () => void
+}
+
+const MONTH_NAMES = [
+  'Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin',
+  'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.',
+]
+
+function getMonthLabel(month: string): string {
+  const [year, m] = month.split('-')
+  return `${MONTH_NAMES[parseInt(m, 10) - 1]} ${year.slice(2)}`
+}
+
+function getMonthFullLabel(month: string, t: (key: string, opts?: Record<string, string>) => string): string {
+  const [year, m] = month.split('-')
+  const monthName = t(`export.months.${parseInt(m, 10) - 1}`)
+  return `${monthName} ${year}`
 }
 
 export default function ExportModal({ isOpen, onClose }: ExportModalProps) {
@@ -24,13 +43,39 @@ export default function ExportModal({ isOpen, onClose }: ExportModalProps) {
   const fixedCharges = useChargesStore((s) => s.fixedCharges)
   const installmentPayments = useChargesStore((s) => s.installmentPayments)
   const plannedExpenses = useChargesStore((s) => s.plannedExpenses)
+  const entries = useMonthlyStore((s) => s.entries)
+  const { getSnapshotForMonth } = useChargeSnapshots()
 
-  const [format, setFormat] = useState<ExportFormat>('pdf')
+  const currentMonth = format(new Date(), 'yyyy-MM')
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth)
+  const [exportFormat, setExportFormat] = useState<ExportFormat>('pdf')
   const [chargeTypes, setChargeTypes] = useState<Set<ChargeTypeFilter>>(new Set(['fixed', 'installment', 'planned']))
   const [selectedPayers, setSelectedPayers] = useState<Set<Payer>>(new Set(['common', 'person_a', 'person_b']))
   const [exporting, setExporting] = useState(false)
 
+  const monthScrollRef = useRef<HTMLDivElement>(null)
+  const activeMonthRef = useRef<HTMLButtonElement>(null)
+
   const isCouple = !!household?.personBName
+  const isCurrentMonth = selectedMonth === currentMonth
+
+  // Only show months that have data (monthly entries) + current month
+  const months = useMemo(() => {
+    const pastMonths = Object.keys(entries)
+      .filter((m) => m < currentMonth)
+      .sort()
+    return [...pastMonths, currentMonth]
+  }, [entries, currentMonth])
+
+  // Scroll to active month pill on open
+  useEffect(() => {
+    if (isOpen && activeMonthRef.current && monthScrollRef.current) {
+      const container = monthScrollRef.current
+      const pill = activeMonthRef.current
+      const scrollLeft = pill.offsetLeft - container.offsetWidth / 2 + pill.offsetWidth / 2
+      container.scrollTo({ left: scrollLeft, behavior: 'smooth' })
+    }
+  }, [isOpen])
 
   const toggleChargeType = (type: ChargeTypeFilter) => {
     setChargeTypes((prev) => {
@@ -56,24 +101,30 @@ export default function ExportModal({ isOpen, onClose }: ExportModalProps) {
     })
   }
 
-  // Count matching charges for preview
-  const matchCount = useMemo(() => {
-    let count = 0
-    const payers = selectedPayers
-    if (chargeTypes.has('fixed')) count += fixedCharges.filter((c) => c.active && payers.has(c.payer)).length
-    if (chargeTypes.has('installment')) count += installmentPayments.filter((c) => payers.has(c.payer)).length
-    if (chargeTypes.has('planned')) count += plannedExpenses.filter((c) => payers.has(c.payer)).length
-    return count
-  }, [chargeTypes, selectedPayers, fixedCharges, installmentPayments, plannedExpenses])
+  // Get snapshot data for the selected month
+  const snapshot = useMemo(() => {
+    return getSnapshotForMonth(selectedMonth)
+  }, [selectedMonth, getSnapshotForMonth])
 
-  const matchTotal = useMemo(() => {
-    let total = 0
-    const payers = selectedPayers
-    if (chargeTypes.has('fixed')) total += fixedCharges.filter((c) => c.active && payers.has(c.payer)).reduce((s, c) => s + c.amount, 0)
-    if (chargeTypes.has('installment')) total += installmentPayments.filter((c) => payers.has(c.payer)).reduce((s, c) => s + c.installmentAmount, 0)
-    if (chargeTypes.has('planned')) total += plannedExpenses.filter((c) => payers.has(c.payer)).reduce((s, c) => s + c.estimatedAmount, 0)
-    return total
-  }, [chargeTypes, selectedPayers, fixedCharges, installmentPayments, plannedExpenses])
+  // Filter snapshot charges by type and payer for preview
+  const filteredCharges = useMemo(() => {
+    return snapshot.charges.filter(
+      (c) => chargeTypes.has(c.type) && selectedPayers.has(c.payer) && !c.isDisabledThisMonth
+    )
+  }, [snapshot, chargeTypes, selectedPayers])
+
+  const matchCount = filteredCharges.length
+  const matchTotal = filteredCharges.reduce((sum, c) => sum + c.amount, 0)
+
+  // Charge type counts from snapshot
+  const chargeTypeCounts = useMemo(() => {
+    const active = snapshot.charges.filter((c) => !c.isDisabledThisMonth)
+    return {
+      fixed: active.filter((c) => c.type === 'fixed').length,
+      installment: active.filter((c) => c.type === 'installment').length,
+      planned: active.filter((c) => c.type === 'planned').length,
+    }
+  }, [snapshot])
 
   const handleExport = async () => {
     if (matchCount === 0) {
@@ -83,21 +134,40 @@ export default function ExportModal({ isOpen, onClose }: ExportModalProps) {
 
     setExporting(true)
     try {
-      const opts = {
-        format,
-        chargeTypes: [...chargeTypes],
-        payers: [...selectedPayers],
-        fixedCharges,
-        installmentPayments,
-        plannedExpenses,
-        household,
-        t,
-      }
-
-      if (format === 'csv') {
-        await exportCSV(opts)
+      if (isCurrentMonth) {
+        // Current month: use raw charge arrays (existing behavior)
+        const opts = {
+          format: exportFormat,
+          chargeTypes: [...chargeTypes],
+          payers: [...selectedPayers],
+          fixedCharges,
+          installmentPayments,
+          plannedExpenses,
+          household,
+          t,
+        }
+        if (exportFormat === 'csv') {
+          await exportCSV(opts)
+        } else {
+          await exportPDF(opts)
+        }
       } else {
-        await exportPDF(opts)
+        // Past month: use snapshot
+        const opts = {
+          format: exportFormat,
+          chargeTypes: [...chargeTypes],
+          payers: [...selectedPayers],
+          charges: filteredCharges,
+          month: selectedMonth,
+          monthLabel: getMonthFullLabel(selectedMonth, t),
+          household,
+          t,
+        }
+        if (exportFormat === 'csv') {
+          await exportMonthCSV(opts)
+        } else {
+          await exportMonthPDF(opts)
+        }
       }
 
       toast.success(t('export.success'))
@@ -119,22 +189,59 @@ export default function ExportModal({ isOpen, onClose }: ExportModalProps) {
   }
 
   const chargeTypeOptions: { value: ChargeTypeFilter; label: string; count: number }[] = [
-    { value: 'fixed', label: t('charges.fixedTab'), count: fixedCharges.filter((c) => c.active).length },
-    { value: 'installment', label: t('charges.installmentTab'), count: installmentPayments.length },
-    { value: 'planned', label: t('charges.plannedTab'), count: plannedExpenses.length },
+    { value: 'fixed', label: t('charges.fixedTab'), count: chargeTypeCounts.fixed },
+    { value: 'installment', label: t('charges.installmentTab'), count: chargeTypeCounts.installment },
+    { value: 'planned', label: t('charges.plannedTab'), count: chargeTypeCounts.planned },
   ]
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={t('export.title')}>
       <div className="space-y-5">
+        {/* Month selector — only show if there are past months with data */}
+        {months.length > 1 && (
+          <div>
+            <label className="text-xs font-semibold text-text-secondary mb-2 block">{t('export.month')}</label>
+            <div
+              ref={monthScrollRef}
+              className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1"
+            >
+              {months.map((m) => {
+                const isActive = m === selectedMonth
+                const isPast = m < currentMonth
+                return (
+                  <button
+                    key={m}
+                    ref={isActive ? activeMonthRef : undefined}
+                    onClick={() => setSelectedMonth(m)}
+                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1 ${
+                      isActive
+                        ? 'bg-brand text-white shadow-lg shadow-brand/20'
+                        : 'bg-white/[0.06] text-text-muted hover:text-white'
+                    }`}
+                  >
+                    {isPast && !isActive && <Lock size={10} className="opacity-50" />}
+                    {getMonthLabel(m)}
+                  </button>
+                )
+              })}
+            </div>
+            {!isCurrentMonth && (
+              <div className="mt-1.5 text-[10px] text-text-muted flex items-center gap-1">
+                <Lock size={10} />
+                {t('export.snapshotDate', { date: getMonthFullLabel(selectedMonth, t) })}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Format selection */}
         <div>
           <label className="text-xs font-semibold text-text-secondary mb-2 block">{t('export.format')}</label>
           <div className="grid grid-cols-2 gap-2">
             <button
-              onClick={() => setFormat('pdf')}
+              onClick={() => setExportFormat('pdf')}
               className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
-                format === 'pdf'
+                exportFormat === 'pdf'
                   ? 'border-brand bg-brand/10 text-brand'
                   : 'border-white/[0.08] bg-white/[0.03] text-text-secondary hover:text-text-primary'
               }`}
@@ -144,12 +251,12 @@ export default function ExportModal({ isOpen, onClose }: ExportModalProps) {
                 <div className="text-sm font-semibold">PDF</div>
                 <div className="text-[10px] opacity-70">{t('export.pdfDesc')}</div>
               </div>
-              {format === 'pdf' && <Check size={14} className="ml-auto" />}
+              {exportFormat === 'pdf' && <Check size={14} className="ml-auto" />}
             </button>
             <button
-              onClick={() => setFormat('csv')}
+              onClick={() => setExportFormat('csv')}
               className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
-                format === 'csv'
+                exportFormat === 'csv'
                   ? 'border-brand bg-brand/10 text-brand'
                   : 'border-white/[0.08] bg-white/[0.03] text-text-secondary hover:text-text-primary'
               }`}
@@ -159,7 +266,7 @@ export default function ExportModal({ isOpen, onClose }: ExportModalProps) {
                 <div className="text-sm font-semibold">CSV</div>
                 <div className="text-[10px] opacity-70">{t('export.csvDesc')}</div>
               </div>
-              {format === 'csv' && <Check size={14} className="ml-auto" />}
+              {exportFormat === 'csv' && <Check size={14} className="ml-auto" />}
             </button>
           </div>
         </div>
@@ -209,7 +316,7 @@ export default function ExportModal({ isOpen, onClose }: ExportModalProps) {
         {/* Preview summary */}
         <AnimatePresence mode="wait">
           <motion.div
-            key={`${matchCount}-${matchTotal}`}
+            key={`${matchCount}-${matchTotal}-${selectedMonth}`}
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             className="p-3 rounded-xl bg-white/[0.04] border border-white/[0.08]"
@@ -235,7 +342,7 @@ export default function ExportModal({ isOpen, onClose }: ExportModalProps) {
           ) : (
             <Download size={16} />
           )}
-          {exporting ? t('export.exporting') : t('export.download', { format: format.toUpperCase() })}
+          {exporting ? t('export.exporting') : t('export.download', { format: exportFormat.toUpperCase() })}
         </Button>
       </div>
     </Modal>
