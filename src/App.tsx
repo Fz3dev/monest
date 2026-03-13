@@ -240,7 +240,7 @@ export default function App() {
             sessionStorage.removeItem('monest-password-recovery')
             setPasswordRecovery(false)
           }} />
-          <Toaster theme="dark" position="top-center" richColors />
+          <Toaster theme="dark" position="bottom-right" richColors />
         </BrowserRouter>
       </ErrorBoundary>
     )
@@ -277,7 +277,7 @@ export default function App() {
             } />
           </Routes>
         </Suspense>
-        <Toaster theme="dark" position="top-center" richColors />
+        <Toaster theme="dark" position="bottom-right" richColors />
         <Analytics />
         <SpeedInsights />
       </BrowserRouter>
