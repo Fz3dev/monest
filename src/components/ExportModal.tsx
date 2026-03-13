@@ -228,12 +228,12 @@ export default function ExportModal({ isOpen, onClose }: ExportModalProps) {
           onClick={handleExport}
           size="lg"
           disabled={exporting || matchCount === 0}
-          className="w-full"
+          className="w-full flex items-center justify-center gap-2"
         >
           {exporting ? (
-            <Loader2 size={16} className="animate-spin mr-2" />
+            <Loader2 size={16} className="animate-spin" />
           ) : (
-            <Download size={16} className="mr-2" />
+            <Download size={16} />
           )}
           {exporting ? t('export.exporting') : t('export.download', { format: format.toUpperCase() })}
         </Button>
