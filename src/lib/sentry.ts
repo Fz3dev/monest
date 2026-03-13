@@ -9,10 +9,10 @@ export function initSentry() {
     dsn: DSN,
     environment: import.meta.env.MODE,
     release: __APP_VERSION__,
-    sendDefaultPii: true,
+    sendDefaultPii: false,
     integrations: [
       Sentry.browserTracingIntegration(),
-      Sentry.replayIntegration({ maskAllText: false, blockAllMedia: false }),
+      Sentry.replayIntegration({ maskAllText: true, blockAllMedia: false }),
     ],
     // Performance: sample 20% of transactions
     tracesSampleRate: 0.2,
@@ -45,10 +45,10 @@ export function initSentry() {
 }
 
 /** Tag current user (call after auth) */
-export function setSentryUser(id: string | null, email?: string) {
+export function setSentryUser(id: string | null) {
   if (!DSN) return
   if (id) {
-    Sentry.setUser({ id, email })
+    Sentry.setUser({ id })
   } else {
     Sentry.setUser(null)
   }

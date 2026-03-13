@@ -230,10 +230,10 @@ export function useSupabaseSync(session: Session | null) {
   }, [householdId])
 
   const deleteItem = useCallback(async (table: string, id: string) => {
-    if (!isSupabaseConfigured() || !supabase) return
-    const { error } = await supabase.from(table).delete().eq('id', id)
+    if (!isSupabaseConfigured() || !supabase || !householdId) return
+    const { error } = await supabase.from(table).delete().eq('id', id).eq('household_id', householdId)
     if (error) throw error
-  }, [])
+  }, [householdId])
 
   const FIELD_MAP: Record<string, string> = {
     incomeA: 'income_a', incomeB: 'income_b',

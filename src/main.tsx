@@ -42,7 +42,7 @@ import './stores/uiStore' // init confidential mode class on <body> before first
 import App from './App'
 
 // ?reset in URL → nuke service worker + caches and reload clean
-if (window.location.search.includes('reset')) {
+if (new URLSearchParams(window.location.search).has('reset')) {
   (async () => {
     try {
       const regs = await navigator.serviceWorker?.getRegistrations() || []

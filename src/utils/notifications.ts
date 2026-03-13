@@ -5,6 +5,7 @@ import { useChargesStore } from '../stores/chargesStore'
 import { useMonthlyStore } from '../stores/monthlyStore'
 import { useExpenseStore } from '../stores/expenseStore'
 import { getDaysInMonth } from 'date-fns'
+import i18n from '../i18n'
 
 const STORAGE_KEY_ENABLED = 'monest-notifications-enabled'
 const STORAGE_KEY_LAST_NOTIF = 'monest-last-notification'
@@ -160,8 +161,8 @@ export function checkAndShowWeeklyNotification(): void {
   const formatted = formatCurrency(dailyAmount)
 
   try {
-    new Notification('Budget du jour', {
-      body: `Il vous reste ${formatted} par jour ce mois-ci`,
+    new Notification(i18n.t('notifications.dailyBudgetTitle'), {
+      body: i18n.t('notifications.dailyBudgetBody', { amount: formatted }),
       icon: '/logo-crown.png',
     })
     localStorage.setItem(STORAGE_KEY_LAST_NOTIF, Date.now().toString())

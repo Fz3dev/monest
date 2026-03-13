@@ -46,6 +46,7 @@ export function getCurrentMonth(): string {
 export const CATEGORIES: CategoryListItem[] = [
   { value: 'logement', labelKey: 'categories.logement' },
   { value: 'assurance', labelKey: 'categories.assurance' },
+  { value: 'banque', labelKey: 'categories.banque' },
   { value: 'credit', labelKey: 'categories.credit' },
   { value: 'abonnement', labelKey: 'categories.abonnement' },
   { value: 'impot', labelKey: 'categories.impot' },

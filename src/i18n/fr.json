@@ -519,7 +519,9 @@
     "partnerExpenseTitle": "Nouvelle dépense",
     "partnerExpenseHint": "Quand votre partenaire ajoute une dépense commune",
     "partnerChargeTitle": "Charge modifiée",
-    "partnerChargeHint": "Quand votre partenaire ajoute ou modifie une charge"
+    "partnerChargeHint": "Quand votre partenaire ajoute ou modifie une charge",
+    "dailyBudgetTitle": "Budget du jour",
+    "dailyBudgetBody": "Il vous reste {{amount}} par jour ce mois-ci"
   },
   "insights": {
     "lowChargesRate": "Vos charges ne repr\u00e9sentent que {{rate}}% de vos revenus. Confortable !",

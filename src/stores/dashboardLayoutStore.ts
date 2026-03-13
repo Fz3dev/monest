@@ -15,6 +15,8 @@ export const WIDGET_CONSTRAINTS: Record<string, WidgetConstraint> = {
   insights:     { minW: 1, maxW: 2, minH: 3, maxH: 8 },
   smartTips:    { minW: 1, maxW: 2, minH: 3, maxH: 8 },
   trend:        { minW: 1, maxW: 3, minH: 5, maxH: 10 },
+  categories:   { minW: 1, maxW: 3, minH: 4, maxH: 10 },
+  chargesDetail:{ minW: 1, maxW: 3, minH: 4, maxH: 10 },
 }
 
 export const DEFAULT_LAYOUTS: Layouts = {

@@ -24,9 +24,6 @@ import { captureError } from '../lib/sentry'
 // Static legacy worker from public/ — compatible with all browsers including mobile Safari
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
 
-// CDN fallback URL (same version, legacy build)
-const WORKER_CDN = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/legacy/build/pdf.worker.min.mjs`
-
 let workerFailed = false
 
 // ─── Regex patterns ─────────────────────────────────────────────────────────
@@ -438,10 +435,6 @@ async function loadPDF(data: Uint8Array): Promise<pdfjsLib.PDFDocumentProxy> {
     {
       name: 'static',
       setup: () => { /* already set to /pdf.worker.min.mjs */ },
-    },
-    {
-      name: 'cdn',
-      setup: () => { pdfjsLib.GlobalWorkerOptions.workerSrc = WORKER_CDN },
     },
     {
       name: 'no-worker',

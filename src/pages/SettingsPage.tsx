@@ -160,6 +160,44 @@ export default function SettingsPage({ session, saveHousehold, createInvite }: S
     try {
       const text = await file.text()
       const data = JSON.parse(text)
+
+      // Basic validation of imported data
+      if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+        toast.error(t('settings.invalidFile'))
+        e.target.value = ''
+        return
+      }
+      if (data.household) {
+        const h = data.household
+        if (typeof h !== 'object' || h === null) {
+          toast.error(t('settings.invalidFile'))
+          e.target.value = ''
+          return
+        }
+        if (('personAName' in h && typeof h.personAName !== 'string') ||
+            ('splitRatio' in h && typeof h.splitRatio !== 'number') ||
+            ('configModel' in h && typeof h.configModel !== 'string')) {
+          toast.error(t('settings.invalidFile'))
+          e.target.value = ''
+          return
+        }
+      }
+      if (data.fixedCharges && !Array.isArray(data.fixedCharges)) {
+        toast.error(t('settings.invalidFile'))
+        e.target.value = ''
+        return
+      }
+      if (data.expenses && !Array.isArray(data.expenses)) {
+        toast.error(t('settings.invalidFile'))
+        e.target.value = ''
+        return
+      }
+      if (data.savingsGoals && !Array.isArray(data.savingsGoals)) {
+        toast.error(t('settings.invalidFile'))
+        e.target.value = ''
+        return
+      }
+
       if (data.household) useHouseholdStore.setState({ household: data.household })
       if (data.fixedCharges) {
         useChargesStore.setState({

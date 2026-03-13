@@ -27,7 +27,7 @@ src/
     ErrorBoundary.jsx
   pages/         — DashboardPage, MonthlyPage, ChargesPage, ExpensesPage, SavingsPage, CalendarPage, ImportPage, SettingsPage
   stores/        — householdStore, chargesStore, monthlyStore, savingsStore, expenseStore (Zustand + persist)
-  utils/         — calculations, csvParser, format, insights, motion
+  utils/         — calculations, csvParser, format, insights
 ```
 
 ## Supabase

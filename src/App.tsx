@@ -206,7 +206,7 @@ export default function App() {
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSentryUser(s?.user?.id ?? null, s?.user?.email ?? undefined)
+      setSentryUser(s?.user?.id ?? null)
       // In recovery mode, only accept the recovery session — ignore other events
       // that would auto-login with the existing browser session
       if (sessionStorage.getItem('monest-password-recovery') === '1') {

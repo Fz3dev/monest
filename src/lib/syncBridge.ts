@@ -112,7 +112,7 @@ async function executeSyncToSupabase(table: string, item: Record<string, unknown
     return true
   } catch (err) {
     console.error(`Sync error (${table}):`, err)
-    toast.error('Erreur de sync — vos modifications pourraient ne pas etre sauvegardees')
+    toast.error('Erreur de sync — vos modifications pourraient ne pas être sauvegardées')
     return false
   }
 }
@@ -124,7 +124,7 @@ async function executeDeleteFromSupabase(table: string, id: string): Promise<boo
     return true
   } catch (err) {
     console.error(`Delete error (${table}):`, err)
-    toast.error('Erreur de sync — vos modifications pourraient ne pas etre sauvegardees')
+    toast.error('Erreur de sync — vos modifications pourraient ne pas être sauvegardées')
     return false
   }
 }
@@ -133,10 +133,10 @@ async function executeDeleteFromSupabase(table: string, id: string): Promise<boo
 
 const TABLE_LABELS: Record<string, string> = {
   fixed_charges: 'charge',
-  installment_payments: 'echeance',
-  planned_expenses: 'depense prevue',
-  expenses: 'depense',
-  savings_goals: 'objectif epargne',
+  installment_payments: 'échéance',
+  planned_expenses: 'dépense prévue',
+  expenses: 'dépense',
+  savings_goals: 'objectif épargne',
 }
 
 function notifyForSync(table: string, item: Record<string, unknown>): void {
@@ -146,7 +146,7 @@ function notifyForSync(table: string, item: Record<string, unknown>): void {
 
   const name = (item.name || item.label || item.description || '') as string
   const amount = item.amount ? `${item.amount}\u20AC ` : ''
-  const title = `${_userName || 'Quelqu\'un'} a modifie un(e) ${label}`
+  const title = `${_userName || 'Quelqu\'un'} a modifié un(e) ${label}`
   const body = amount || name ? `${amount}${name}`.trim() : null
 
   createNotification({
@@ -168,7 +168,7 @@ function notifyForDelete(table: string, id: string): void {
     householdId: _householdId,
     actorId: _userId,
     type: 'charge_deleted',
-    title: `${_userName || 'Quelqu\'un'} a supprime un(e) ${label}`,
+    title: `${_userName || 'Quelqu\'un'} a supprimé un(e) ${label}`,
     metadata: { table, itemId: id },
   })
 }
@@ -177,7 +177,7 @@ function notifyForMonthly(month: string): void {
   if (!_userId || !_householdId) return
 
   // Format month label (e.g. "2026-03" -> "Mars 2026")
-  const MONTHS = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre']
+  const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
   const [year, m] = month.split('-')
   const monthLabel = `${MONTHS[parseInt(m, 10) - 1] || m} ${year}`
 
@@ -185,7 +185,7 @@ function notifyForMonthly(month: string): void {
     householdId: _householdId,
     actorId: _userId,
     type: 'salary_updated',
-    title: `${_userName || 'Quelqu\'un'} a mis a jour les revenus`,
+    title: `${_userName || 'Quelqu\'un'} a mis à jour les revenus`,
     body: monthLabel,
     metadata: { month },
   })
@@ -263,7 +263,7 @@ export function syncMonthlyEntryToSupabase<T extends object>(
       removePendingWrite(key)
     } catch (err) {
       console.error('Monthly sync error:', err)
-      toast.error('Erreur de sync — vos modifications pourraient ne pas etre sauvegardees')
+      toast.error('Erreur de sync — vos modifications pourraient ne pas être sauvegardées')
     }
   }, 300)
   _pendingTimers.set(key, timer)

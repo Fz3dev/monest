@@ -35,11 +35,22 @@ function getPayerLabel(payer: Payer, household: Household | null, t: TFunction):
   return payer
 }
 
+// Map ISO currency code to symbol for PDF/CSV (jsPDF can't use Intl currency formatting)
+function getCurrencySymbol(currency?: string): string {
+  if (!currency || currency === 'EUR') return '\u20AC'
+  const symbols: Record<string, string> = { USD: '$', GBP: '\u00A3', CHF: 'CHF', CAD: 'CA$', MAD: 'MAD', TND: 'TND', XOF: 'CFA' }
+  return symbols[currency] || currency
+}
+
 function formatAmount(amount: number): string {
   // Replace non-breaking spaces (U+202F, U+00A0) with regular spaces — jsPDF can't render them
   return new Intl.NumberFormat('fr-FR', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 })
     .format(amount)
     .replace(/[\u00A0\u202F]/g, ' ')
+}
+
+function formatAmountWithCurrency(amount: number, currency?: string): string {
+  return `${formatAmount(amount)} ${getCurrencySymbol(currency)}`
 }
 
 function dateStr(): string {
@@ -111,8 +122,9 @@ export async function exportCSV(opts: ExportOptions): Promise<void> {
 
 // ─── PDF Export ─────────────────────────────────────────────────────────────
 
-async function loadLogoBase64(): Promise<string> {
+async function loadLogoBase64(): Promise<string | null> {
   const response = await fetch('/logo-crown-sm.png')
+  if (!response.ok) return null
   const blob = await response.blob()
   return new Promise((resolve) => {
     const reader = new FileReader()
@@ -126,6 +138,7 @@ export async function exportPDF(opts: ExportOptions): Promise<void> {
   const { jsPDF } = await import('jspdf')
   const autoTable = (await import('jspdf-autotable')).default
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+
 
   // ─── Color palette (light theme, print-friendly) ────────────────────────
   const BRAND: [number, number, number] = [108, 99, 255]
@@ -281,7 +294,7 @@ export async function exportPDF(opts: ExportOptions): Promise<void> {
     doc.setFontSize(8)
     doc.setFont('helvetica', 'bold')
     doc.text(label, 17, yPos + 3.5)
-    doc.text(`${formatAmount(amount)} \u20AC`, pageW - 17, yPos + 3.5, { align: 'right' })
+    doc.text(formatAmountWithCurrency(amount, household?.currency), pageW - 17, yPos + 3.5, { align: 'right' })
     yPos += 10
   }
 
@@ -293,7 +306,7 @@ export async function exportPDF(opts: ExportOptions): Promise<void> {
     doc.setTextColor(...BRAND)
     doc.setFontSize(10)
     doc.setFont('helvetica', 'bold')
-    doc.text(`Total : ${formatAmount(amount)} \u20AC`, pageW - 14, yPos + 3, { align: 'right' })
+    doc.text(`Total : ${formatAmountWithCurrency(amount, household?.currency)}`, pageW - 14, yPos + 3, { align: 'right' })
     yPos += 12
   }
 
@@ -353,7 +366,7 @@ export async function exportPDF(opts: ExportOptions): Promise<void> {
         name: c.name,
         amount: c.amount,
         payer: c.payer,
-        cols: [c.name, `${formatAmount(c.amount)} \u20AC`, getFrequencyLabel(c.frequency), getCategoryLabel(c.category)],
+        cols: [c.name, formatAmountWithCurrency(c.amount, household?.currency), getFrequencyLabel(c.frequency), getCategoryLabel(c.category)],
       }))
     addGroupedSection(`${t('charges.fixedTab')} (${items.length})`, items)
   }
@@ -366,7 +379,7 @@ export async function exportPDF(opts: ExportOptions): Promise<void> {
         name: c.name,
         amount: c.installmentAmount,
         payer: c.payer,
-        cols: [c.name, `${formatAmount(c.installmentAmount)} \u20AC`, `${c.installmentCount}x`, '-'],
+        cols: [c.name, formatAmountWithCurrency(c.installmentAmount, household?.currency), `${c.installmentCount}x`, '-'],
       }))
     addGroupedSection(`${t('charges.installmentTab')} (${items.length})`, items)
   }
@@ -379,7 +392,7 @@ export async function exportPDF(opts: ExportOptions): Promise<void> {
         name: c.name,
         amount: c.estimatedAmount,
         payer: c.payer,
-        cols: [c.name, `${formatAmount(c.estimatedAmount)} \u20AC`, c.targetMonth, '-'],
+        cols: [c.name, formatAmountWithCurrency(c.estimatedAmount, household?.currency), c.targetMonth, '-'],
       }))
     addGroupedSection(`${t('charges.plannedTab')} (${items.length})`, items)
   }
@@ -438,6 +451,7 @@ export async function exportMonthPDF(opts: MonthExportOptions): Promise<void> {
   const { jsPDF } = await import('jspdf')
   const autoTable = (await import('jspdf-autotable')).default
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+
 
   const BRAND: [number, number, number] = [108, 99, 255]
   const BRAND_LIGHT: [number, number, number] = [237, 235, 255]
@@ -563,7 +577,7 @@ export async function exportMonthPDF(opts: MonthExportOptions): Promise<void> {
     doc.setFontSize(8)
     doc.setFont('helvetica', 'bold')
     doc.text(label, 17, yPos + 3.5)
-    doc.text(`${formatAmount(amount)} \u20AC`, pageW - 17, yPos + 3.5, { align: 'right' })
+    doc.text(formatAmountWithCurrency(amount, household?.currency), pageW - 17, yPos + 3.5, { align: 'right' })
     yPos += 10
   }
 
@@ -574,7 +588,7 @@ export async function exportMonthPDF(opts: MonthExportOptions): Promise<void> {
     doc.setTextColor(...BRAND)
     doc.setFontSize(10)
     doc.setFont('helvetica', 'bold')
-    doc.text(`Total : ${formatAmount(amount)} \u20AC`, pageW - 14, yPos + 3, { align: 'right' })
+    doc.text(`Total : ${formatAmountWithCurrency(amount, household?.currency)}`, pageW - 14, yPos + 3, { align: 'right' })
     yPos += 12
   }
 
@@ -632,7 +646,7 @@ export async function exportMonthPDF(opts: MonthExportOptions): Promise<void> {
       name: c.name,
       amount: c.amount,
       payer: c.payer,
-      cols: [c.name, `${formatAmount(c.amount)} \u20AC`, c.category ? getCategoryLabel(c.category) : '-'],
+      cols: [c.name, formatAmountWithCurrency(c.amount, household?.currency), c.category ? getCategoryLabel(c.category) : '-'],
     }))
 
     addGroupedSection(`${typeLabels[type]} (${items.length})`, items)
