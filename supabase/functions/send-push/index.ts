@@ -53,7 +53,7 @@ async function createVapidJwt(audience: string): Promise<string> {
   const payload = {
     aud: audience,
     exp: Math.floor(Date.now() / 1000) + 12 * 60 * 60,
-    sub: 'mailto:limlahi.fawsy3@gmail.com',
+    sub: 'mailto:contact@monest.dev',
   }
 
   const enc = new TextEncoder()

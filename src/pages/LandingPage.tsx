@@ -718,7 +718,7 @@ export default function LandingPage({ lang = 'fr' }: { lang?: string }) {
             <span className="text-sm text-text-muted">© {new Date().getFullYear()} Monest. {t.footer.rights}</span>
           </div>
           <div className="flex items-center gap-6">
-            <a href="mailto:limlahi.fawsy3@gmail.com" className="text-sm text-text-muted hover:text-text-secondary transition-colors">
+            <a href="mailto:contact@monest.dev" className="text-sm text-text-muted hover:text-text-secondary transition-colors">
               Contact
             </a>
             <Link to="/confidentialite" className="text-sm text-text-muted hover:text-text-secondary transition-colors">
