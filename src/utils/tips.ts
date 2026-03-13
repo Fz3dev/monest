@@ -142,7 +142,9 @@ function checkMultipleCredits(charges: FixedCharge[]): TipCandidate | null {
 }
 
 function checkStreaming(charges: FixedCharge[]): TipCandidate | null {
-  const streaming = charges.filter((c) => nameMatches(c.name, STREAMING_PATTERNS))
+  const streaming = charges.filter(
+    (c) => nameMatches(c.name, STREAMING_PATTERNS) && !nameMatches(c.name, ENERGY_PATTERNS)
+  )
   if (streaming.length <= 1) return null
 
   const total = streaming.reduce((sum, c) => sum + monthlyAmount(c), 0)
@@ -254,7 +256,7 @@ export function generateSmartTips(
 
   candidates.push(...checkCommitmentEnding(active, currentMonth))
 
-  // Sort by priority (lower = more impactful), then return max 5
-  candidates.sort((a, b) => a.priority - b.priority)
-  return candidates.slice(0, 5).map((c) => c.tip)
+  // Shuffle candidates of same priority, then return max 2
+  candidates.sort((a, b) => a.priority - b.priority || Math.random() - 0.5)
+  return candidates.slice(0, 2).map((c) => c.tip)
 }
