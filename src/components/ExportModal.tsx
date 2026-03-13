@@ -119,9 +119,9 @@ export default function ExportModal({ isOpen, onClose }: ExportModalProps) {
   }
 
   const chargeTypeOptions: { value: ChargeTypeFilter; label: string; count: number }[] = [
-    { value: 'fixed', label: t('charges.tabFixed'), count: fixedCharges.filter((c) => c.active).length },
-    { value: 'installment', label: t('charges.tabInstallment'), count: installmentPayments.length },
-    { value: 'planned', label: t('charges.tabPlanned'), count: plannedExpenses.length },
+    { value: 'fixed', label: t('charges.fixedTab'), count: fixedCharges.filter((c) => c.active).length },
+    { value: 'installment', label: t('charges.installmentTab'), count: installmentPayments.length },
+    { value: 'planned', label: t('charges.plannedTab'), count: plannedExpenses.length },
   ]
 
   return (

@@ -43,7 +43,7 @@ function buildRows(opts: ExportOptions): Record<string, string>[] {
       if (!payers.includes(c.payer)) continue
       if (!c.active) continue
       rows.push({
-        [t('export.colType')]: t('charges.tabFixed'),
+        [t('export.colType')]: t('charges.fixedTab'),
         [t('export.colName')]: c.name,
         [t('export.colAmount')]: formatAmount(c.amount),
         [t('export.colFrequency')]: getFrequencyLabel(c.frequency),
@@ -57,7 +57,7 @@ function buildRows(opts: ExportOptions): Record<string, string>[] {
     for (const c of installmentPayments) {
       if (!payers.includes(c.payer)) continue
       rows.push({
-        [t('export.colType')]: t('charges.tabInstallment'),
+        [t('export.colType')]: t('charges.installmentTab'),
         [t('export.colName')]: c.name,
         [t('export.colAmount')]: formatAmount(c.installmentAmount),
         [t('export.colFrequency')]: `${c.installmentCount}x`,
@@ -71,7 +71,7 @@ function buildRows(opts: ExportOptions): Record<string, string>[] {
     for (const c of plannedExpenses) {
       if (!payers.includes(c.payer)) continue
       rows.push({
-        [t('export.colType')]: t('charges.tabPlanned'),
+        [t('export.colType')]: t('charges.plannedTab'),
         [t('export.colName')]: c.name,
         [t('export.colAmount')]: formatAmount(c.estimatedAmount),
         [t('export.colFrequency')]: c.targetMonth,
@@ -240,7 +240,7 @@ export async function exportPDF(opts: ExportOptions): Promise<void> {
       .filter((c) => payers.includes(c.payer) && c.active)
       .reduce((sum, c) => sum + c.amount, 0)
     if (data.length) {
-      addSection(`${t('charges.tabFixed')} (${data.length})`, data)
+      addSection(`${t('charges.fixedTab')} (${data.length})`, data)
       // Total row
       doc.setTextColor(...TEXT_MUTED)
       doc.setFontSize(9)
@@ -264,7 +264,7 @@ export async function exportPDF(opts: ExportOptions): Promise<void> {
       .filter((c) => payers.includes(c.payer))
       .reduce((sum, c) => sum + c.installmentAmount, 0)
     if (data.length) {
-      addSection(`${t('charges.tabInstallment')} (${data.length})`, data)
+      addSection(`${t('charges.installmentTab')} (${data.length})`, data)
       doc.setTextColor(...TEXT_MUTED)
       doc.setFontSize(9)
       doc.setFont('helvetica', 'bold')
@@ -287,7 +287,7 @@ export async function exportPDF(opts: ExportOptions): Promise<void> {
       .filter((c) => payers.includes(c.payer))
       .reduce((sum, c) => sum + c.estimatedAmount, 0)
     if (data.length) {
-      addSection(`${t('charges.tabPlanned')} (${data.length})`, data)
+      addSection(`${t('charges.plannedTab')} (${data.length})`, data)
       doc.setTextColor(...TEXT_MUTED)
       doc.setFontSize(9)
       doc.setFont('helvetica', 'bold')
