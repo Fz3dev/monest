@@ -30,6 +30,18 @@ export function initSentry() {
       'AbortError',
       'ChunkLoadError',
       /Loading chunk .* failed/,
+      /sw\.js/,
+      'Script load failed',
+      'Non-Error promise rejection captured',
+      /Object Not Found Matching Id/,
+    ],
+    // Ignore errors from browser extensions and third-party scripts
+    denyUrls: [
+      /extensions\//i,
+      /^chrome:\/\//i,
+      /^moz-extension:\/\//i,
+      /^safari-(web-)?extension:\/\//i,
+      /googletagmanager\.com/,
     ],
     // Strip sensitive data before sending
     beforeSend(event) {
